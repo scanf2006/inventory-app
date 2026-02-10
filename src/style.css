@@ -23,7 +23,8 @@ body {
     font-family: 'Inter', -apple-system, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
-    overflow: hidden; /* 防止整个页面滚动，由 main 负责 */
+    overflow: hidden;
+    /* 防止整个页面滚动，由 main 负责 */
 }
 
 #app {
@@ -39,7 +40,7 @@ body {
     color: white;
     padding: 40px 20px 20px;
     text-align: left;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .app-header h1 {
@@ -66,7 +67,9 @@ body {
     scrollbar-width: none;
 }
 
-.category-tabs::-webkit-scrollbar { display: none; }
+.category-tabs::-webkit-scrollbar {
+    display: none;
+}
 
 .tab {
     flex: 1;
@@ -85,7 +88,7 @@ body {
 .tab.active {
     background: var(--primary-color);
     color: white;
-    box-shadow: 0 4px 8px rgba(0,122,255,0.3);
+    box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3);
 }
 
 /* Content Area */
@@ -109,20 +112,34 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.item-info {
+    flex: 1;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .item-info .item-name {
     font-weight: 700;
     font-size: 1.1rem;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .item-info .item-result {
     font-size: 0.85rem;
     color: var(--primary-color);
     font-weight: 600;
+    height: 1.2rem;
+    /* 固定高度确保布局稳定 */
+    line-height: 1.2rem;
 }
 
 .input-group {
@@ -158,7 +175,8 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
-.primary-btn, .secondary-btn {
+.primary-btn,
+.secondary-btn {
     flex: 1;
     padding: 16px;
     border-radius: 14px;
@@ -169,16 +187,25 @@ body {
     transition: transform 0.1s;
 }
 
-.primary-btn { background: var(--primary-color); color: white; }
-.secondary-btn { background: #E5E5EA; color: var(--text-main); }
+.primary-btn {
+    background: var(--primary-color);
+    color: white;
+}
 
-.primary-btn:active { transform: scale(0.97); }
+.secondary-btn {
+    background: #E5E5EA;
+    color: var(--text-main);
+}
+
+.primary-btn:active {
+    transform: scale(0.97);
+}
 
 /* Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: flex-end;
     z-index: 100;
@@ -213,7 +240,9 @@ body {
     border-radius: 8px;
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
 /* PDF View */
 .pdf-template {
@@ -228,14 +257,27 @@ body {
     margin-top: 20px;
 }
 
-.pdf-table th, .pdf-table td {
+.pdf-table th,
+.pdf-table td {
     border: 1px solid #000;
     padding: 8px;
     text-align: left;
 }
 
 @media print {
-    body * { visibility: hidden; }
-    #pdf-template, #pdf-template * { visibility: visible; }
-    #pdf-template { position: absolute; left: 0; top: 0; width: 100%; }
+    body * {
+        visibility: hidden;
+    }
+
+    #pdf-template,
+    #pdf-template * {
+        visibility: visible;
+    }
+
+    #pdf-template {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
 }

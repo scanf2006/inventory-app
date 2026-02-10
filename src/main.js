@@ -59,14 +59,25 @@ function renderInventory() {
     });
 }
 
-// Update inventory value
+// Update inventory value with debounce for mobile stability
+let calcTimeout;
 window.updateValue = (name, value, index) => {
     state.inventory[name] = value;
-    const total = evaluateExpression(value);
-    const resultEl = document.getElementById(`result-${index}`);
-    if (resultEl) {
-        resultEl.innerText = value ? 'Subtotal: ' + total : '';
-    }
+
+    // Clear previous timeout
+    if (calcTimeout) clearTimeout(calcTimeout);
+
+    // Use a small debounce to prevent layout calculation during active typing on mobile
+    calcTimeout = setTimeout(() => {
+        const total = evaluateExpression(value);
+        const resultEl = document.getElementById(`result-${index}`);
+        if (resultEl) {
+            // Update in the next animation frame to be as smooth as possible
+            requestAnimationFrame(() => {
+                resultEl.innerText = value ? 'Subtotal: ' + total : '';
+            });
+        }
+    }, 150); // 150ms is short enough for responsiveness but avoids input lag
 };
 
 // Toggle Category
