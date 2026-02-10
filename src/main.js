@@ -34,25 +34,25 @@ function evaluateExpression(expr) {
 function renderInventory() {
     const list = document.getElementById('inventory-list');
     list.innerHTML = '';
-    
+
     const categoryProducts = state.products[state.currentCategory] || [];
-    
-    categoryProducts.forEach(name => {
+
+    categoryProducts.forEach((name, index) => {
         const val = state.inventory[name] || '';
         const total = evaluateExpression(val);
-        
+
         const card = document.createElement('div');
         card.className = 'item-card';
         card.innerHTML = `
             <div class="item-info">
                 <div class="item-name">${name}</div>
-                <div class="item-result">${val ? '小计: ' + total : ''}</div>
+                <div class="item-result" id="result-${index}">${val ? '小计: ' + total : ''}</div>
             </div>
             <div class="input-group">
                 <input type="text" class="item-input" 
                     placeholder="数值" 
                     value="${val}" 
-                    oninput="updateValue('${name}', this.value)">
+                    oninput="updateValue('${name}', this.value, ${index})">
             </div>
         `;
         list.appendChild(card);
@@ -60,9 +60,13 @@ function renderInventory() {
 }
 
 // 更新库存值
-window.updateValue = (name, value) => {
+window.updateValue = (name, value, index) => {
     state.inventory[name] = value;
-    renderInventory();
+    const total = evaluateExpression(value);
+    const resultEl = document.getElementById(`result-${index}`);
+    if (resultEl) {
+        resultEl.innerText = value ? '小计: ' + total : '';
+    }
 };
 
 // 切换分类
@@ -88,7 +92,7 @@ function renderManageList() {
     const pList = document.getElementById('product-manage-list');
     pList.innerHTML = '';
     const categoryProducts = state.products[state.currentCategory];
-    
+
     categoryProducts.forEach((name, index) => {
         const li = document.createElement('li');
         li.style.cssText = 'display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;';
@@ -124,9 +128,9 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
     const pdfArea = document.getElementById('pdf-template');
     const tbody = document.getElementById('pdf-tbody');
     document.getElementById('pdf-date').innerText = `报告日期: ${new Date().toLocaleDateString('zh-CN')} ${new Date().toLocaleTimeString('zh-CN')}`;
-    
+
     tbody.innerHTML = '';
-    
+
     ['bulk', 'case', 'coolant', 'others'].forEach(cat => {
         const products = state.products[cat];
         products.forEach(name => {
@@ -151,7 +155,7 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
     }
 
     pdfArea.classList.remove('hidden');
-    
+
     const opt = {
         margin: 10,
         filename: `Lube_Inventory_${new Date().toLocaleDateString()}.pdf`,
