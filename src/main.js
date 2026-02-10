@@ -1,4 +1,4 @@
-// 初始产品配置（从用户图片中提取）
+// Initial product configuration
 const INITIAL_PRODUCTS = {
     bulk: ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
     case: ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
@@ -6,23 +6,23 @@ const INITIAL_PRODUCTS = {
     others: ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
 };
 
-// 全局状态
+// Global State
 let state = {
     currentCategory: 'bulk',
     products: JSON.parse(localStorage.getItem('lubricant_products')) || INITIAL_PRODUCTS,
-    inventory: {} // key: productName, value: expression (e.g., "100+200")
+    inventory: {} // key: productName, value: expression
 };
 
-// 保存到本地
+// Save to LocalStorage
 function saveToStorage() {
     localStorage.setItem('lubricant_products', JSON.stringify(state.products));
 }
 
-// 安全评估数学表达式
+// Safely evaluate mathematical expressions
 function evaluateExpression(expr) {
     if (!expr || expr.trim() === '') return 0;
     try {
-        // 只允许数字、加号、点和空格
+        // Only allow numbers, plus signs, dots, and spaces
         const safeExpr = expr.replace(/[^0-9+\. ]/g, '');
         return Number(eval(safeExpr)) || 0;
     } catch (e) {
@@ -30,7 +30,7 @@ function evaluateExpression(expr) {
     }
 }
 
-// 渲染库存列表
+// Render Inventory List
 function renderInventory() {
     const list = document.getElementById('inventory-list');
     list.innerHTML = '';
@@ -46,11 +46,11 @@ function renderInventory() {
         card.innerHTML = `
             <div class="item-info">
                 <div class="item-name">${name}</div>
-                <div class="item-result" id="result-${index}">${val ? '小计: ' + total : ''}</div>
+                <div class="item-result" id="result-${index}">${val ? 'Subtotal: ' + total : ''}</div>
             </div>
             <div class="input-group">
                 <input type="text" class="item-input" 
-                    placeholder="数值" 
+                    placeholder="Val" 
                     value="${val}" 
                     oninput="updateValue('${name}', this.value, ${index})">
             </div>
@@ -59,17 +59,17 @@ function renderInventory() {
     });
 }
 
-// 更新库存值
+// Update inventory value
 window.updateValue = (name, value, index) => {
     state.inventory[name] = value;
     const total = evaluateExpression(value);
     const resultEl = document.getElementById(`result-${index}`);
     if (resultEl) {
-        resultEl.innerText = value ? '小计: ' + total : '';
+        resultEl.innerText = value ? 'Subtotal: ' + total : '';
     }
 };
 
-// 切换分类
+// Toggle Category
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelector('.tab.active').classList.remove('active');
@@ -79,7 +79,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     });
 });
 
-// 管理产品弹窗逻辑
+// Management Modal Logic
 const modal = document.getElementById('modal-overlay');
 document.getElementById('manage-btn').addEventListener('click', () => {
     modal.classList.remove('hidden');
@@ -98,7 +98,7 @@ function renderManageList() {
         li.style.cssText = 'display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;';
         li.innerHTML = `
             <span>${name}</span>
-            <button onclick="removeProduct(${index})" style="background:#ff3b30; color:white; border:none; border-radius:4px; padding:4px 8px;">删除</button>
+            <button onclick="removeProduct(${index})" style="background:#ff3b30; color:white; border:none; border-radius:4px; padding:4px 8px;">Delete</button>
         `;
         pList.appendChild(li);
     });
@@ -123,11 +123,11 @@ document.getElementById('add-product-btn').addEventListener('click', () => {
     }
 });
 
-// PDF 导出功能
+// PDF Export logic
 document.getElementById('export-pdf-btn').addEventListener('click', () => {
     const pdfArea = document.getElementById('pdf-template');
     const tbody = document.getElementById('pdf-tbody');
-    document.getElementById('pdf-date').innerText = `报告日期: ${new Date().toLocaleDateString('zh-CN')} ${new Date().toLocaleTimeString('zh-CN')}`;
+    document.getElementById('pdf-date').innerText = `Report Date: ${new Date().toLocaleDateString('en-US')} ${new Date().toLocaleTimeString('en-US')}`;
 
     tbody.innerHTML = '';
 
@@ -150,7 +150,7 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
     });
 
     if (tbody.innerHTML === '') {
-        alert('请先录入一些数据！');
+        alert('Please enter some data first!');
         return;
     }
 
@@ -169,8 +169,8 @@ document.getElementById('export-pdf-btn').addEventListener('click', () => {
     });
 });
 
-// 初始化日期
-document.getElementById('current-date').innerText = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+// Initialize Date
+document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-// 首次渲染
+// Init Render
 renderInventory();

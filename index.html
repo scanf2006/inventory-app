@@ -1,26 +1,30 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>润滑油库存统计</title>
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Lube Inventory Tracker</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@400;700&display=swap"
+        rel="stylesheet">
     <!-- html2pdf Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="src/style.css">
 </head>
+
 <body>
     <div id="app">
-        <!-- 顶部导航 -->
+        <!-- Header -->
         <header class="app-header">
-            <h1>库存统计</h1>
-            <div class="date-display" id="current-date">2026年02月10日</div>
+            <h1>Inventory</h1>
+            <div class="date-display" id="current-date">February 10, 2026</div>
         </header>
 
-        <!-- 分类切换标签 -->
+        <!-- Category Tabs -->
         <nav class="category-tabs" id="category-tabs">
             <button class="tab active" data-id="bulk">Bulk Oil</button>
             <button class="tab" data-id="case">Case Oil</button>
@@ -28,49 +32,49 @@
             <button class="tab" data-id="others">Others</button>
         </nav>
 
-        <!-- 主内容区域 -->
+        <!-- Main Content -->
         <main class="content-area">
             <div id="inventory-list" class="inventory-list">
-                <!-- 产品项将通过 JS 动态渲染 -->
+                <!-- Products rendered via JS -->
             </div>
         </main>
 
-        <!-- 底部操作栏 -->
+        <!-- Footer -->
         <footer class="app-footer">
-            <button id="manage-btn" class="secondary-btn">设置</button>
-            <button id="export-pdf-btn" class="primary-btn">生成 PDF</button>
+            <button id="manage-btn" class="secondary-btn">Settings</button>
+            <button id="export-pdf-btn" class="primary-btn">Generate PDF</button>
         </footer>
 
-        <!-- 设置弹窗 -->
+        <!-- Management Modal -->
         <div id="modal-overlay" class="modal-overlay hidden">
             <div class="modal">
                 <div class="modal-header">
-                    <h2>管理产品库</h2>
+                    <h2>Manage Products</h2>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="add-product-form">
-                        <input type="text" id="new-product-name" placeholder="输入新产品名称">
-                        <button id="add-product-btn">添加</button>
+                        <input type="text" id="new-product-name" placeholder="New product name">
+                        <button id="add-product-btn">Add</button>
                     </div>
                     <ul id="product-manage-list"></ul>
                 </div>
             </div>
         </div>
 
-        <!-- 用于 PDF 生成的隐藏区域 -->
+        <!-- PDF Template (Hidden) -->
         <div id="pdf-template" class="pdf-template hidden">
             <div class="pdf-header">
-                <h2>月度润滑油库存统计报表</h2>
+                <h2>Monthly Lubricant Inventory Report</h2>
                 <p id="pdf-date"></p>
             </div>
             <table class="pdf-table" id="pdf-table-content">
                 <thead>
                     <tr>
-                        <th>分类</th>
-                        <th>产品名称</th>
-                        <th>统计明细 (加法)</th>
-                        <th>最终数值</th>
+                        <th>Category</th>
+                        <th>Product Name</th>
+                        <th>Details (Calc)</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody id="pdf-tbody"></tbody>
@@ -79,4 +83,5 @@
     </div>
     <script src="src/main.js"></script>
 </body>
+
 </html>
