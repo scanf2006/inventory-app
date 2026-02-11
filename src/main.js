@@ -212,7 +212,7 @@ function renderInventory() {
         '<button class="' + (state.viewMode === 'edit' ? 'active' : '') + '" onclick="setViewMode(\'edit\')">Edit</button>' +
         '<button class="' + (state.viewMode === 'summary' ? 'active' : '') + '" onclick="setViewMode(\'summary\')">Summary</button>' +
         '</div>' +
-        '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.75rem; padding:6px 12px; background:#fff; border:1px solid #ddd; color:#007AFF;">Sort A-Z</button>';
+        '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:#fff; border:1px solid var(--border-color); color:var(--primary-color); border-radius:12px; font-weight:700;">Sort A-Z</button>';
     list.appendChild(toggleBar);
 
     var categoryProducts = state.products[state.currentCategory];

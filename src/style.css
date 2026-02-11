@@ -108,27 +108,33 @@ body {
 .segmented-control {
     display: flex;
     background: #E5E5EA;
-    padding: 2px;
-    border-radius: 9px;
+    padding: 4px;
+    /* Slightly more padding */
+    border-radius: 12px;
+    /* Smoother corner */
     gap: 0;
 }
 
 .segmented-control button {
     border: none;
     background: transparent;
-    padding: 6px 16px;
-    border-radius: 7px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 12px 24px;
+    /* Significantly enlarged */
+    border-radius: 9px;
+    font-size: 1.1rem;
+    /* Much larger font */
+    font-weight: 700;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .segmented-control button.active {
     background: white;
-    color: var(--text-main);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: var(--primary-color);
+    /* Theme color for active text */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    /* More premium shadow */
 }
 
 /* Summary Grid Mode */
@@ -140,27 +146,31 @@ body {
 
 .summary-card {
     background: white;
-    padding: 12px;
-    border-radius: 12px;
+    padding: 16px;
+    /* Added more space */
+    border-radius: 16px;
+    /* Match main items */
     display: flex;
     flex-direction: column;
     justify-content: center;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .summary-card .s-name {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 1rem;
+    /* Enlarged */
+    font-weight: 700;
     color: var(--text-muted);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .summary-card .s-val {
-    font-size: 1.2rem;
-    font-weight: 800;
+    font-size: 1.4rem;
+    /* Enlarged */
+    font-weight: 900;
     color: var(--primary-color);
 }
 
