@@ -141,9 +141,7 @@ function pullFromCloud() {
                 renderTabs();
                 renderInventory();
                 updateSyncStatus("Online (Synced)", true);
-                alert("Data synced from cloud!");
             } else {
-                alert("Connected! No cloud data found.");
                 pushToCloud();
             }
         })
