@@ -1,5 +1,5 @@
-// 版本 1.3.1 - INV-aiden
-console.log("正在加载 INV-aiden 核心逻辑 v1.3.1");
+// 版本 1.3.2 - INV-aiden
+console.log("正在加载 INV-aiden 核心逻辑 v1.3.2");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -602,9 +602,17 @@ if (document.getElementById('export-pdf-btn')) {
         });
         if (!hasData) return alert('No data.');
         pdfArea.classList.remove('hidden');
+
+        // 生成带日期的文件名
+        var now = new Date();
+        var dateStr = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0');
+        var fileName = 'INV_aiden_Report_' + dateStr + '.pdf';
+
         html2pdf().set({
             margin: 10,
-            filename: 'INV_aiden_Report.pdf',
+            filename: fileName,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
