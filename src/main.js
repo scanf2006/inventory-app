@@ -229,7 +229,11 @@ function renderInventory() {
     quickAdd.onclick = function () {
         var name = prompt("Enter new product name:");
         if (name && name.trim() !== '') {
-            state.products[state.currentCategory].push(name.trim());
+            var trimmedName = name.trim();
+            if (state.products[state.currentCategory].indexOf(trimmedName) !== -1) {
+                return alert("Duplicate Product: '" + trimmedName + "' already exists in this category.");
+            }
+            state.products[state.currentCategory].push(trimmedName);
             saveToStorage();
             renderInventory();
         }
@@ -240,10 +244,14 @@ function renderInventory() {
 window.renameProductInline = function (oldName, index) {
     var newName = prompt("Rename product:", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
-        state.products[state.currentCategory][index] = newName.trim();
+        var trimmedName = newName.trim();
+        if (state.products[state.currentCategory].indexOf(trimmedName) !== -1) {
+            return alert("Duplicate Product: '" + trimmedName + "' already exists in this category.");
+        }
+        state.products[state.currentCategory][index] = trimmedName;
         // Migrate inventory data
         var oldKey = state.currentCategory + '-' + oldName;
-        var newKey = state.currentCategory + '-' + newName.trim();
+        var newKey = state.currentCategory + '-' + trimmedName;
         if (state.inventory[oldKey] !== undefined) {
             state.inventory[newKey] = state.inventory[oldKey];
             delete state.inventory[oldKey];
@@ -427,6 +435,9 @@ if (document.getElementById('add-product-btn')) {
         var input = document.getElementById('new-product-name');
         var name = input.value.trim();
         if (name && state.currentCategory) {
+            if (state.products[state.currentCategory].indexOf(name) !== -1) {
+                return alert("Duplicate Product: '" + name + "' already exists in this category.");
+            }
             state.products[state.currentCategory].push(name);
             saveToStorage();
             input.value = '';
