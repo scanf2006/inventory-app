@@ -1,4 +1,4 @@
-// VERSION 1.2.2 - INV-aiden
+// VERSION 1.2.3 - INV-aiden
 console.log("Loading Main.js v1.0.4");
 
 // Initial product configuration
@@ -563,6 +563,7 @@ const iosHint = document.getElementById('ios-install-hint');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('PWA: beforeinstallprompt event fired');
     e.preventDefault();
     deferredPrompt = e;
     if (installBtn) installBtn.style.display = 'block';
