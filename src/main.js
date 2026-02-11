@@ -215,6 +215,10 @@ function renderInventory() {
             '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
+            '<div class="item-sort-btns">' +
+            '<button class="item-sort-btn" onclick="moveProductInline(' + index + ', -1)" ' + (index === 0 ? 'disabled' : '') + '>↑</button>' +
+            '<button class="item-sort-btn" onclick="moveProductInline(' + index + ', 1)" ' + (index === categoryProducts.length - 1 ? 'disabled' : '') + '>↓</button>' +
+            '</div>' +
             '<input type="text" class="item-input" placeholder="0" value="' + val + '" ' +
             'oninput="updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
             '</div>' +
@@ -266,6 +270,17 @@ window.removeProductInline = function (index) {
         var name = state.products[state.currentCategory][index];
         state.products[state.currentCategory].splice(index, 1);
         delete state.inventory[state.currentCategory + '-' + name];
+        saveToStorage();
+        renderInventory();
+    }
+};
+
+window.moveProductInline = function (index, direction) {
+    var products = state.products[state.currentCategory];
+    var newIdx = index + direction;
+    if (newIdx >= 0 && newIdx < products.length) {
+        var temp = products.splice(index, 1)[0];
+        products.splice(newIdx, 0, temp);
         saveToStorage();
         renderInventory();
     }
