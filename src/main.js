@@ -1,5 +1,5 @@
-// 版本 1.3.2 - INV-aiden
-console.log("正在加载 INV-aiden 核心逻辑 v1.3.2");
+// 版本 1.3.3 - INV-aiden
+console.log("正在加载 INV-aiden 核心逻辑 v1.3.3");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -116,10 +116,10 @@ function pullFromCloud() {
         initSupabase();
         if (!supabaseClient) {
             var keys = Object.keys(window).filter(function (k) { return k.toLowerCase().indexOf('supa') !== -1; });
-            return alert("Sync Error: Library not loaded.\nTry Ctrl+F5 on PC.\nFound: " + keys.join(', '));
+            return alert("同步错误：数据库库未加载。\n请在 PC 上尝试 Ctrl+F5 强制刷新。\n发现库： " + keys.join(', '));
         }
     }
-    if (!state.syncId) return alert("Please set a Sync ID in Settings first.");
+    if (!state.syncId) return alert("请先在设置中设置同步 ID。");
 
     updateSyncStatus("Pulling...", false);
     supabaseClient
@@ -147,8 +147,8 @@ function pullFromCloud() {
             }
         })
         .catch(function (e) {
-            alert("Sync Failed: " + (e.message || "Unknown error"));
-            updateSyncStatus("Sync Error", false);
+            alert("同步失败：" + (e.message || "未知错误"));
+            updateSyncStatus("同步错误", false);
         });
 }
 
@@ -343,11 +343,11 @@ window.submitQuickAdd = function () {
 };
 
 window.renameProductInline = function (oldName, index) {
-    var newName = prompt("Rename product:", oldName);
+    var newName = prompt("重命名产品：", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
         var trimmedName = newName.trim();
         if (state.products[state.currentCategory].indexOf(trimmedName) !== -1) {
-            return alert("Duplicate Product: '" + trimmedName + "' already exists in this category.");
+            return alert("产品重复：'" + trimmedName + "' 已存在于该分类中。");
         }
         state.products[state.currentCategory][index] = trimmedName;
         // 迁移库存数据
@@ -363,7 +363,7 @@ window.renameProductInline = function (oldName, index) {
 };
 
 window.removeProductInline = function (index) {
-    if (confirm("Delete this product?")) {
+    if (confirm("确定要删除该产品及其库存数据吗？")) {
         var name = state.products[state.currentCategory][index];
         state.products[state.currentCategory].splice(index, 1);
         delete state.inventory[state.currentCategory + '-' + name];
@@ -422,21 +422,19 @@ if (document.getElementById('connect-sync-btn')) {
             saveToStorage(false);
             pullFromCloud();
         } else {
-            alert("Please enter a Sync ID.");
+            alert("请输入同步 ID。");
         }
     };
 }
 
 window.resetInventory = function () {
-    if (confirm("Reset ALL inventory values to zero? This will not delete products or categories.")) {
+    if (confirm("确定要将所有库存数值清零吗？这不会删除产品或分类。")) {
         state.inventory = {};
         saveToStorage();
         renderInventory();
-        alert("All inventory values have been reset.");
+        alert("所有库存数据已清零。");
     }
 };
-
-// 删除冗余 resetLocalData
 
 function renderManageUI() {
     var cList = document.getElementById('category-manage-list');
@@ -506,7 +504,7 @@ window.moveCategory = function (index, direction) {
 window.editCategory = function (oldCat) {
     var newCat = prompt("Rename category:", oldCat);
     if (newCat && newCat.trim() !== "" && newCat !== oldCat) {
-        if (state.products[newCat]) return alert("Exists.");
+        if (state.products[newCat]) return alert("该分类名称已存在。");
         state.products[newCat] = state.products[oldCat];
         delete state.products[oldCat];
         var ordIdx = state.categoryOrder.indexOf(oldCat);
@@ -527,7 +525,7 @@ window.editCategory = function (oldCat) {
 };
 
 window.removeCategory = function (cat) {
-    if (confirm("Delete category?")) {
+    if (confirm("确定要删除该分类及其下的所有产品和库存吗？此操作不可撤销。")) {
         delete state.products[cat];
         state.categoryOrder = state.categoryOrder.filter(function (c) { return c !== cat; });
         Object.keys(state.inventory).forEach(function (key) {
@@ -547,7 +545,7 @@ if (document.getElementById('add-product-btn')) {
         var name = input.value.trim();
         if (name && state.currentCategory) {
             if (state.products[state.currentCategory].indexOf(name) !== -1) {
-                return alert("Duplicate Product: '" + name + "' already exists in this category.");
+                return alert("产品重复：'" + name + "' 已存在于该分类中。");
             }
             state.products[state.currentCategory].push(name);
             saveToStorage();
@@ -600,7 +598,7 @@ if (document.getElementById('export-pdf-btn')) {
                 pdfContent.appendChild(block);
             }
         });
-        if (!hasData) return alert('No data.');
+        if (!hasData) return alert('没有可导出到 PDF 的数据。');
         pdfArea.classList.remove('hidden');
 
         // 生成带日期的文件名
@@ -629,7 +627,7 @@ const iosHint = document.getElementById('ios-install-hint');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('PWA: beforeinstallprompt event fired');
+    console.log('PWA：捕获到安装引导事件');
     e.preventDefault();
     deferredPrompt = e;
     if (installBtn) installBtn.style.display = 'block';
@@ -655,8 +653,8 @@ if (installBtn) {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('SW Registered', reg))
-            .catch(err => console.error('SW Registration Failed', err));
+            .then(reg => console.log('服务进程注册成功', reg))
+            .catch(err => console.error('服务进程注册失败', err));
     });
 }
 
