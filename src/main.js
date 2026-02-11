@@ -83,8 +83,8 @@ function updateSyncStatus(status, isOnline) {
 
 // Push to Cloud (Promise version for compatibility)
 function pushToCloud() {
-    if (!supabase || !state.syncId) return;
-    supabase
+    if (!supabaseClient || !state.syncId) return;
+    supabaseClient
         .from('app_sync')
         .upsert({
             sync_id: state.syncId,
