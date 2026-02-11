@@ -1,4 +1,4 @@
-const CACHE_NAME = 'inv-aiden-v1.3.3';
+const CACHE_NAME = 'inv-aiden-v1.4.0';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
