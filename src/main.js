@@ -30,7 +30,8 @@ var state = {
     products: safeGetJSON('lubricant_products', INITIAL_PRODUCTS),
     inventory: safeGetJSON('lubricant_inventory', {}),
     categoryOrder: safeGetJSON('lubricant_category_order', Object.keys(INITIAL_PRODUCTS)),
-    syncId: localStorage.getItem('lubricant_sync_id') || ""
+    syncId: localStorage.getItem('lubricant_sync_id') || "",
+    viewMode: 'edit' // 'edit' or 'summary'
 };
 
 // Supabase Configuration
@@ -203,13 +204,35 @@ function renderInventory() {
         return;
     }
 
-    // Sort Bar
-    var sortBar = document.createElement('div');
-    sortBar.style = "display:flex; justify-content:flex-end; padding-bottom:10px;";
-    sortBar.innerHTML = '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.75rem; padding:6px 12px; background:#fff; border:1px solid #ddd; color:#007AFF;">Sort A-Z (Alphabetical)</button>';
-    list.appendChild(sortBar);
+    // View Mode Toggle & Sort
+    var toggleBar = document.createElement('div');
+    toggleBar.className = 'view-toggle-bar';
+    toggleBar.innerHTML =
+        '<div class="segmented-control">' +
+        '<button class="' + (state.viewMode === 'edit' ? 'active' : '') + '" onclick="setViewMode(\'edit\')">Edit</button>' +
+        '<button class="' + (state.viewMode === 'summary' ? 'active' : '') + '" onclick="setViewMode(\'summary\')">Summary</button>' +
+        '</div>' +
+        '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.75rem; padding:6px 12px; background:#fff; border:1px solid #ddd; color:#007AFF;">Sort A-Z</button>';
+    list.appendChild(toggleBar);
 
     var categoryProducts = state.products[state.currentCategory];
+
+    if (state.viewMode === 'summary') {
+        list.classList.add('summary-mode');
+        categoryProducts.forEach(function (name) {
+            var val = state.inventory[state.currentCategory + '-' + name] || '';
+            var total = evaluateExpression(val);
+            var card = document.createElement('div');
+            card.className = 'summary-card';
+            card.innerHTML =
+                '<div class="s-name">' + name + '</div>' +
+                '<div class="s-val">' + total + '</div>';
+            list.appendChild(card);
+        });
+        return;
+    }
+
+    list.classList.remove('summary-mode');
     categoryProducts.forEach(function (name, index) {
         var val = state.inventory[state.currentCategory + '-' + name] || '';
         var total = evaluateExpression(val);
@@ -285,6 +308,11 @@ window.sortProductsAZ = function () {
         saveToStorage();
         renderInventory();
     }
+};
+
+window.setViewMode = function (mode) {
+    state.viewMode = mode;
+    renderInventory();
 };
 
 window.updateValue = function (name, value, index) {
