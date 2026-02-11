@@ -221,6 +221,13 @@ function renderInventory() {
 
     if (state.viewMode === 'summary') {
         list.classList.add('summary-mode');
+
+        // Add Stats Header for Summary
+        var statsHeader = document.createElement('div');
+        statsHeader.style = "grid-column: 1 / -1; padding: 10px 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;";
+        statsHeader.innerHTML = '📊 Total: <span style="color:var(--primary-color);">' + categoryProducts.length + '</span> Products';
+        list.appendChild(statsHeader);
+
         categoryProducts.forEach(function (name) {
             var val = state.inventory[state.currentCategory + '-' + name] || '';
             var total = evaluateExpression(val);
