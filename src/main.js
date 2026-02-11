@@ -197,10 +197,12 @@ function renderInventory() {
     var list = document.getElementById('inventory-list');
     if (!list) return;
     list.innerHTML = '';
+
     if (!state.currentCategory || !state.products[state.currentCategory]) {
         list.innerHTML = '<p style="text-align:center;color:#888;margin-top:20px;">No products found</p>';
         return;
     }
+
     var categoryProducts = state.products[state.currentCategory];
     categoryProducts.forEach(function (name, index) {
         var val = state.inventory[state.currentCategory + '-' + name] || '';
@@ -209,16 +211,57 @@ function renderInventory() {
         card.className = 'item-card';
         card.innerHTML =
             '<div class="item-info">' +
-            '<div class="item-name">' + name + '</div>' +
+            '<div class="item-name" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\', ' + index + ')">' + name + '</div>' +
             '<div class="item-result" id="result-' + index + '">' + (val ? 'Subtotal: ' + total : '') + '</div>' +
             '</div>' +
             '<div class="input-group">' +
             '<input type="text" class="item-input" placeholder="Val" value="' + val + '" ' +
             'oninput="updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
-            '</div>';
+            '</div>' +
+            '<button class="item-delete-btn" onclick="removeProductInline(' + index + ')">&times;</button>';
         list.appendChild(card);
     });
+
+    // Quick Add Button
+    var quickAdd = document.createElement('div');
+    quickAdd.className = 'quick-add-card';
+    quickAdd.innerText = '+ Add Product';
+    quickAdd.onclick = function () {
+        var name = prompt("Enter new product name:");
+        if (name && name.trim() !== '') {
+            state.products[state.currentCategory].push(name.trim());
+            saveToStorage();
+            renderInventory();
+        }
+    };
+    list.appendChild(quickAdd);
 }
+
+window.renameProductInline = function (oldName, index) {
+    var newName = prompt("Rename product:", oldName);
+    if (newName && newName.trim() !== "" && newName !== oldName) {
+        state.products[state.currentCategory][index] = newName.trim();
+        // Migrate inventory data
+        var oldKey = state.currentCategory + '-' + oldName;
+        var newKey = state.currentCategory + '-' + newName.trim();
+        if (state.inventory[oldKey] !== undefined) {
+            state.inventory[newKey] = state.inventory[oldKey];
+            delete state.inventory[oldKey];
+        }
+        saveToStorage();
+        renderInventory();
+    }
+};
+
+window.removeProductInline = function (index) {
+    if (confirm("Delete this product?")) {
+        var name = state.products[state.currentCategory][index];
+        state.products[state.currentCategory].splice(index, 1);
+        delete state.inventory[state.currentCategory + '-' + name];
+        saveToStorage();
+        renderInventory();
+    }
+};
 
 window.updateValue = function (name, value, index) {
     state.inventory[state.currentCategory + '-' + name] = value;

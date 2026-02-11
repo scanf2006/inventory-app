@@ -138,8 +138,29 @@ body {
     color: var(--primary-color);
     font-weight: 600;
     height: 1.2rem;
-    /* 固定高度确保布局稳定 */
     line-height: 1.2rem;
+}
+
+.item-delete-btn {
+    background: none;
+    border: none;
+    color: #FF3B30;
+    font-size: 1.2rem;
+    padding: 10px;
+    margin-right: -10px;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+}
+
+.item-card:hover .item-delete-btn {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .item-delete-btn {
+        opacity: 0.6;
+    }
 }
 
 .input-group {
@@ -163,6 +184,26 @@ body {
 .item-input:focus {
     outline: none;
     border-color: var(--primary-color);
+}
+
+/* Quick Add Area */
+.quick-add-card {
+    background: transparent;
+    border: 2px dashed var(--border-color);
+    padding: 12px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.quick-add-card:active {
+    background: rgba(0, 0, 0, 0.05);
+    transform: scale(0.98);
 }
 
 /* Footer Buttons */
