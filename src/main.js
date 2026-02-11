@@ -1,3 +1,6 @@
+// VERSION 1.0.4 - Lube Inventory Tracker
+console.log("Loading Main.js v1.0.4");
+
 // Initial product configuration
 const INITIAL_PRODUCTS = {
     "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
@@ -6,9 +9,9 @@ const INITIAL_PRODUCTS = {
     "Others": ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
 };
 
-// Global Catch for Mobile Debugging
+// Global Catch for Mobile/PC Debugging
 window.onerror = function (msg, url, line) {
-    alert("System Error: " + msg + "\nAt: " + line);
+    alert("Runtime Error: " + msg + "\nLine: " + line);
     return false;
 };
 
@@ -18,9 +21,7 @@ function safeGetJSON(key, defaultValue) {
         var item = localStorage.getItem(key);
         if (!item || item === "undefined") return defaultValue;
         return JSON.parse(item) || defaultValue;
-    } catch (e) {
-        return defaultValue;
-    }
+    } catch (e) { return defaultValue; }
 }
 
 // Global State
@@ -38,18 +39,22 @@ var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var supabaseClient = null;
 
 function initSupabase() {
-    // Check window.supabasejs first, then window.supabase (library), ensuring it has createClient
+    // Extensive check for various CDN export patterns
     var lib = window.supabasejs || window.supabase;
+
+    // Deep check if 'createClient' is available
     if (lib && typeof lib.createClient === 'function') {
         supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("Supabase Client initialized");
+    } else if (lib && lib.supabase && typeof lib.supabase.createClient === 'function') {
+        supabaseClient = lib.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 }
 initSupabase();
 
-window.onload = function () {
+// Ensure re-init on load
+window.addEventListener('load', function () {
     if (!supabaseClient) initSupabase();
-};
+});
 
 // Category Repair & Initialization
 function initializeCategory() {
@@ -78,9 +83,11 @@ function updateSyncStatus(status, isOnline) {
     }
 }
 
-// Push to Cloud (Promise version for compatibility)
+// Push to Cloud
 function pushToCloud() {
+    if (!supabaseClient) initSupabase();
     if (!supabaseClient || !state.syncId) return;
+
     supabaseClient
         .from('app_sync')
         .upsert({
@@ -102,11 +109,14 @@ function pushToCloud() {
         });
 }
 
-// Pull from Cloud (Promise version for compatibility)
+// Pull from Cloud
 function pullFromCloud() {
     if (!supabaseClient) {
         initSupabase();
-        if (!supabaseClient) return alert("System Error: Cloud library not loaded. Check internet.");
+        if (!supabaseClient) {
+            var keys = Object.keys(window).filter(function (k) { return k.toLowerCase().indexOf('supa') !== -1; });
+            return alert("Sync Error: Library not loaded.\nTry Ctrl+F5 on PC.\nFound: " + keys.join(', '));
+        }
     }
     if (!state.syncId) return alert("Please set a Sync ID in Settings first.");
 
@@ -133,14 +143,13 @@ function pullFromCloud() {
                 updateSyncStatus("Online (Synced)", true);
                 alert("Data synced from cloud!");
             } else {
-                alert("Connected! No cloud data found. Starting a new backup.");
+                alert("Connected! No cloud data found.");
                 pushToCloud();
             }
         })
         .catch(function (e) {
-            console.error("Pull error:", e);
+            alert("Sync Failed: " + (e.message || "Unknown error"));
             updateSyncStatus("Sync Error", false);
-            if (e.message) alert("Sync Failed: " + e.message);
         });
 }
 
