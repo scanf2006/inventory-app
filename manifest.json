@@ -1,0 +1,16 @@
+{
+  "name": "Lube Inventory Tracker",
+  "short_name": "LubeST",
+  "description": "Professional tool for tracking lubricant inventory across devices.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#007AFF",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

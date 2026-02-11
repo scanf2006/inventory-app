@@ -6,6 +6,11 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lube Inventory Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,6 +81,15 @@
 
                     <hr>
                     <section class="management-section">
+                        <h3>App Installation</h3>
+                        <button id="pwa-install-btn" class="primary-btn"
+                            style="width:100%; display:none; margin-bottom:10px; background:#5856D6;">📥 Install App to
+                            Home Screen</button>
+                        <p class="small-hint">Install for offline use and quick access from your home screen.</p>
+                    </section>
+
+                    <hr>
+                    <section class="management-section">
                         <h3>Manage Categories</h3>
                         <div class="add-form">
                             <input type="text" id="new-category-name" placeholder="New category (e.g. Tank)">
@@ -112,7 +126,7 @@
             </div>
         </div>
     </div>
-    <script src="src/main.js?v=1.1.9"></script>
+    <script src="src/main.js?v=1.2.0"></script>
 </body>
 
 </html>
