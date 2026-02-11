@@ -1,4 +1,4 @@
-// VERSION 1.0.4 - Lube Inventory Tracker
+// VERSION 1.2.1 - INV-aiden
 console.log("Loading Main.js v1.0.4");
 
 // Initial product configuration
@@ -546,7 +546,7 @@ if (document.getElementById('export-pdf-btn')) {
         pdfArea.classList.remove('hidden');
         html2pdf().set({
             margin: 10,
-            filename: 'Lube_Report.pdf',
+            filename: 'INV_aiden_Report.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
