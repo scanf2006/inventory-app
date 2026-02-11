@@ -13,6 +13,8 @@
         rel="stylesheet">
     <!-- html2pdf Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="src/style.css">
 </head>
 
@@ -50,6 +52,17 @@
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <section class="management-section sync-config">
+                        <h3>Cloud Sync</h3>
+                        <div class="sync-status" id="sync-status">Status: <span>Offline (Local only)</span></div>
+                        <div class="add-form">
+                            <input type="text" id="sync-id-input" placeholder="Enter your Sync ID (e.g. user_2026)">
+                            <button id="connect-sync-btn">Connect</button>
+                        </div>
+                        <p class="small-hint">Devices with the same ID will sync data automatically.</p>
+                    </section>
+
+                    <hr>
                     <section class="management-section">
                         <h3>Manage Categories</h3>
                         <div class="add-form">

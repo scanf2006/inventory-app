@@ -346,6 +346,39 @@ hr {
     display: none !important;
 }
 
+/* Sync UI Styling */
+.sync-config {
+    background: #fdfdfd;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+}
+
+.sync-status {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.sync-status span {
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #FF9500;
+    /* Orange for local */
+    color: white;
+    font-size: 0.75rem;
+}
+
+.sync-status.online span {
+    background: var(--success-color);
+}
+
+.small-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
 /* Compact PDF Styling */
 .pdf-template {
     padding: 30px;

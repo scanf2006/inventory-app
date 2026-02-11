@@ -8,29 +8,103 @@ const INITIAL_PRODUCTS = {
 
 // Global State
 let state = {
-    currentCategory: "", // Will be set to the first category on init
+    currentCategory: "",
     products: JSON.parse(localStorage.getItem('lubricant_products')) || INITIAL_PRODUCTS,
     inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {},
-    categoryOrder: JSON.parse(localStorage.getItem('lubricant_category_order')) || Object.keys(INITIAL_PRODUCTS)
+    categoryOrder: JSON.parse(localStorage.getItem('lubricant_category_order')) || Object.keys(INITIAL_PRODUCTS),
+    syncId: localStorage.getItem('lubricant_sync_id') || ""
 };
 
-// Sync order if new categories were added in previous versions without order
-const currentCats = Object.keys(state.products);
-state.categoryOrder = state.categoryOrder.filter(c => currentCats.includes(c));
-currentCats.forEach(c => {
-    if (!state.categoryOrder.includes(c)) state.categoryOrder.push(c);
-});
+// Supabase Configuration
+const SUPABASE_URL = "https://kutwhtcvhtbhbhhyqiop.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4";
+let supabase = null;
 
-// Ensure there's a current category
-if (state.categoryOrder.length > 0 && !state.products[state.currentCategory]) {
-    state.currentCategory = state.categoryOrder[0];
+// Handle different CDN export names
+const lib = window.supabase || window.supabasejs;
+if (lib) {
+    supabase = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
-// Save to LocalStorage
-function saveToStorage() {
+// Sync Status Utility
+function updateSyncStatus(status, isOnline = false) {
+    const el = document.getElementById('sync-status');
+    if (el) {
+        const span = el.querySelector('span');
+        if (span) {
+            span.innerText = status;
+            el.classList.toggle('online', isOnline);
+        }
+    }
+}
+
+// Push to Cloud
+async function pushToCloud() {
+    if (!supabase || !state.syncId) return;
+    try {
+        const { error } = await supabase
+            .from('app_sync')
+            .upsert({
+                sync_id: state.syncId,
+                data: {
+                    products: state.products,
+                    inventory: state.inventory,
+                    categoryOrder: state.categoryOrder
+                },
+                updated_at: new Date().toISOString()
+            });
+        if (error) throw error;
+        updateSyncStatus("Online (Synced)", true);
+    } catch (e) {
+        console.error("Push error:", e);
+        updateSyncStatus("Sync Error", false);
+    }
+}
+
+// Pull from Cloud
+async function pullFromCloud() {
+    if (!supabase || !state.syncId) return;
+    try {
+        updateSyncStatus("Pulling...", false);
+        const { data, error } = await supabase
+            .from('app_sync')
+            .select('data')
+            .eq('sync_id', state.syncId)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') { // Not found
+                await pushToCloud(); // Initialize for this ID
+                return;
+            }
+            throw error;
+        }
+
+        if (data && data.data) {
+            const incoming = data.data;
+            state.products = incoming.products || state.products;
+            state.inventory = incoming.inventory || state.inventory;
+            state.categoryOrder = incoming.categoryOrder || state.categoryOrder;
+            saveToStorage(false); // Save locally without triggering a push loop
+            renderTabs();
+            renderInventory();
+            updateSyncStatus("Online (Synced)", true);
+        }
+    } catch (e) {
+        console.error("Pull error:", e);
+        updateSyncStatus("Sync Error", false);
+    }
+}
+
+function saveToStorage(autoPush = true) {
     localStorage.setItem('lubricant_products', JSON.stringify(state.products));
     localStorage.setItem('lubricant_inventory', JSON.stringify(state.inventory));
     localStorage.setItem('lubricant_category_order', JSON.stringify(state.categoryOrder));
+    localStorage.setItem('lubricant_sync_id', state.syncId);
+
+    if (autoPush && state.syncId) {
+        pushToCloud();
+    }
 }
 
 // Safely evaluate mathematical expressions
@@ -104,8 +178,24 @@ window.updateValue = (name, value, index) => {
 const modal = document.getElementById('modal-overlay');
 document.getElementById('manage-btn').addEventListener('click', () => {
     modal.classList.remove('hidden');
+    document.getElementById('sync-id-input').value = state.syncId;
+    if (state.syncId) pullFromCloud();
     renderManageUI();
 });
+
+// Connect Sync Button
+document.getElementById('connect-sync-btn').onclick = () => {
+    const input = document.getElementById('sync-id-input');
+    const id = input.value.trim();
+    if (id) {
+        state.syncId = id;
+        saveToStorage(false);
+        pullFromCloud();
+    } else {
+        alert("Please enter a Sync ID.");
+    }
+};
+
 document.querySelector('.close-modal').addEventListener('click', () => modal.classList.add('hidden'));
 
 function renderManageUI() {
@@ -315,3 +405,4 @@ document.getElementById('current-date').innerText = new Date().toLocaleDateStrin
 // Init Render
 renderTabs();
 renderInventory();
+if (state.syncId) pullFromCloud();
