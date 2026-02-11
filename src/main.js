@@ -112,7 +112,10 @@ function pushToCloud() {
 function pullFromCloud() {
     if (!supabase) {
         initSupabase();
-        if (!supabase) return alert("System Error: Cloud library not loaded. Check internet.");
+        if (!supabase) {
+            var supaKeys = Object.keys(window).filter(function (k) { return k.toLowerCase().indexOf('supa') !== -1; });
+            return alert("System Error: Cloud library not loaded.\nFound keys: " + supaKeys.join(', ') + "\nPlease check if your browser blocks unpkg.com");
+        }
     }
     if (!state.syncId) return alert("Please set a Sync ID in Settings first.");
 
