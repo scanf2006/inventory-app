@@ -1,5 +1,5 @@
-// 版本 1.3.0 - INV-aiden
-console.log("正在加载 INV-aiden 核心逻辑 v1.3.0");
+// 版本 1.3.1 - INV-aiden
+console.log("正在加载 INV-aiden 核心逻辑 v1.3.1");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -168,6 +168,13 @@ function updateProductSuggestions() {
         option.value = p;
         datalist.appendChild(option);
     });
+
+    // 针对移动端的特殊处理：强制重新关联 list 属性以触发浏览器重新扫描
+    document.querySelectorAll('input[list="master-product-list"]').forEach(function (input) {
+        var listId = input.getAttribute('list');
+        input.setAttribute('list', '');
+        setTimeout(function () { input.setAttribute('list', listId); }, 10);
+    });
 }
 
 function saveToStorage(autoPush) {
@@ -290,7 +297,7 @@ function renderInventory() {
     var quickAddForm = document.createElement('div');
     quickAddForm.className = 'quick-add-form hidden';
     quickAddForm.innerHTML =
-        '<input type="text" id="quick-add-input" placeholder="Type or select product..." list="master-product-list">' +
+        '<input type="text" id="quick-add-input" placeholder="Type or select product..." list="master-product-list" autocomplete="off">' +
         '<div class="quick-add-actions">' +
         '<button onclick="submitQuickAdd()">Add</button>' +
         '<button class="cancel" onclick="toggleQuickAdd(false)">Cancel</button>' +
