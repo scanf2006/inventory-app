@@ -10,12 +10,13 @@ const INITIAL_PRODUCTS = {
 let state = {
     currentCategory: 'bulk',
     products: JSON.parse(localStorage.getItem('lubricant_products')) || INITIAL_PRODUCTS,
-    inventory: {} // key: productName, value: expression
+    inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {} // key: productName, value: expression
 };
 
 // Save to LocalStorage
 function saveToStorage() {
     localStorage.setItem('lubricant_products', JSON.stringify(state.products));
+    localStorage.setItem('lubricant_inventory', JSON.stringify(state.inventory));
 }
 
 // Safely evaluate mathematical expressions
@@ -63,6 +64,7 @@ function renderInventory() {
 let calcTimeout;
 window.updateValue = (name, value, index) => {
     state.inventory[name] = value;
+    saveToStorage(); // Auto-save on every change
 
     // Clear previous timeout
     if (calcTimeout) clearTimeout(calcTimeout);
