@@ -98,11 +98,17 @@ body {
 }
 
 /* View Mode Toggles */
+.inventory-controls {
+    flex-shrink: 0;
+    margin-bottom: 20px;
+}
+
 .view-toggle-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    gap: 15px;
+    /* Added gap */
 }
 
 .segmented-control {

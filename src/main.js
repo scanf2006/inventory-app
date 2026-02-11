@@ -196,15 +196,17 @@ function renderTabs() {
 // Render Inventory List
 function renderInventory() {
     var list = document.getElementById('inventory-list');
-    if (!list) return;
+    var controls = document.getElementById('inventory-controls');
+    if (!list || !controls) return;
     list.innerHTML = '';
+    controls.innerHTML = '';
 
     if (!state.currentCategory || !state.products[state.currentCategory]) {
         list.innerHTML = '<p style="text-align:center;color:#888;margin-top:20px;">No products found</p>';
         return;
     }
 
-    // View Mode Toggle & Sort
+    // Render Toggle & Sort into Controls
     var toggleBar = document.createElement('div');
     toggleBar.className = 'view-toggle-bar';
     toggleBar.innerHTML =
@@ -213,7 +215,7 @@ function renderInventory() {
         '<button class="' + (state.viewMode === 'summary' ? 'active' : '') + '" onclick="setViewMode(\'summary\')">Summary</button>' +
         '</div>' +
         '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:#fff; border:1px solid var(--border-color); color:var(--primary-color); border-radius:12px; font-weight:700;">Sort A-Z</button>';
-    list.appendChild(toggleBar);
+    controls.appendChild(toggleBar);
 
     var categoryProducts = state.products[state.currentCategory];
 
