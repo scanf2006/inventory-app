@@ -13,10 +13,15 @@
         rel="stylesheet">
     <!-- html2pdf Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Supabase SDK -->
+    <!-- Supabase SDK (Multi-CDN for stability) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        console.log("Supabase probe:", window.supabase ? "Found" : "Missing");
+        if (!window.supabase) {
+            console.log("Unpkg failed, trying cdnjs...");
+            var s = document.createElement('script');
+            s.src = "https://cdnjs.cloudflare.com/ajax/libs/supabase/2.45.1/supabase.js";
+            document.head.appendChild(s);
+        }
     </script>
     <link rel="stylesheet" href="src/style.css">
 </head>
