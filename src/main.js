@@ -277,18 +277,13 @@ window.removeProductInline = function (index) {
     }
 };
 
-window.moveProductInline = function (index, direction) {
-    var products = state.products[state.currentCategory];
-    var newIdx = index + direction;
-    if (newIdx >= 0 && newIdx < products.length) {
-        var temp = products.splice(index, 1)[0];
-        products.splice(newIdx, 0, temp);
+window.sortProductsAZ = function () {
+    if (state.currentCategory && state.products[state.currentCategory]) {
+        state.products[state.currentCategory].sort(function (a, b) {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        });
         saveToStorage();
         renderInventory();
-    }
-};
-
-renderInventory();
     }
 };
 
