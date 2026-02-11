@@ -109,7 +109,10 @@ function renderManageUI() {
         li.className = 'manage-item';
         li.innerHTML = `
             <span>${cat}</span>
-            <button class="btn-delete" onclick="removeCategory('${cat}')">Delete</button>
+            <div class="item-actions">
+                <button class="btn-edit" onclick="editCategory('${cat}')">Edit</button>
+                <button class="btn-delete" onclick="removeCategory('${cat}')">Delete</button>
+            </div>
         `;
         cList.appendChild(li);
     });
@@ -146,9 +149,47 @@ document.getElementById('add-category-btn').onclick = () => {
     }
 };
 
+window.editCategory = (oldCat) => {
+    const newCat = prompt(`Rename category "${oldCat}" to:`, oldCat);
+    if (newCat && newCat.trim() !== "" && newCat !== oldCat) {
+        if (state.products[newCat]) {
+            alert("A category with this name already exists.");
+            return;
+        }
+
+        // 1. Migrate Products
+        state.products[newCat] = state.products[oldCat];
+        delete state.products[oldCat];
+
+        // 2. Migrate Inventory Data
+        Object.keys(state.inventory).forEach(key => {
+            if (key.startsWith(`${oldCat}-`)) {
+                const productName = key.substring(oldCat.length + 1);
+                state.inventory[`${newCat}-${productName}`] = state.inventory[key];
+                delete state.inventory[key];
+            }
+        });
+
+        // 3. Update Current Category if renamed
+        if (state.currentCategory === oldCat) {
+            state.currentCategory = newCat;
+        }
+
+        saveToStorage();
+        renderTabs();
+        renderInventory();
+        renderManageUI();
+    }
+};
+
 window.removeCategory = (cat) => {
-    if (confirm(`Delete entire category "${cat}"?`)) {
+    if (confirm(`Delete entire category "${cat}" and all its data?`)) {
         delete state.products[cat];
+        // Clean up inventory data for this category
+        Object.keys(state.inventory).forEach(key => {
+            if (key.startsWith(`${cat}-`)) delete state.inventory[key];
+        });
+
         if (state.currentCategory === cat) {
             state.currentCategory = Object.keys(state.products)[0] || "";
         }
