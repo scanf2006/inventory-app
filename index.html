@@ -24,12 +24,9 @@
             <div class="date-display" id="current-date">February 10, 2026</div>
         </header>
 
-        <!-- Category Tabs -->
+        <!-- Category Tabs (Dynamic) -->
         <nav class="category-tabs" id="category-tabs">
-            <button class="tab active" data-id="bulk">Bulk Oil</button>
-            <button class="tab" data-id="case">Case Oil</button>
-            <button class="tab" data-id="coolant">Coolant</button>
-            <button class="tab" data-id="others">Others</button>
+            <!-- Rendered by JS -->
         </nav>
 
         <!-- Main Content -->
@@ -53,11 +50,25 @@
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="add-product-form">
-                        <input type="text" id="new-product-name" placeholder="New product name">
-                        <button id="add-product-btn">Add</button>
-                    </div>
-                    <ul id="product-manage-list"></ul>
+                    <section class="management-section">
+                        <h3>Manage Categories</h3>
+                        <div class="add-form">
+                            <input type="text" id="new-category-name" placeholder="New category (e.g. Tank)">
+                            <button id="add-category-btn">Add</button>
+                        </div>
+                        <ul id="category-manage-list" class="manage-list"></ul>
+                    </section>
+
+                    <hr>
+
+                    <section class="management-section">
+                        <h3>Manage Products in <span id="current-manage-cat-name"></span></h3>
+                        <div class="add-form">
+                            <input type="text" id="new-product-name" placeholder="New product name">
+                            <button id="add-product-btn">Add</button>
+                        </div>
+                        <ul id="product-manage-list" class="manage-list"></ul>
+                    </section>
                 </div>
             </div>
         </div>

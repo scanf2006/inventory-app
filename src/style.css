@@ -221,6 +221,78 @@ body {
     overflow-y: auto;
 }
 
+/* Modal Improvements */
+.management-section {
+    margin-bottom: 24px;
+}
+
+.management-section h3 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.add-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.add-form input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+}
+
+.add-form button {
+    padding: 0 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.manage-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.manage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f8f8;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.manage-item span {
+    font-weight: 500;
+}
+
+.btn-delete {
+    background: #FF3B30;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 24px 0;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;

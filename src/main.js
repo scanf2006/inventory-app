@@ -1,17 +1,23 @@
 // Initial product configuration
 const INITIAL_PRODUCTS = {
-    bulk: ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
-    case: ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
-    coolant: ["RED 50/50", "GREEN 50/50"],
-    others: ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
+    "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
+    "Case Oil": ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
+    "Coolant": ["RED 50/50", "GREEN 50/50"],
+    "Others": ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
 };
 
 // Global State
 let state = {
-    currentCategory: 'bulk',
+    currentCategory: "", // Will be set to the first category on init
     products: JSON.parse(localStorage.getItem('lubricant_products')) || INITIAL_PRODUCTS,
-    inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {} // key: productName, value: expression
+    inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {}
 };
+
+// Ensure there's a current category
+const categories = Object.keys(state.products);
+if (categories.length > 0) {
+    state.currentCategory = categories[0];
+}
 
 // Save to LocalStorage
 function saveToStorage() {
@@ -26,9 +32,25 @@ function evaluateExpression(expr) {
         // Only allow numbers, plus signs, dots, and spaces
         const safeExpr = expr.replace(/[^0-9+\. ]/g, '');
         return Number(eval(safeExpr)) || 0;
-    } catch (e) {
-        return 0;
-    }
+    } catch (e) { return 0; }
+}
+
+// Render dynamic tabs
+function renderTabs() {
+    const tabNav = document.getElementById('category-tabs');
+    tabNav.innerHTML = '';
+
+    Object.keys(state.products).forEach(cat => {
+        const button = document.createElement('button');
+        button.className = `tab ${cat === state.currentCategory ? 'active' : ''}`;
+        button.innerText = cat;
+        button.onclick = () => {
+            state.currentCategory = cat;
+            renderTabs();
+            renderInventory();
+        };
+        tabNav.appendChild(button);
+    });
 }
 
 // Render Inventory List
@@ -36,12 +58,15 @@ function renderInventory() {
     const list = document.getElementById('inventory-list');
     list.innerHTML = '';
 
-    const categoryProducts = state.products[state.currentCategory] || [];
+    if (!state.currentCategory || !state.products[state.currentCategory]) {
+        list.innerHTML = '<p style="text-align:center;color:#888;margin-top:20px;">No category selected</p>';
+        return;
+    }
 
+    const categoryProducts = state.products[state.currentCategory];
     categoryProducts.forEach((name, index) => {
-        const val = state.inventory[name] || '';
+        const val = state.inventory[`${state.currentCategory}-${name}`] || '';
         const total = evaluateExpression(val);
-
         const card = document.createElement('div');
         card.className = 'item-card';
         card.innerHTML = `
@@ -50,9 +75,7 @@ function renderInventory() {
                 <div class="item-result" id="result-${index}">${val ? 'Subtotal: ' + total : ''}</div>
             </div>
             <div class="input-group">
-                <input type="text" class="item-input" 
-                    placeholder="Val" 
-                    value="${val}" 
+                <input type="text" class="item-input" placeholder="Val" value="${val}" 
                     oninput="updateValue('${name}', this.value, ${index})">
             </div>
         `;
@@ -60,130 +83,133 @@ function renderInventory() {
     });
 }
 
-// Update inventory value with debounce for mobile stability
-let calcTimeout;
+// Update inventory value
 window.updateValue = (name, value, index) => {
-    state.inventory[name] = value;
-    saveToStorage(); // Auto-save on every change
-
-    // Clear previous timeout
-    if (calcTimeout) clearTimeout(calcTimeout);
-
-    // Use a small debounce to prevent layout calculation during active typing on mobile
-    calcTimeout = setTimeout(() => {
-        const total = evaluateExpression(value);
-        const resultEl = document.getElementById(`result-${index}`);
-        if (resultEl) {
-            // Update in the next animation frame to be as smooth as possible
-            requestAnimationFrame(() => {
-                resultEl.innerText = value ? 'Subtotal: ' + total : '';
-            });
-        }
-    }, 150); // 150ms is short enough for responsiveness but avoids input lag
+    state.inventory[`${state.currentCategory}-${name}`] = value;
+    saveToStorage();
+    const total = evaluateExpression(value);
+    const resultEl = document.getElementById(`result-${index}`);
+    if (resultEl) resultEl.innerText = value ? 'Subtotal: ' + total : '';
 };
 
-// Toggle Category
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelector('.tab.active').classList.remove('active');
-        tab.classList.add('active');
-        state.currentCategory = tab.dataset.id;
-        renderInventory();
-    });
-});
-
-// Management Modal Logic
+// Modal Logic
 const modal = document.getElementById('modal-overlay');
 document.getElementById('manage-btn').addEventListener('click', () => {
     modal.classList.remove('hidden');
-    renderManageList();
+    renderManageUI();
 });
-
 document.querySelector('.close-modal').addEventListener('click', () => modal.classList.add('hidden'));
 
-function renderManageList() {
+function renderManageUI() {
+    // 1. Manage Categories
+    const cList = document.getElementById('category-manage-list');
+    cList.innerHTML = '';
+    Object.keys(state.products).forEach(cat => {
+        const li = document.createElement('li');
+        li.className = 'manage-item';
+        li.innerHTML = `
+            <span>${cat}</span>
+            <button class="btn-delete" onclick="removeCategory('${cat}')">Delete</button>
+        `;
+        cList.appendChild(li);
+    });
+
+    // 2. Manage Products in current active category
+    document.getElementById('current-manage-cat-name').innerText = state.currentCategory;
     const pList = document.getElementById('product-manage-list');
     pList.innerHTML = '';
-    const categoryProducts = state.products[state.currentCategory];
 
-    categoryProducts.forEach((name, index) => {
-        const li = document.createElement('li');
-        li.style.cssText = 'display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;';
-        li.innerHTML = `
-            <span>${name}</span>
-            <button onclick="removeProduct(${index})" style="background:#ff3b30; color:white; border:none; border-radius:4px; padding:4px 8px;">Delete</button>
-        `;
-        pList.appendChild(li);
-    });
+    if (state.currentCategory) {
+        state.products[state.currentCategory].forEach((name, index) => {
+            const li = document.createElement('li');
+            li.className = 'manage-item';
+            li.innerHTML = `
+                <span>${name}</span>
+                <button class="btn-delete" onclick="removeProduct(${index})">Delete</button>
+            `;
+            pList.appendChild(li);
+        });
+    }
 }
+
+// Category Actions
+document.getElementById('add-category-btn').onclick = () => {
+    const input = document.getElementById('new-category-name');
+    const name = input.value.trim();
+    if (name && !state.products[name]) {
+        state.products[name] = [];
+        if (!state.currentCategory) state.currentCategory = name;
+        saveToStorage();
+        input.value = '';
+        renderTabs();
+        renderManageUI();
+    }
+};
+
+window.removeCategory = (cat) => {
+    if (confirm(`Delete entire category "${cat}"?`)) {
+        delete state.products[cat];
+        if (state.currentCategory === cat) {
+            state.currentCategory = Object.keys(state.products)[0] || "";
+        }
+        saveToStorage();
+        renderTabs();
+        renderInventory();
+        renderManageUI();
+    }
+};
+
+// Product Actions
+document.getElementById('add-product-btn').onclick = () => {
+    const input = document.getElementById('new-product-name');
+    const name = input.value.trim();
+    if (name && state.currentCategory) {
+        state.products[state.currentCategory].push(name);
+        saveToStorage();
+        input.value = '';
+        renderInventory();
+        renderManageUI();
+    }
+};
 
 window.removeProduct = (index) => {
     state.products[state.currentCategory].splice(index, 1);
     saveToStorage();
-    renderManageList();
     renderInventory();
+    renderManageUI();
 };
 
-document.getElementById('add-product-btn').addEventListener('click', () => {
-    const input = document.getElementById('new-product-name');
-    const name = input.value.trim();
-    if (name) {
-        state.products[state.currentCategory].push(name);
-        saveToStorage();
-        renderManageList();
-        renderInventory();
-        input.value = '';
-    }
-});
-
-// PDF Export logic
-document.getElementById('export-pdf-btn').addEventListener('click', () => {
+// PDF Export
+document.getElementById('export-pdf-btn').onclick = () => {
     const pdfArea = document.getElementById('pdf-template');
     const tbody = document.getElementById('pdf-tbody');
-    document.getElementById('pdf-date').innerText = `Report Date: ${new Date().toLocaleDateString('en-US')} ${new Date().toLocaleTimeString('en-US')}`;
-
+    document.getElementById('pdf-date').innerText = `Report Date: ${new Date().toLocaleString('en-US')}`;
     tbody.innerHTML = '';
 
-    ['bulk', 'case', 'coolant', 'others'].forEach(cat => {
-        const products = state.products[cat];
-        products.forEach(name => {
-            const expr = state.inventory[name] || '-';
-            const total = evaluateExpression(expr);
-            if (expr !== '-') {
+    Object.keys(state.products).forEach(cat => {
+        state.products[cat].forEach(name => {
+            const expr = state.inventory[`${cat}-${name}`] || '';
+            if (expr) {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${cat.toUpperCase()}</td>
-                    <td>${name}</td>
-                    <td>${expr}</td>
-                    <td><b>${total}</b></td>
-                `;
+                tr.innerHTML = `<td>${cat}</td><td>${name}</td><td>${expr}</td><td><b>${evaluateExpression(expr)}</b></td>`;
                 tbody.appendChild(tr);
             }
         });
     });
 
-    if (tbody.innerHTML === '') {
-        alert('Please enter some data first!');
-        return;
-    }
+    if (tbody.innerHTML === '') return alert('No data to export!');
 
     pdfArea.classList.remove('hidden');
-
-    const opt = {
+    html2pdf().set({
         margin: 10,
-        filename: `Lube_Inventory_${new Date().toLocaleDateString()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        filename: `Lube_Report_${new Date().toISOString().split('T')[0]}.pdf`,
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(pdfArea).save().then(() => {
-        pdfArea.classList.add('hidden');
-    });
-});
+    }).from(pdfArea).save().then(() => pdfArea.classList.add('hidden'));
+};
 
 // Initialize Date
 document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 // Init Render
+renderTabs();
 renderInventory();
