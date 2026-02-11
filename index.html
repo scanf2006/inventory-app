@@ -49,8 +49,6 @@
         <!-- Footer -->
         <footer class="app-footer">
             <button id="manage-btn" class="secondary-btn">Settings</button>
-            <button onclick="pullFromCloud()" class="secondary-btn" style="background:#34C759; color:white;">Sync
-                Now</button>
             <button id="export-pdf-btn" class="primary-btn">Generate PDF</button>
         </footer>
 
@@ -69,6 +67,9 @@
                             <input type="text" id="sync-id-input" placeholder="Enter your Sync ID (e.g. user_2026)">
                             <button id="connect-sync-btn">Connect</button>
                         </div>
+                        <button onclick="pullFromCloud()" class="secondary-btn"
+                            style="width:100%; margin-top:10px; background:#34C759; color:white;">Sync Now (Refresh
+                            Cloud Data)</button>
                         <p class="small-hint">Devices with the same ID will sync data automatically.</p>
                     </section>
 
