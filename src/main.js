@@ -85,10 +85,13 @@ function pushToCloud() {
         .then(function (res) {
             if (res.error) throw res.error;
             updateSyncStatus("Online (Synced)", true);
+            console.log("Successfully pushed to cloud");
         })
         .catch(function (e) {
             console.error("Push error:", e);
             updateSyncStatus("Sync Error", false);
+            // Alert on specific errors to help user (e.g. Table not found)
+            if (e.message) alert("Push Failed: " + e.message + "\nDid you run the SQL script in Supabase?");
         });
 }
 
@@ -116,11 +119,16 @@ function pullFromCloud() {
                 renderTabs();
                 renderInventory();
                 updateSyncStatus("Online (Synced)", true);
+                alert("Data synced from cloud!");
+            } else {
+                alert("Connected! No cloud data found. Starting a new backup.");
+                pushToCloud();
             }
         })
         .catch(function (e) {
             console.error("Pull error:", e);
             updateSyncStatus("Sync Error", false);
+            if (e.message) alert("Sync Failed: " + e.message);
         });
 }
 
