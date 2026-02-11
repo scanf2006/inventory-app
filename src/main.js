@@ -221,10 +221,6 @@ function renderInventory() {
             '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
-            '<div class="item-sort-btns">' +
-            '<button class="item-sort-btn" onclick="moveProductInline(' + index + ', -1)" ' + (index === 0 ? 'disabled' : '') + '>↑</button>' +
-            '<button class="item-sort-btn" onclick="moveProductInline(' + index + ', 1)" ' + (index === categoryProducts.length - 1 ? 'disabled' : '') + '>↓</button>' +
-            '</div>' +
             '<input type="text" class="item-input" placeholder="0" value="' + val + '" ' +
             'oninput="updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
             '</div>' +
@@ -292,13 +288,7 @@ window.moveProductInline = function (index, direction) {
     }
 };
 
-window.sortProductsAZ = function () {
-    if (state.currentCategory && state.products[state.currentCategory]) {
-        state.products[state.currentCategory].sort(function (a, b) {
-            return a.toLowerCase().localeCompare(b.toLowerCase());
-        });
-        saveToStorage();
-        renderInventory();
+renderInventory();
     }
 };
 
