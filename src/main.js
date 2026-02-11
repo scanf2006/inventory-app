@@ -260,6 +260,15 @@ if (document.getElementById('connect-sync-btn')) {
     };
 }
 
+window.resetInventory = function () {
+    if (confirm("Reset ALL inventory values to zero? This will not delete products or categories.")) {
+        state.inventory = {};
+        saveToStorage();
+        renderInventory();
+        alert("All inventory values have been reset.");
+    }
+};
+
 window.resetLocalData = function () {
     if (confirm("DANGER: Clear all local data?")) {
         localStorage.clear();
