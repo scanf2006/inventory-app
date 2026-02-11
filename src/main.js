@@ -248,27 +248,63 @@ window.removeProduct = (index) => {
 // PDF Export
 document.getElementById('export-pdf-btn').onclick = () => {
     const pdfArea = document.getElementById('pdf-template');
-    const tbody = document.getElementById('pdf-tbody');
+    const pdfContent = document.getElementById('pdf-content');
     document.getElementById('pdf-date').innerText = `Report Date: ${new Date().toLocaleString('en-US')}`;
-    tbody.innerHTML = '';
+    pdfContent.innerHTML = '';
+
+    let hasData = false;
 
     state.categoryOrder.forEach(cat => {
-        state.products[cat].forEach(name => {
-            const expr = state.inventory[`${cat}-${name}`] || '';
-            if (expr) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${cat}</td><td>${name}</td><td>${expr}</td><td><b>${evaluateExpression(expr)}</b></td>`;
-                tbody.appendChild(tr);
-            }
+        // Filter products with data in this category
+        const activeProducts = state.products[cat].filter(name => {
+            return (state.inventory[`${cat}-${name}`] || '').trim() !== '';
         });
+
+        if (activeProducts.length > 0) {
+            hasData = true;
+
+            // Create Category Block
+            const block = document.createElement('div');
+            block.className = 'pdf-category-block';
+            block.innerHTML = `<div class="pdf-category-title">${cat}</div>`;
+
+            const grid = document.createElement('div');
+            grid.className = 'pdf-grid';
+
+            activeProducts.forEach(name => {
+                const expr = state.inventory[`${cat}-${name}`];
+                const total = evaluateExpression(expr);
+
+                const item = document.createElement('div');
+                item.className = 'pdf-grid-item';
+                item.innerHTML = `
+                    <span class="p-name">${name}</span>
+                    <span class="p-val">${total}</span>
+                `;
+                grid.appendChild(item);
+            });
+
+            // If odd number of items, add a spacer to keep borders consistent
+            if (activeProducts.length % 2 !== 0) {
+                const spacer = document.createElement('div');
+                spacer.className = 'pdf-grid-item';
+                spacer.innerHTML = '<span></span><span></span>';
+                grid.appendChild(spacer);
+            }
+
+            block.appendChild(grid);
+            pdfContent.appendChild(block);
+        }
     });
 
-    if (tbody.innerHTML === '') return alert('No data to export!');
+    if (!hasData) return alert('No data to export!');
 
     pdfArea.classList.remove('hidden');
     html2pdf().set({
         margin: 10,
         filename: `Lube_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     }).from(pdfArea).save().then(() => pdfArea.classList.add('hidden'));
 };
