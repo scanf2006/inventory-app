@@ -1,4 +1,4 @@
-// VERSION 1.2.1 - INV-aiden
+// VERSION 1.2.2 - INV-aiden
 console.log("Loading Main.js v1.0.4");
 
 // Initial product configuration
@@ -557,12 +557,21 @@ if (document.getElementById('export-pdf-btn')) {
 // PWA Installation & Service Worker
 let deferredPrompt;
 const installBtn = document.getElementById('pwa-install-btn');
+const iosHint = document.getElementById('ios-install-hint');
+
+// iOS Detection
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     if (installBtn) installBtn.style.display = 'block';
 });
+
+// Explicitly show hint for iOS in Settings
+if (isIOS && iosHint) {
+    iosHint.style.display = 'block';
+}
 
 if (installBtn) {
     installBtn.addEventListener('click', async () => {
