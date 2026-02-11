@@ -6,12 +6,24 @@ const INITIAL_PRODUCTS = {
     "Others": ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
 };
 
+// Helper to safely parse JSON from LocalStorage
+function safeGetJSON(key, defaultValue) {
+    try {
+        const item = localStorage.getItem(key);
+        if (!item || item === "undefined") return defaultValue;
+        return JSON.parse(item) || defaultValue;
+    } catch (e) {
+        console.error(`Error parsing ${key}:`, e);
+        return defaultValue;
+    }
+}
+
 // Global State
 let state = {
     currentCategory: "",
-    products: JSON.parse(localStorage.getItem('lubricant_products')) || INITIAL_PRODUCTS,
-    inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {},
-    categoryOrder: JSON.parse(localStorage.getItem('lubricant_category_order')) || Object.keys(INITIAL_PRODUCTS),
+    products: safeGetJSON('lubricant_products', INITIAL_PRODUCTS),
+    inventory: safeGetJSON('lubricant_inventory', {}),
+    categoryOrder: safeGetJSON('lubricant_category_order', Object.keys(INITIAL_PRODUCTS)),
     syncId: localStorage.getItem('lubricant_sync_id') || ""
 };
 
@@ -44,7 +56,8 @@ function updateSyncStatus(status, isOnline = false) {
         const span = el.querySelector('span');
         if (span) {
             span.innerText = status;
-            el.parentElement.classList.toggle('online', isOnline); // Fixed selector to .sync-status
+            // Target the wrapper div .sync-status itself for color toggling
+            el.classList.toggle('online', isOnline);
         }
     }
 }
@@ -122,13 +135,21 @@ function saveToStorage(autoPush = true) {
     }
 }
 
-// Safely evaluate mathematical expressions
+// Safely evaluate simple mathematical expressions without eval()
 function evaluateExpression(expr) {
-    if (!expr || expr.trim() === '') return 0;
+    if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
     try {
-        const safeExpr = expr.replace(/[^0-9+\. ]/g, '');
-        return Number(eval(safeExpr)) || 0;
-    } catch (e) { return 0; }
+        // Only allow numbers, plus signs, and dots
+        const cleanExpr = expr.replace(/[^0-9+\. ]/g, '');
+        // Split by '+' and sum the parts
+        return cleanExpr.split('+')
+            .map(part => parseFloat(part.trim()))
+            .filter(val => !isNaN(val))
+            .reduce((sum, val) => sum + val, 0);
+    } catch (e) {
+        console.error("Eval error:", e);
+        return 0;
+    }
 }
 
 // Render dynamic tabs
@@ -211,6 +232,14 @@ document.getElementById('connect-sync-btn').onclick = () => {
 };
 
 document.querySelector('.close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+
+// Management UI Actions
+window.resetLocalData = () => {
+    if (confirm("DANGER: Clear all local data and reload from defaults? (This will NOT affect cloud data unless you sync)")) {
+        localStorage.clear();
+        location.reload();
+    }
+};
 
 function renderManageUI() {
     const cList = document.getElementById('category-manage-list');
