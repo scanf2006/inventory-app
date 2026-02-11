@@ -554,6 +554,12 @@ hr {
     font-size: 0.85rem;
 }
 
+/* Enhanced separator for 2-column layout */
+.pdf-grid-item:nth-child(odd) {
+    border-right: 3px double #888;
+    /* Doubled and slightly darker divider */
+}
+
 .pdf-grid-item .p-name {
     font-weight: 500;
 }
