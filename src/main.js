@@ -36,10 +36,23 @@ var state = {
 var SUPABASE_URL = "https://kutwhtcvhtbhbhhyqiop.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4";
 var supabase = null;
-var lib = window.supabase || window.supabasejs;
-if (lib) {
-    supabase = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function initSupabase() {
+    var lib = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
+    if (lib && lib.createClient) {
+        supabase = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("Supabase initialized successfully");
+    } else {
+        console.error("Supabase library not found on window");
+        // Don't alert here yet, maybe CDN is slow
+    }
 }
+initSupabase();
+
+// Fallback for slow CDN
+window.onload = function () {
+    if (!supabase) initSupabase();
+};
 
 // Category Repair & Initialization
 function initializeCategory() {
@@ -97,7 +110,12 @@ function pushToCloud() {
 
 // Pull from Cloud (Promise version for compatibility)
 function pullFromCloud() {
-    if (!supabase || !state.syncId) return;
+    if (!supabase) {
+        initSupabase();
+        if (!supabase) return alert("System Error: Cloud library not loaded. Check internet.");
+    }
+    if (!state.syncId) return alert("Please set a Sync ID in Settings first.");
+
     updateSyncStatus("Pulling...", false);
     supabase
         .from('app_sync')
