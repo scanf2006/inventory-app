@@ -93,6 +93,12 @@ body {
 
 /* Content Area */
 .content-area {
+    flex: 1;
+    /* Take remaining space */
+    overflow-y: auto;
+    /* Allow scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling for iOS */
     padding: 20px;
     padding-bottom: 40px;
 }
