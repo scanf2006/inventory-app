@@ -212,10 +212,10 @@ function renderInventory() {
         card.innerHTML =
             '<div class="item-info">' +
             '<div class="item-name" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\', ' + index + ')">' + name + '</div>' +
-            '<div class="item-result" id="result-' + index + '">' + (val ? 'Subtotal: ' + total : '') + '</div>' +
+            '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
-            '<input type="text" class="item-input" placeholder="Val" value="' + val + '" ' +
+            '<input type="text" class="item-input" placeholder="0" value="' + val + '" ' +
             'oninput="updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
             '</div>' +
             '<button class="item-delete-btn" onclick="removeProductInline(' + index + ')">&times;</button>';
@@ -268,7 +268,7 @@ window.updateValue = function (name, value, index) {
     saveToStorage();
     var total = evaluateExpression(value);
     var resultEl = document.getElementById('result-' + index);
-    if (resultEl) resultEl.innerText = value ? 'Subtotal: ' + total : '';
+    if (resultEl) resultEl.innerText = 'Subtotal: ' + total;
 };
 
 // Modal Logic
@@ -452,17 +452,15 @@ if (document.getElementById('export-pdf-btn')) {
         pdfContent.innerHTML = '';
         var hasData = false;
         state.categoryOrder.forEach(function (cat) {
-            var activeProducts = (state.products[cat] || []).filter(function (name) {
-                return (state.inventory[cat + '-' + name] || '').trim() !== '';
-            });
-            if (activeProducts.length > 0) {
+            var allProducts = state.products[cat] || [];
+            if (allProducts.length > 0) {
                 hasData = true;
                 var block = document.createElement('div');
                 block.className = 'pdf-category-block';
                 block.innerHTML = '<div class="pdf-category-title">' + cat + '</div>';
                 var grid = document.createElement('div');
                 grid.className = 'pdf-grid';
-                activeProducts.forEach(function (name) {
+                allProducts.forEach(function (name) {
                     var expr = state.inventory[cat + '-' + name];
                     var total = evaluateExpression(expr);
                     var item = document.createElement('div');
@@ -470,7 +468,7 @@ if (document.getElementById('export-pdf-btn')) {
                     item.innerHTML = '<span class="p-name">' + name + '</span><span class="p-val">' + total + '</span>';
                     grid.appendChild(item);
                 });
-                if (activeProducts.length % 2 !== 0) {
+                if (allProducts.length % 2 !== 0) {
                     var spacer = document.createElement('div');
                     spacer.className = 'pdf-grid-item';
                     spacer.innerHTML = '<span></span><span></span>';
