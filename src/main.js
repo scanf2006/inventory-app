@@ -10,19 +10,27 @@ const INITIAL_PRODUCTS = {
 let state = {
     currentCategory: "", // Will be set to the first category on init
     products: JSON.parse(localStorage.getItem('lubricant_products')) || INITIAL_PRODUCTS,
-    inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {}
+    inventory: JSON.parse(localStorage.getItem('lubricant_inventory')) || {},
+    categoryOrder: JSON.parse(localStorage.getItem('lubricant_category_order')) || Object.keys(INITIAL_PRODUCTS)
 };
 
+// Sync order if new categories were added in previous versions without order
+const currentCats = Object.keys(state.products);
+state.categoryOrder = state.categoryOrder.filter(c => currentCats.includes(c));
+currentCats.forEach(c => {
+    if (!state.categoryOrder.includes(c)) state.categoryOrder.push(c);
+});
+
 // Ensure there's a current category
-const categories = Object.keys(state.products);
-if (categories.length > 0) {
-    state.currentCategory = categories[0];
+if (state.categoryOrder.length > 0 && !state.products[state.currentCategory]) {
+    state.currentCategory = state.categoryOrder[0];
 }
 
 // Save to LocalStorage
 function saveToStorage() {
     localStorage.setItem('lubricant_products', JSON.stringify(state.products));
     localStorage.setItem('lubricant_inventory', JSON.stringify(state.inventory));
+    localStorage.setItem('lubricant_category_order', JSON.stringify(state.categoryOrder));
 }
 
 // Safely evaluate mathematical expressions
@@ -40,7 +48,7 @@ function renderTabs() {
     const tabNav = document.getElementById('category-tabs');
     tabNav.innerHTML = '';
 
-    Object.keys(state.products).forEach(cat => {
+    state.categoryOrder.forEach(cat => {
         const button = document.createElement('button');
         button.className = `tab ${cat === state.currentCategory ? 'active' : ''}`;
         button.innerText = cat;
@@ -104,12 +112,14 @@ function renderManageUI() {
     // 1. Manage Categories
     const cList = document.getElementById('category-manage-list');
     cList.innerHTML = '';
-    Object.keys(state.products).forEach(cat => {
+    state.categoryOrder.forEach((cat, idx) => {
         const li = document.createElement('li');
         li.className = 'manage-item';
         li.innerHTML = `
             <span>${cat}</span>
             <div class="item-actions">
+                <button class="btn-sort" onclick="moveCategory(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}>↑</button>
+                <button class="btn-sort" onclick="moveCategory(${idx}, 1)" ${idx === state.categoryOrder.length - 1 ? 'disabled' : ''}>↓</button>
                 <button class="btn-edit" onclick="editCategory('${cat}')">Edit</button>
                 <button class="btn-delete" onclick="removeCategory('${cat}')">Delete</button>
             </div>
@@ -141,9 +151,21 @@ document.getElementById('add-category-btn').onclick = () => {
     const name = input.value.trim();
     if (name && !state.products[name]) {
         state.products[name] = [];
+        state.categoryOrder.push(name);
         if (!state.currentCategory) state.currentCategory = name;
         saveToStorage();
         input.value = '';
+        renderTabs();
+        renderManageUI();
+    }
+};
+
+window.moveCategory = (index, direction) => {
+    const newIdx = index + direction;
+    if (newIdx >= 0 && newIdx < state.categoryOrder.length) {
+        const [temp] = state.categoryOrder.splice(index, 1);
+        state.categoryOrder.splice(newIdx, 0, temp);
+        saveToStorage();
         renderTabs();
         renderManageUI();
     }
@@ -157,9 +179,11 @@ window.editCategory = (oldCat) => {
             return;
         }
 
-        // 1. Migrate Products
+        // 1. Migrate Products & Order
         state.products[newCat] = state.products[oldCat];
         delete state.products[oldCat];
+        const ordIdx = state.categoryOrder.indexOf(oldCat);
+        if (ordIdx > -1) state.categoryOrder[ordIdx] = newCat;
 
         // 2. Migrate Inventory Data
         Object.keys(state.inventory).forEach(key => {
@@ -185,13 +209,14 @@ window.editCategory = (oldCat) => {
 window.removeCategory = (cat) => {
     if (confirm(`Delete entire category "${cat}" and all its data?`)) {
         delete state.products[cat];
+        state.categoryOrder = state.categoryOrder.filter(c => c !== cat);
         // Clean up inventory data for this category
         Object.keys(state.inventory).forEach(key => {
             if (key.startsWith(`${cat}-`)) delete state.inventory[key];
         });
 
         if (state.currentCategory === cat) {
-            state.currentCategory = Object.keys(state.products)[0] || "";
+            state.currentCategory = state.categoryOrder[0] || "";
         }
         saveToStorage();
         renderTabs();
@@ -227,7 +252,7 @@ document.getElementById('export-pdf-btn').onclick = () => {
     document.getElementById('pdf-date').innerText = `Report Date: ${new Date().toLocaleString('en-US')}`;
     tbody.innerHTML = '';
 
-    Object.keys(state.products).forEach(cat => {
+    state.categoryOrder.forEach(cat => {
         state.products[cat].forEach(name => {
             const expr = state.inventory[`${cat}-${name}`] || '';
             if (expr) {

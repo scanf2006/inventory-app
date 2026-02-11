@@ -282,6 +282,21 @@ body {
     gap: 8px;
 }
 
+.btn-sort {
+    background: #E5E5EA;
+    color: var(--text-main);
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.btn-sort:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
 .btn-edit {
     background: #E5E5EA;
     color: var(--text-main);
