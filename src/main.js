@@ -19,12 +19,23 @@ let state = {
 const SUPABASE_URL = "https://kutwhtcvhtbhbhhyqiop.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4";
 let supabase = null;
-
-// Handle different CDN export names
 const lib = window.supabase || window.supabasejs;
 if (lib) {
     supabase = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
+
+// Category Repair & Initialization
+function initializeCategory() {
+    const currentCats = Object.keys(state.products);
+    state.categoryOrder = (state.categoryOrder || []).filter(c => currentCats.includes(c));
+    currentCats.forEach(c => {
+        if (!state.categoryOrder.includes(c)) state.categoryOrder.push(c);
+    });
+    if (state.categoryOrder.length > 0 && (!state.currentCategory || !state.products[state.currentCategory])) {
+        state.currentCategory = state.categoryOrder[0];
+    }
+}
+initializeCategory();
 
 // Sync Status Utility
 function updateSyncStatus(status, isOnline = false) {
@@ -33,7 +44,7 @@ function updateSyncStatus(status, isOnline = false) {
         const span = el.querySelector('span');
         if (span) {
             span.innerText = status;
-            el.classList.toggle('online', isOnline);
+            el.parentElement.classList.toggle('online', isOnline); // Fixed selector to .sync-status
         }
     }
 }
@@ -73,8 +84,8 @@ async function pullFromCloud() {
             .single();
 
         if (error) {
-            if (error.code === 'PGRST116') { // Not found
-                await pushToCloud(); // Initialize for this ID
+            if (error.code === 'PGRST116') {
+                await pushToCloud();
                 return;
             }
             throw error;
@@ -85,7 +96,11 @@ async function pullFromCloud() {
             state.products = incoming.products || state.products;
             state.inventory = incoming.inventory || state.inventory;
             state.categoryOrder = incoming.categoryOrder || state.categoryOrder;
-            saveToStorage(false); // Save locally without triggering a push loop
+
+            // Re-initialize category state from downloaded data
+            initializeCategory();
+
+            saveToStorage(false);
             renderTabs();
             renderInventory();
             updateSyncStatus("Online (Synced)", true);
@@ -111,7 +126,6 @@ function saveToStorage(autoPush = true) {
 function evaluateExpression(expr) {
     if (!expr || expr.trim() === '') return 0;
     try {
-        // Only allow numbers, plus signs, dots, and spaces
         const safeExpr = expr.replace(/[^0-9+\. ]/g, '');
         return Number(eval(safeExpr)) || 0;
     } catch (e) { return 0; }
@@ -179,7 +193,7 @@ const modal = document.getElementById('modal-overlay');
 document.getElementById('manage-btn').addEventListener('click', () => {
     modal.classList.remove('hidden');
     document.getElementById('sync-id-input').value = state.syncId;
-    if (state.syncId) pullFromCloud();
+    if (supabase && state.syncId) pullFromCloud();
     renderManageUI();
 });
 
@@ -199,7 +213,6 @@ document.getElementById('connect-sync-btn').onclick = () => {
 document.querySelector('.close-modal').addEventListener('click', () => modal.classList.add('hidden'));
 
 function renderManageUI() {
-    // 1. Manage Categories
     const cList = document.getElementById('category-manage-list');
     cList.innerHTML = '';
     state.categoryOrder.forEach((cat, idx) => {
@@ -217,12 +230,11 @@ function renderManageUI() {
         cList.appendChild(li);
     });
 
-    // 2. Manage Products in current active category
-    document.getElementById('current-manage-cat-name').innerText = state.currentCategory;
+    document.getElementById('current-manage-cat-name').innerText = state.currentCategory || "None";
     const pList = document.getElementById('product-manage-list');
     pList.innerHTML = '';
 
-    if (state.currentCategory) {
+    if (state.currentCategory && state.products[state.currentCategory]) {
         state.products[state.currentCategory].forEach((name, index) => {
             const li = document.createElement('li');
             li.className = 'manage-item';
@@ -268,14 +280,10 @@ window.editCategory = (oldCat) => {
             alert("A category with this name already exists.");
             return;
         }
-
-        // 1. Migrate Products & Order
         state.products[newCat] = state.products[oldCat];
         delete state.products[oldCat];
         const ordIdx = state.categoryOrder.indexOf(oldCat);
         if (ordIdx > -1) state.categoryOrder[ordIdx] = newCat;
-
-        // 2. Migrate Inventory Data
         Object.keys(state.inventory).forEach(key => {
             if (key.startsWith(`${oldCat}-`)) {
                 const productName = key.substring(oldCat.length + 1);
@@ -283,12 +291,7 @@ window.editCategory = (oldCat) => {
                 delete state.inventory[key];
             }
         });
-
-        // 3. Update Current Category if renamed
-        if (state.currentCategory === oldCat) {
-            state.currentCategory = newCat;
-        }
-
+        if (state.currentCategory === oldCat) state.currentCategory = newCat;
         saveToStorage();
         renderTabs();
         renderInventory();
@@ -300,14 +303,10 @@ window.removeCategory = (cat) => {
     if (confirm(`Delete entire category "${cat}" and all its data?`)) {
         delete state.products[cat];
         state.categoryOrder = state.categoryOrder.filter(c => c !== cat);
-        // Clean up inventory data for this category
         Object.keys(state.inventory).forEach(key => {
             if (key.startsWith(`${cat}-`)) delete state.inventory[key];
         });
-
-        if (state.currentCategory === cat) {
-            state.currentCategory = state.categoryOrder[0] || "";
-        }
+        if (state.currentCategory === cat) state.currentCategory = state.categoryOrder[0] || "";
         saveToStorage();
         renderTabs();
         renderInventory();
@@ -341,54 +340,35 @@ document.getElementById('export-pdf-btn').onclick = () => {
     const pdfContent = document.getElementById('pdf-content');
     document.getElementById('pdf-date').innerText = `Report Date: ${new Date().toLocaleString('en-US')}`;
     pdfContent.innerHTML = '';
-
     let hasData = false;
-
     state.categoryOrder.forEach(cat => {
-        // Filter products with data in this category
-        const activeProducts = state.products[cat].filter(name => {
-            return (state.inventory[`${cat}-${name}`] || '').trim() !== '';
-        });
-
+        const activeProducts = state.products[cat].filter(name => (state.inventory[`${cat}-${name}`] || '').trim() !== '');
         if (activeProducts.length > 0) {
             hasData = true;
-
-            // Create Category Block
             const block = document.createElement('div');
             block.className = 'pdf-category-block';
             block.innerHTML = `<div class="pdf-category-title">${cat}</div>`;
-
             const grid = document.createElement('div');
             grid.className = 'pdf-grid';
-
             activeProducts.forEach(name => {
                 const expr = state.inventory[`${cat}-${name}`];
                 const total = evaluateExpression(expr);
-
                 const item = document.createElement('div');
                 item.className = 'pdf-grid-item';
-                item.innerHTML = `
-                    <span class="p-name">${name}</span>
-                    <span class="p-val">${total}</span>
-                `;
+                item.innerHTML = `<span class="p-name">${name}</span><span class="p-val">${total}</span>`;
                 grid.appendChild(item);
             });
-
-            // If odd number of items, add a spacer to keep borders consistent
             if (activeProducts.length % 2 !== 0) {
                 const spacer = document.createElement('div');
                 spacer.className = 'pdf-grid-item';
                 spacer.innerHTML = '<span></span><span></span>';
                 grid.appendChild(spacer);
             }
-
             block.appendChild(grid);
             pdfContent.appendChild(block);
         }
     });
-
     if (!hasData) return alert('No data to export!');
-
     pdfArea.classList.remove('hidden');
     html2pdf().set({
         margin: 10,
@@ -405,4 +385,4 @@ document.getElementById('current-date').innerText = new Date().toLocaleDateStrin
 // Init Render
 renderTabs();
 renderInventory();
-if (state.syncId) pullFromCloud();
+if (supabase && state.syncId) pullFromCloud();
