@@ -203,6 +203,12 @@ function renderInventory() {
         return;
     }
 
+    // Sort Bar
+    var sortBar = document.createElement('div');
+    sortBar.style = "display:flex; justify-content:flex-end; padding-bottom:10px;";
+    sortBar.innerHTML = '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.75rem; padding:6px 12px; background:#fff; border:1px solid #ddd; color:#007AFF;">Sort A-Z (Alphabetical)</button>';
+    list.appendChild(sortBar);
+
     var categoryProducts = state.products[state.currentCategory];
     categoryProducts.forEach(function (name, index) {
         var val = state.inventory[state.currentCategory + '-' + name] || '';
@@ -281,6 +287,16 @@ window.moveProductInline = function (index, direction) {
     if (newIdx >= 0 && newIdx < products.length) {
         var temp = products.splice(index, 1)[0];
         products.splice(newIdx, 0, temp);
+        saveToStorage();
+        renderInventory();
+    }
+};
+
+window.sortProductsAZ = function () {
+    if (state.currentCategory && state.products[state.currentCategory]) {
+        state.products[state.currentCategory].sort(function (a, b) {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        });
         saveToStorage();
         renderInventory();
     }
