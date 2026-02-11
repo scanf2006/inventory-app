@@ -24,7 +24,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     overflow: hidden;
-    /* 防止整个页面滚动，由 main 负责 */
+    /* 防止整个页面滚动，由 .content-area 负责 */
 }
 
 #app {
@@ -34,7 +34,7 @@ body {
     height: 100dvh;
 }
 
-/* Header */
+/* 页眉 */
 .app-header {
     background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
     color: white;
@@ -56,7 +56,7 @@ body {
     margin-top: 4px;
 }
 
-/* Tabs */
+/* 标签页 */
 .category-tabs {
     display: flex;
     background: white;
@@ -91,19 +91,19 @@ body {
     box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3);
 }
 
-/* Content Area */
+/* 内容区域 */
 .content-area {
     flex: 1;
-    /* Take remaining space */
+    /* 占据剩余空间 */
     overflow-y: auto;
-    /* Allow scrolling */
+    /* 允许滚动 */
     -webkit-overflow-scrolling: touch;
-    /* Smooth scrolling for iOS */
+    /* iOS 平滑滚动 */
     padding: 20px;
     padding-bottom: 40px;
 }
 
-/* View Mode Toggles */
+/* 视图模式切换栏 */
 .inventory-controls {
     flex-shrink: 0;
     margin-bottom: 20px;
@@ -114,16 +114,16 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 15px;
-    /* Added gap */
+    /* 增加间距 */
 }
 
 .segmented-control {
     display: flex;
     background: #E5E5EA;
     padding: 4px;
-    /* Slightly more padding */
+    /* 稍微增加内边距 */
     border-radius: 12px;
-    /* Smoother corner */
+    /* 更圆滑的边角 */
     gap: 0;
 }
 
@@ -131,10 +131,10 @@ body {
     border: none;
     background: transparent;
     padding: 12px 24px;
-    /* Significantly enlarged */
+    /* 显著增大点击区域 */
     border-radius: 9px;
     font-size: 1.1rem;
-    /* Much larger font */
+    /* 更大的字体 */
     font-weight: 700;
     color: var(--text-muted);
     cursor: pointer;
@@ -144,12 +144,12 @@ body {
 .segmented-control button.active {
     background: white;
     color: var(--primary-color);
-    /* Theme color for active text */
+    /* 激活状态使用主题色 */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-    /* More premium shadow */
+    /* 更高级的阴影 */
 }
 
-/* Summary Grid Mode */
+/* 摘要网格模式 */
 .inventory-list.summary-mode {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -159,9 +159,9 @@ body {
 .summary-card {
     background: white;
     padding: 16px;
-    /* Added more space */
+    /* 增加空间 */
     border-radius: 16px;
-    /* Match main items */
+    /* 匹配主项目圆角 */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -171,7 +171,7 @@ body {
 
 .summary-card .s-name {
     font-size: 1rem;
-    /* Enlarged */
+    /* 增大 */
     font-weight: 700;
     color: var(--text-muted);
     margin-bottom: 6px;
@@ -181,7 +181,7 @@ body {
 
 .summary-card .s-val {
     font-size: 1.4rem;
-    /* Enlarged */
+    /* 增大 */
     font-weight: 900;
     color: var(--primary-color);
 }
@@ -214,7 +214,7 @@ body {
 .item-info .item-name {
     font-weight: 700;
     font-size: 1.3rem;
-    /* Enlarged */
+    /* 增大 */
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -223,7 +223,7 @@ body {
 
 .item-info .item-result {
     font-size: 1rem;
-    /* Enlarged */
+    /* 增大 */
     color: var(--primary-color);
     font-weight: 600;
     height: 1.4rem;
@@ -259,17 +259,17 @@ body {
     gap: 8px;
 }
 
-/* Removed item-sort-btns and item-sort-btn styles as they are being removed from UI */
+/* 移除已废弃的排序按钮样式 */
 
 .item-input {
     width: 140px;
-    /* Wider for easier touch */
+    /* 增加宽度方便触摸 */
     padding: 16px 12px;
-    /* Taller */
+    /* 增加高度 */
     border: 2px solid var(--border-color);
     border-radius: 12px;
     font-size: 1.2rem;
-    /* Larger font */
+    /* 更大字体 */
     text-align: right;
     font-family: 'Inter', monospace;
     transition: border-color 0.2s;
@@ -280,7 +280,7 @@ body {
     border-color: var(--primary-color);
 }
 
-/* Quick Add Area */
+/* 快速添加区域 */
 .quick-add-card {
     background: transparent;
     border: 2px dashed var(--border-color);
@@ -300,7 +300,7 @@ body {
     transform: scale(0.98);
 }
 
-/* Footer Buttons */
+/* 页脚按钮 */
 .app-footer {
     padding: 16px 20px calc(16px + var(--safe-area-inset-bottom));
     background: rgba(255, 255, 255, 0.8);
@@ -336,7 +336,7 @@ body {
     transform: scale(0.97);
 }
 
-/* Modal */
+/* 弹窗样式 */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -356,7 +356,7 @@ body {
     overflow-y: auto;
 }
 
-/* Modal Improvements */
+/* 弹窗布局优化 */
 .management-section {
     margin-bottom: 24px;
 }
@@ -481,7 +481,7 @@ hr {
     display: none !important;
 }
 
-/* Sync UI Styling */
+/* 同步界面样式 */
 .sync-config {
     background: #fdfdfd;
     padding: 16px;
@@ -499,7 +499,7 @@ hr {
     padding: 2px 8px;
     border-radius: 12px;
     background: #FF9500;
-    /* Orange for local */
+    /* 本地模式使用橙色 */
     color: white;
     font-size: 0.75rem;
 }
@@ -514,7 +514,7 @@ hr {
     margin-top: 5px;
 }
 
-/* Compact PDF Styling */
+/* 紧凑型 PDF 样式 */
 .pdf-template {
     padding: 30px;
     background: white;
@@ -557,7 +557,7 @@ hr {
 /* Enhanced separator for 2-column layout */
 .pdf-grid-item:nth-child(odd) {
     border-right: 3px double #888;
-    /* Doubled and slightly darker divider */
+    /* 双线分割更清晰 */
 }
 
 .pdf-grid-item .p-name {

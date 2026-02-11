@@ -1,7 +1,7 @@
-// VERSION 1.2.3 - INV-aiden
-console.log("Loading Main.js v1.0.4");
+// 版本 1.2.4 - INV-aiden
+console.log("正在加载 INV-aiden 核心逻辑 v1.2.4");
 
-// Initial product configuration
+// 初始产品配置
 const INITIAL_PRODUCTS = {
     "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
     "Case Oil": ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
@@ -9,13 +9,13 @@ const INITIAL_PRODUCTS = {
     "Others": ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
 };
 
-// Global Catch for Mobile/PC Debugging
+// 全局错误捕获，用于手机/PC 调试
 window.onerror = function (msg, url, line) {
-    alert("Runtime Error: " + msg + "\nLine: " + line);
+    alert("运行时错误: " + msg + "\n行号: " + line);
     return false;
 };
 
-// Helper: safe JSON
+// 助手函数：安全解析 JSON
 function safeGetJSON(key, defaultValue) {
     try {
         var item = localStorage.getItem(key);
@@ -24,26 +24,26 @@ function safeGetJSON(key, defaultValue) {
     } catch (e) { return defaultValue; }
 }
 
-// Global State
+// 全局状态
 var state = {
     currentCategory: "",
     products: safeGetJSON('lubricant_products', INITIAL_PRODUCTS),
     inventory: safeGetJSON('lubricant_inventory', {}),
     categoryOrder: safeGetJSON('lubricant_category_order', Object.keys(INITIAL_PRODUCTS)),
     syncId: localStorage.getItem('lubricant_sync_id') || "",
-    viewMode: 'edit' // 'edit' or 'summary'
+    viewMode: 'edit' // 'edit' (编辑) 或 'summary' (摘要)
 };
 
-// Supabase Configuration
+// Supabase 配置
 var SUPABASE_URL = "https://kutwhtcvhtbhbhhyqiop.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4";
 var supabaseClient = null;
 
 function initSupabase() {
-    // Extensive check for various CDN export patterns
+    // 检查各种 CDN 导出模式
     var lib = window.supabasejs || window.supabase;
 
-    // Deep check if 'createClient' is available
+    // 深度检查 'createClient' 是否可用
     if (lib && typeof lib.createClient === 'function') {
         supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
     } else if (lib && lib.supabase && typeof lib.supabase.createClient === 'function') {
@@ -52,12 +52,12 @@ function initSupabase() {
 }
 initSupabase();
 
-// Ensure re-init on load
+// 确保页面加载时重新初始化
 window.addEventListener('load', function () {
     if (!supabaseClient) initSupabase();
 });
 
-// Category Repair & Initialization
+// 分类修复与初始化
 function initializeCategory() {
     var currentCats = Object.keys(state.products);
     var order = state.categoryOrder || [];
@@ -71,7 +71,7 @@ function initializeCategory() {
 }
 initializeCategory();
 
-// Sync Status Utility
+// 同步状态工具
 function updateSyncStatus(status, isOnline) {
     var el = document.getElementById('sync-status');
     if (el) {
@@ -84,7 +84,7 @@ function updateSyncStatus(status, isOnline) {
     }
 }
 
-// Push to Cloud
+// 推送到云端
 function pushToCloud() {
     if (!supabaseClient) initSupabase();
     if (!supabaseClient || !state.syncId) return;
@@ -110,7 +110,7 @@ function pushToCloud() {
         });
 }
 
-// Pull from Cloud
+// 从云端拉取
 function pullFromCloud() {
     if (!supabaseClient) {
         initSupabase();
@@ -162,7 +162,7 @@ function saveToStorage(autoPush) {
     }
 }
 
-// Math Utility
+// 数学逻辑工具
 function evaluateExpression(expr) {
     if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
     var cleanExpr = expr.replace(/[^0-9+\. ]/g, '');
@@ -175,7 +175,7 @@ function evaluateExpression(expr) {
     return total;
 }
 
-// Render dynamic tabs
+// 渲染动态标签页
 function renderTabs() {
     var tabNav = document.getElementById('category-tabs');
     if (!tabNav) return;
@@ -193,7 +193,7 @@ function renderTabs() {
     });
 }
 
-// Render Inventory List
+// 渲染库存列表
 function renderInventory() {
     var list = document.getElementById('inventory-list');
     var controls = document.getElementById('inventory-controls');
@@ -206,7 +206,7 @@ function renderInventory() {
         return;
     }
 
-    // Render Toggle & Sort into Controls
+    // 渲染切换栏与排序按钮到控制容器
     var toggleBar = document.createElement('div');
     toggleBar.className = 'view-toggle-bar';
     toggleBar.innerHTML =
@@ -222,7 +222,7 @@ function renderInventory() {
     if (state.viewMode === 'summary') {
         list.classList.add('summary-mode');
 
-        // Add Stats Header for Summary
+        // 为摘要视图添加统计页眉
         var statsHeader = document.createElement('div');
         statsHeader.style = "grid-column: 1 / -1; padding: 10px 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;";
         statsHeader.innerHTML = '📊 Total: <span style="color:var(--primary-color);">' + categoryProducts.length + '</span> Products';
@@ -260,7 +260,7 @@ function renderInventory() {
         list.appendChild(card);
     });
 
-    // Quick Add Button
+    // 快速添加按钮
     var quickAdd = document.createElement('div');
     quickAdd.className = 'quick-add-card';
     quickAdd.innerText = '+ Add Product';
@@ -287,7 +287,7 @@ window.renameProductInline = function (oldName, index) {
             return alert("Duplicate Product: '" + trimmedName + "' already exists in this category.");
         }
         state.products[state.currentCategory][index] = trimmedName;
-        // Migrate inventory data
+        // 迁移库存数据
         var oldKey = state.currentCategory + '-' + oldName;
         var newKey = state.currentCategory + '-' + trimmedName;
         if (state.inventory[oldKey] !== undefined) {
@@ -332,7 +332,7 @@ window.updateValue = function (name, value, index) {
     if (resultEl) resultEl.innerText = 'Subtotal: ' + total;
 };
 
-// Modal Logic
+// 弹窗逻辑
 var modal = document.getElementById('modal-overlay');
 if (document.getElementById('manage-btn')) {
     document.getElementById('manage-btn').onclick = function () {
@@ -349,7 +349,7 @@ if (document.querySelector('.close-modal')) {
     };
 }
 
-// Connect Sync Button
+// 连接同步按钮
 if (document.getElementById('connect-sync-btn')) {
     document.getElementById('connect-sync-btn').onclick = function () {
         var input = document.getElementById('sync-id-input');
@@ -373,12 +373,7 @@ window.resetInventory = function () {
     }
 };
 
-window.resetLocalData = function () {
-    if (confirm("DANGER: Clear all local data?")) {
-        localStorage.clear();
-        location.reload();
-    }
-};
+// 删除冗余 resetLocalData
 
 function renderManageUI() {
     var cList = document.getElementById('category-manage-list');
@@ -417,7 +412,7 @@ function renderManageUI() {
     }
 }
 
-// Actions
+// 交互动作
 if (document.getElementById('add-category-btn')) {
     document.getElementById('add-category-btn').onclick = function () {
         var input = document.getElementById('new-category-name');
@@ -507,7 +502,7 @@ window.removeProduct = function (index) {
     renderManageUI();
 };
 
-// PDF
+// PDF 导出
 if (document.getElementById('export-pdf-btn')) {
     document.getElementById('export-pdf-btn').onclick = function () {
         var pdfArea = document.getElementById('pdf-template');
@@ -554,12 +549,12 @@ if (document.getElementById('export-pdf-btn')) {
     };
 }
 
-// PWA Installation & Service Worker
+// PWA 安装与服务进程
 let deferredPrompt;
 const installBtn = document.getElementById('pwa-install-btn');
 const iosHint = document.getElementById('ios-install-hint');
 
-// iOS Detection
+// iOS 检测
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -569,7 +564,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     if (installBtn) installBtn.style.display = 'block';
 });
 
-// Explicitly show hint for iOS in Settings
+// 在设置中明确为 iOS 显示提示
 if (isIOS && iosHint) {
     iosHint.style.display = 'block';
 }
@@ -594,7 +589,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Init
+// 初始化入口
 document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 renderTabs();
 renderInventory();
