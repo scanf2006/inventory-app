@@ -111,7 +111,8 @@
                     <section class="management-section">
                         <h3>Manage Products in <span id="current-manage-cat-name"></span></h3>
                         <div class="add-form">
-                            <input type="text" id="new-product-name" placeholder="New product name">
+                            <input type="text" id="new-product-name" placeholder="New product name"
+                                list="master-product-list">
                             <button id="add-product-btn">Add</button>
                         </div>
                         <ul id="product-manage-list" class="manage-list"></ul>
@@ -133,8 +134,10 @@
                 <!-- Data will be injected here as category blocks -->
             </div>
         </div>
+        <!-- 智能建议下拉列表 (由 JS 动态填充) -->
+        <datalist id="master-product-list"></datalist>
     </div>
-    <script src="src/main.js?v=1.2.4"></script>
+    <script src="src/main.js?v=1.3.0"></script>
 </body>
 
 </html>

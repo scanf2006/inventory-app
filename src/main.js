@@ -1,5 +1,5 @@
-// 版本 1.2.4 - INV-aiden
-console.log("正在加载 INV-aiden 核心逻辑 v1.2.4");
+// 版本 1.3.0 - INV-aiden
+console.log("正在加载 INV-aiden 核心逻辑 v1.3.0");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -152,11 +152,30 @@ function pullFromCloud() {
         });
 }
 
+// 动态更新 PWA/添加产品时的智能建议列表
+function updateProductSuggestions() {
+    var datalist = document.getElementById('master-product-list');
+    if (!datalist) return;
+
+    var allProducts = new Set();
+    Object.values(state.products).forEach(function (list) {
+        list.forEach(function (p) { allProducts.add(p); });
+    });
+
+    datalist.innerHTML = '';
+    Array.from(allProducts).sort().forEach(function (p) {
+        var option = document.createElement('option');
+        option.value = p;
+        datalist.appendChild(option);
+    });
+}
+
 function saveToStorage(autoPush) {
     localStorage.setItem('lubricant_products', JSON.stringify(state.products));
     localStorage.setItem('lubricant_inventory', JSON.stringify(state.inventory));
     localStorage.setItem('lubricant_category_order', JSON.stringify(state.categoryOrder));
     localStorage.setItem('lubricant_sync_id', state.syncId);
+    updateProductSuggestions(); // 保存时同步更新建议列表
     if (autoPush !== false && state.syncId) {
         pushToCloud();
     }
@@ -260,24 +279,61 @@ function renderInventory() {
         list.appendChild(card);
     });
 
-    // 快速添加按钮
-    var quickAdd = document.createElement('div');
-    quickAdd.className = 'quick-add-card';
-    quickAdd.innerText = '+ Add Product';
-    quickAdd.onclick = function () {
-        var name = prompt("Enter new product name:");
-        if (name && name.trim() !== '') {
-            var trimmedName = name.trim();
-            if (state.products[state.currentCategory].indexOf(trimmedName) !== -1) {
-                return alert("Duplicate Product: '" + trimmedName + "' already exists in this category.");
-            }
-            state.products[state.currentCategory].push(trimmedName);
-            saveToStorage();
-            renderInventory();
-        }
-    };
-    list.appendChild(quickAdd);
+    // 快速添加按钮及内联输入模式
+    var quickAddWrapper = document.createElement('div');
+    quickAddWrapper.className = 'quick-add-wrapper';
+
+    var quickAddBtn = document.createElement('div');
+    quickAddBtn.className = 'quick-add-card';
+    quickAddBtn.innerText = '+ Add Product';
+
+    var quickAddForm = document.createElement('div');
+    quickAddForm.className = 'quick-add-form hidden';
+    quickAddForm.innerHTML =
+        '<input type="text" id="quick-add-input" placeholder="Type or select product..." list="master-product-list">' +
+        '<div class="quick-add-actions">' +
+        '<button onclick="submitQuickAdd()">Add</button>' +
+        '<button class="cancel" onclick="toggleQuickAdd(false)">Cancel</button>' +
+        '</div>';
+
+    quickAddBtn.onclick = function () { toggleQuickAdd(true); };
+
+    quickAddWrapper.appendChild(quickAddBtn);
+    quickAddWrapper.appendChild(quickAddForm);
+    list.appendChild(quickAddWrapper);
 }
+
+window.toggleQuickAdd = function (show) {
+    var btn = document.querySelector('.quick-add-card');
+    var form = document.querySelector('.quick-add-form');
+    if (btn && form) {
+        if (show) {
+            btn.classList.add('hidden');
+            form.classList.remove('hidden');
+            var input = document.getElementById('quick-add-input');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+        } else {
+            btn.classList.remove('hidden');
+            form.classList.add('hidden');
+        }
+    }
+};
+
+window.submitQuickAdd = function () {
+    var input = document.getElementById('quick-add-input');
+    var name = input ? input.value.trim() : "";
+    if (name && state.currentCategory) {
+        if (state.products[state.currentCategory].indexOf(name) !== -1) {
+            return alert("Duplicate Product: '" + name + "' already exists in this category.");
+        }
+        state.products[state.currentCategory].push(name);
+        saveToStorage();
+        renderInventory();
+    }
+};
 
 window.renameProductInline = function (oldName, index) {
     var newName = prompt("Rename product:", oldName);
@@ -591,6 +647,7 @@ if ('serviceWorker' in navigator) {
 
 // 初始化入口
 document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+updateProductSuggestions(); // 启动时填充建议
 renderTabs();
 renderInventory();
 if (supabaseClient && state.syncId) pullFromCloud();
