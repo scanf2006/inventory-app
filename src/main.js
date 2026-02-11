@@ -35,23 +35,20 @@ var state = {
 // Supabase Configuration
 var SUPABASE_URL = "https://kutwhtcvhtbhbhhyqiop.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4";
-var supabase = null;
+var supabaseClient = null;
 
 function initSupabase() {
-    var lib = window.supabase || (window.supabaseJS ? window.supabaseJS : null);
-    if (lib && lib.createClient) {
-        supabase = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("Supabase initialized successfully");
-    } else {
-        console.error("Supabase library not found on window");
-        // Don't alert here yet, maybe CDN is slow
+    // Check window.supabasejs first, then window.supabase (library), ensuring it has createClient
+    var lib = window.supabasejs || window.supabase;
+    if (lib && typeof lib.createClient === 'function') {
+        supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("Supabase Client initialized");
     }
 }
 initSupabase();
 
-// Fallback for slow CDN
 window.onload = function () {
-    if (!supabase) initSupabase();
+    if (!supabaseClient) initSupabase();
 };
 
 // Category Repair & Initialization
@@ -98,29 +95,23 @@ function pushToCloud() {
         .then(function (res) {
             if (res.error) throw res.error;
             updateSyncStatus("Online (Synced)", true);
-            console.log("Successfully pushed to cloud");
         })
         .catch(function (e) {
             console.error("Push error:", e);
             updateSyncStatus("Sync Error", false);
-            // Alert on specific errors to help user (e.g. Table not found)
-            if (e.message) alert("Push Failed: " + e.message + "\nDid you run the SQL script in Supabase?");
         });
 }
 
 // Pull from Cloud (Promise version for compatibility)
 function pullFromCloud() {
-    if (!supabase) {
+    if (!supabaseClient) {
         initSupabase();
-        if (!supabase) {
-            var supaKeys = Object.keys(window).filter(function (k) { return k.toLowerCase().indexOf('supa') !== -1; });
-            return alert("System Error: Cloud library not loaded.\nFound keys: " + supaKeys.join(', ') + "\nPlease check if your browser blocks unpkg.com");
-        }
+        if (!supabaseClient) return alert("System Error: Cloud library not loaded. Check internet.");
     }
     if (!state.syncId) return alert("Please set a Sync ID in Settings first.");
 
     updateSyncStatus("Pulling...", false);
-    supabase
+    supabaseClient
         .from('app_sync')
         .select('data')
         .eq('sync_id', state.syncId)
@@ -236,7 +227,7 @@ if (document.getElementById('manage-btn')) {
     document.getElementById('manage-btn').onclick = function () {
         modal.classList.remove('hidden');
         document.getElementById('sync-id-input').value = state.syncId;
-        if (supabase && state.syncId) pullFromCloud();
+        if (supabaseClient && state.syncId) pullFromCloud();
         renderManageUI();
     };
 }
@@ -446,4 +437,4 @@ if (document.getElementById('export-pdf-btn')) {
 document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 renderTabs();
 renderInventory();
-if (supabase && state.syncId) pullFromCloud();
+if (supabaseClient && state.syncId) pullFromCloud();
