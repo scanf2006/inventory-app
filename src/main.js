@@ -1,5 +1,5 @@
-// Version 1.6.1 - INV-aiden
-console.log("Loading INV-aiden core logic v1.6.0");
+// Version 1.6.2 - INV-aiden
+console.log("Loading INV-aiden core logic v1.6.2");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -30,7 +30,11 @@ var state = {
     products: safeGetJSON('lubricant_products', INITIAL_PRODUCTS),
     inventory: safeGetJSON('lubricant_inventory', {}),
     categoryOrder: safeGetJSON('lubricant_category_order', Object.keys(INITIAL_PRODUCTS)),
-    syncId: localStorage.getItem('lubricant_sync_id') || "",
+    // 修正持久化逻辑：防止 "null" 字符串干扰 / Fix persistence: prevent "null" string interference
+    syncId: (function () {
+        var id = localStorage.getItem('lubricant_sync_id');
+        return (id === null || id === "null" || id === "undefined") ? "" : id;
+    })(),
     viewMode: 'edit', // 'edit' or 'summary'
     sortDirection: 'asc' // 'asc' or 'desc'
 };
@@ -120,16 +124,19 @@ function pullFromCloud() {
         }
     }
 
-    // 智能引导：如果 state.syncId 为空，尝试直接读取输入框的值
-    // Smart Guidance: If state.syncId is empty, try reading from the input box directly
-    if (!state.syncId) {
-        var input = document.getElementById('sync-id-input');
-        if (input && input.value.trim()) {
-            state.syncId = input.value.trim();
-            saveToStorage(false);
-        } else {
-            return alert("Sync ID Required: Please enter your Sync ID in Settings (use the same ID as on your PC) and click 'Connect'.");
-        }
+    // 强化同步识别：优先采用输入框当前值
+    // Enhanced Sync Detection: Prioritize current input value
+    var input = document.getElementById('sync-id-input');
+    var currentInputValue = input ? input.value.trim() : "";
+
+    // 如果 state.syncId 为空或与输入框不符，立即更新
+    if (currentInputValue && currentInputValue !== state.syncId) {
+        state.syncId = currentInputValue;
+        saveToStorage(false);
+    }
+
+    if (!state.syncId || state.syncId === "null") {
+        return alert("Sync ID Required: Please enter the same ID as your PC in Settings and click 'Sync Now'.");
     }
 
     updateSyncStatus("Syncing...", false);

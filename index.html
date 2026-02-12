@@ -88,7 +88,8 @@
                         <h3>Cloud Sync</h3>
                         <div class="sync-status" id="sync-status">Status: <span>Offline (Local only)</span></div>
                         <div class="add-form">
-                            <input type="text" id="sync-id-input" placeholder="Enter your Sync ID (e.g. user_2026)">
+                            <input type="text" id="sync-id-input" placeholder="Enter your Sync ID (e.g. user_2026)"
+                                oninput="state.syncId = this.value.trim(); saveToStorage(false);">
                             <button id="connect-sync-btn">Connect</button>
                         </div>
                         <button onclick="pullFromCloud()" class="secondary-btn"
@@ -155,7 +156,7 @@
         <!-- 智能建议下拉列表 (由 JS 动态填充) -->
         <datalist id="master-product-list"></datalist>
     </div>
-    <script src="src/main.js?v=1.6.0"></script>
+    <script src="src/main.js?v=1.6.2"></script>
 </body>
 
 </html>
