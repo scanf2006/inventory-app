@@ -500,10 +500,14 @@ body {
     background: var(--bg-color);
     width: 100%;
     height: 90vh;
+    max-height: 90vh;
+    /* 强制高度约束 / Forced height constraint */
     border-radius: 30px 30px 0 0;
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    /* 关键：裁剪内容以启用内部滚动 / Crucial: clip content to enable internal scroll */
     animation: slideUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -528,11 +532,13 @@ body {
 /* 弹窗主体滚动支持 / Modal Body Scroll Support */
 .modal-body {
     flex: 1;
+    min-height: 0;
+    /* 关键：允许弹性子元素在溢出时正确减小尺寸 / Crucial: allow flex child to shrink correctly on overflow */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 24px;
-    padding-bottom: 40px;
-    /* 确保内容不被页脚遮挡 / Ensure content not blocked by footer */
+    padding-bottom: 60px;
+    /* 增加底部间距确保按钮不被遮盖 / Increased bottom spacing */
 }
 
 /* 弹窗布局优化 */
