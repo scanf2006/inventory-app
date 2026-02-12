@@ -1,21 +1,40 @@
 :root {
-    --primary-color: #007AFF;
-    --primary-dark: #0056b3;
-    --accent-color: #FFD60A;
+    /* 调色盘升级 / Color Palette Upgrade */
+    --primary-blue: #003785;
+    /* Petroleum Blue */
+    --accent-gold: #FFCC00;
+    /* Machine Gold */
     --bg-color: #F2F2F7;
     --card-bg: #FFFFFF;
     --text-main: #1C1C1E;
     --text-muted: #8E8E93;
-    --border-color: #C6C6C8;
+    --border-color: rgba(0, 0, 0, 0.1);
     --success-color: #34C759;
-    --header-height: 120px;
-    --footer-height: 80px;
+    --header-height: 140px;
+    --footer-height: 85px;
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+
+    /* 材质与深度 / Material & Depth */
+    --glass-header: rgba(0, 55, 133, 0.95);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0A0F1E;
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --text-main: #F2F2F7;
+        --text-muted: #8E8E93;
+        --border-color: rgba(255, 255, 255, 0.1);
+        --glass-header: rgba(0, 40, 95, 0.98);
+        --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
 }
 
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 
 body {
@@ -24,7 +43,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     overflow: hidden;
-    /* 防止整个页面滚动，由 .content-area 负责 */
+    transition: background-color 0.3s ease;
 }
 
 #app {
@@ -34,13 +53,17 @@ body {
     height: 100dvh;
 }
 
-/* 页眉 */
+/* 页眉 - 玻璃拟态 / Header - Glassmorphism */
 .app-header {
-    background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
+    background: var(--glass-header);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     color: white;
-    padding: 40px 20px 20px;
+    padding: 55px 25px 25px;
     text-align: left;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
 }
 
 .app-header h1 {
@@ -48,23 +71,31 @@ body {
     margin: 0;
     font-size: 1.8rem;
     letter-spacing: -0.5px;
+    color: var(--accent-gold);
+}
+
+.header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .date-display {
     font-size: 0.9rem;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.6);
     margin-top: 4px;
+    font-weight: 500;
 }
 
-/* 标签页 */
+/* 标签页 / Tabs */
 .category-tabs {
     display: flex;
-    background: white;
-    padding: 10px;
-    gap: 8px;
+    background: var(--bg-color);
+    padding: 15px 10px;
+    gap: 10px;
     overflow-x: auto;
-    border-bottom: 1px solid var(--border-color);
     scrollbar-width: none;
+    z-index: 90;
 }
 
 .category-tabs::-webkit-scrollbar {
@@ -72,26 +103,30 @@ body {
 }
 
 .tab {
-    flex: 1;
-    min-width: 90px;
-    padding: 10px 5px;
-    border: none;
-    background: transparent;
+    flex: 0 0 auto;
+    min-width: 100px;
+    padding: 12px 18px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
     color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 50px;
+    /* 极圆设计 / Ultra-rounded */
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     white-space: nowrap;
+    cursor: pointer;
 }
 
 .tab.active {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3);
+    background: var(--accent-gold);
+    color: #000;
+    border-color: var(--accent-gold);
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(255, 204, 0, 0.2);
 }
 
-/* 内容区域 */
+/* 内容区域 / Content */
 .content-area {
     flex: 1;
     /* 占据剩余空间 */
@@ -100,7 +135,7 @@ body {
     -webkit-overflow-scrolling: touch;
     /* iOS 平滑滚动 */
     padding: 20px;
-    padding-bottom: 40px;
+    padding-bottom: 20px;
 }
 
 /* 视图模式切换栏 */
@@ -187,20 +222,49 @@ body {
 }
 
 .inventory-list {
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
 }
 
 .item-card {
     background: var(--card-bg);
-    padding: 16px;
-    border-radius: 16px;
+    padding: 22px;
+    border-radius: 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(5px);
+    animation: cardEntrance 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes cardEntrance {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 连续动画延迟 / Staggered delays */
+.item-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.item-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.item-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.item-card:nth-child(n+4) {
+    animation-delay: 0.2s;
 }
 
 .item-info {
@@ -209,26 +273,26 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 0; /* 关键：允许 flex 子元素收缩以触发内容省略 / Crucial: allow flex child to shrink for ellipsis */
+    min-width: 0;
+    /* 关键：允许 flex 子元素收缩以触发内容省略 / Crucial: allow flex child to shrink for ellipsis */
 }
 
 .item-info .item-name {
     font-weight: 700;
-    font-size: 1.3rem;
-    /* 增大 */
-    margin-bottom: 4px;
+    font-size: 1.25rem;
+    margin-bottom: 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text-main);
 }
 
 .item-info .item-result {
-    font-size: 1rem;
-    /* 增大 */
-    color: var(--primary-color);
-    font-weight: 600;
-    height: 1.4rem;
-    line-height: 1.4rem;
+    font-size: 0.95rem;
+    color: var(--accent-gold);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .item-delete-btn {
@@ -264,21 +328,29 @@ body {
 
 .item-input {
     width: 140px;
-    /* 增加宽度方便触摸 */
-    padding: 16px 12px;
-    /* 增加高度 */
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.05);
     border: 2px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 16px;
     font-size: 1.2rem;
-    /* 更大字体 */
     text-align: right;
     font-family: 'Inter', monospace;
-    transition: border-color 0.2s;
+    font-weight: 600;
+    color: var(--text-main);
+    transition: all 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+    .item-input {
+        background: rgba(0, 0, 0, 0.4);
+    }
 }
 
 .item-input:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--accent-gold);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.1);
 }
 
 /* 快速添加区域 */
@@ -369,38 +441,45 @@ body {
 
 /* 页脚按钮 */
 .app-footer {
-    padding: 16px 20px calc(16px + var(--safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
+    padding: 20px;
+    background: var(--glass-header);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     display: flex;
-    gap: 12px;
-    border-top: 1px solid var(--border-color);
-}
-
-.primary-btn,
-.secondary-btn {
-    flex: 1;
-    padding: 16px;
-    border-radius: 14px;
-    font-weight: 700;
-    font-size: 1rem;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.1s;
+    gap: 15px;
+    padding-bottom: calc(20px + var(--safe-area-inset-bottom));
 }
 
 .primary-btn {
-    background: var(--primary-color);
-    color: white;
+    flex: 1.5;
+    background: var(--accent-gold);
+    color: #000;
+    border: none;
+    padding: 18px;
+    border-radius: 18px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 16px rgba(255, 204, 0, 0.2);
+    transition: all 0.2s;
 }
 
 .secondary-btn {
-    background: #E5E5EA;
-    color: var(--text-main);
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 18px;
+    border-radius: 18px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.2s;
 }
 
-.primary-btn:active {
-    transform: scale(0.97);
+.primary-btn:active,
+.secondary-btn:active {
+    transform: scale(0.96);
 }
 
 /* 弹窗样式 */
@@ -415,12 +494,32 @@ body {
 }
 
 .modal {
-    background: white;
+    background: var(--bg-color);
     width: 100%;
-    border-radius: 20px 20px 0 0;
-    padding: 24px;
-    max-height: 80vh;
-    overflow-y: auto;
+    height: 90vh;
+    border-radius: 30px 30px 0 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .modal {
+        background: #111;
+    }
 }
 
 /* 弹窗布局优化 */

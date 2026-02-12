@@ -35,8 +35,26 @@
     <div id="app">
         <!-- Header -->
         <header class="app-header">
-            <h1>Inventory</h1>
-            <div class="date-display" id="current-date">February 10, 2026</div>
+            <div class="header-flex">
+                <div class="header-text">
+                    <h1>Inventory Control</h1>
+                    <div class="date-display" id="current-date">February 11, 2026</div>
+                </div>
+                <div class="header-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 2C7.58 2 4 4.01 4 6.5V17.5C4 19.99 7.58 22 12 22C16.42 22 20 19.99 20 17.5V6.5C20 4.01 16.42 2 12 2Z"
+                            fill="var(--accent-gold)" fill-opacity="0.2" stroke="var(--accent-gold)" stroke-width="2" />
+                        <path d="M4 12V17.5C4 19.99 7.58 22 12 22C16.42 22 20 19.99 20 17.5V12"
+                            stroke="var(--accent-gold)" stroke-width="2" stroke-linecap="round" />
+                        <path d="M4 6.5C4 8.99 7.58 11 12 11C16.42 11 20 8.99 20 6.5" stroke="var(--accent-gold)"
+                            stroke-width="2" stroke-linecap="round" />
+                        <path
+                            d="M12 14.5C13.6569 14.5 15 13.1569 15 11.5C15 9.84315 13.6569 8.5 12 8.5C10.3431 8.5 9 9.84315 9 11.5C9 13.1569 10.3431 14.5 12 14.5Z"
+                            fill="var(--accent-gold)" />
+                    </svg>
+                </div>
+            </div>
         </header>
 
         <!-- Category Tabs (Dynamic) -->
@@ -137,7 +155,7 @@
         <!-- 智能建议下拉列表 (由 JS 动态填充) -->
         <datalist id="master-product-list"></datalist>
     </div>
-    <script src="src/main.js?v=1.5.1"></script>
+    <script src="src/main.js?v=1.6.0"></script>
 </body>
 
 </html>
