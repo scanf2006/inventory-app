@@ -525,6 +525,16 @@ body {
     }
 }
 
+/* 弹窗主体滚动支持 / Modal Body Scroll Support */
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px;
+    padding-bottom: 40px;
+    /* 确保内容不被页脚遮挡 / Ensure content not blocked by footer */
+}
+
 /* 弹窗布局优化 */
 .management-section {
     margin-bottom: 24px;

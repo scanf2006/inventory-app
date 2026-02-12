@@ -1,5 +1,5 @@
-// Version 1.6.2 - INV-aiden
-console.log("Loading INV-aiden core logic v1.6.2");
+// Version 1.6.3 - INV-aiden
+console.log("Loading INV-aiden core logic v1.6.3");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
