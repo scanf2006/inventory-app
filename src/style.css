@@ -610,13 +610,21 @@ body {
 }
 
 .btn-sort {
-    background: #E5E5EA;
-    color: var(--text-main);
-    border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 1rem;
-    font-weight: 700;
+    background: var(--primary-blue);
+    color: var(--accent-gold);
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-sort:active {
+    transform: scale(0.9);
+    background: var(--accent-gold);
+    color: #000;
 }
 
 .btn-sort:disabled {
@@ -625,13 +633,19 @@ body {
 }
 
 .btn-edit {
-    background: #E5E5EA;
-    color: var(--text-main);
-    border: none;
-    border-radius: 6px;
+    background: rgba(0, 55, 133, 0.1);
+    color: var(--primary-blue);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     padding: 6px 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.btn-edit:active {
+    background: var(--primary-blue);
+    color: white;
 }
 
 .btn-delete {

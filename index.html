@@ -37,7 +37,7 @@
         <header class="app-header">
             <div class="header-flex">
                 <div class="header-text">
-                    <h1>Inventory Control</h1>
+                    <h1>Inventory</h1>
                     <div class="date-display" id="current-date">February 11, 2026</div>
                 </div>
                 <div class="header-icon">
@@ -92,10 +92,8 @@
                                 oninput="state.syncId = this.value.trim(); saveToStorage(false);">
                             <button id="connect-sync-btn">Connect</button>
                         </div>
-                        <button onclick="pullFromCloud()" class="secondary-btn"
-                            style="width:100%; margin-top:10px; background:#34C759; color:white;">Sync Now (Refresh
-                            Cloud Data)</button>
-                        <p class="small-hint">Devices with the same ID will sync data automatically.</p>
+                        <p class="small-hint">Devices with the same ID will sync data automatically. Clicking "Connect"
+                            will also pull the latest data immediately.</p>
                     </section>
 
                     <hr>
@@ -156,7 +154,7 @@
         <!-- 智能建议下拉列表 (由 JS 动态填充) -->
         <datalist id="master-product-list"></datalist>
     </div>
-    <script src="src/main.js?v=1.6.4"></script>
+    <script src="src/main.js?v=1.6.5"></script>
 </body>
 
 </html>
