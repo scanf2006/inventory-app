@@ -1,4 +1,4 @@
-// Version 1.6.0 - INV-aiden
+// Version 1.6.1 - INV-aiden
 console.log("Loading INV-aiden core logic v1.6.0");
 
 // 初始产品配置
@@ -111,18 +111,28 @@ function pushToCloud() {
         });
 }
 
-// 从云端拉取
+// 从云端拉取 / Pull from Cloud
 function pullFromCloud() {
     if (!supabaseClient) {
         initSupabase();
         if (!supabaseClient) {
-            var keys = Object.keys(window).filter(function (k) { return k.toLowerCase().indexOf('supa') !== -1; });
-            return alert("Sync Error: Library not loaded.\nTry Ctrl+F5 on PC.\nFound: " + keys.join(', '));
+            return alert("Sync Error: Cloud library not loaded. Please refresh the page.");
         }
     }
-    if (!state.syncId) return alert("Please set a Sync ID in Settings first.");
 
-    updateSyncStatus("Pulling...", false);
+    // 智能引导：如果 state.syncId 为空，尝试直接读取输入框的值
+    // Smart Guidance: If state.syncId is empty, try reading from the input box directly
+    if (!state.syncId) {
+        var input = document.getElementById('sync-id-input');
+        if (input && input.value.trim()) {
+            state.syncId = input.value.trim();
+            saveToStorage(false);
+        } else {
+            return alert("Sync ID Required: Please enter your Sync ID in Settings (use the same ID as on your PC) and click 'Connect'.");
+        }
+    }
+
+    updateSyncStatus("Syncing...", false);
     supabaseClient
         .from('app_sync')
         .select('data')
@@ -130,6 +140,7 @@ function pullFromCloud() {
         .single()
         .then(function (res) {
             if (res.error) {
+                // 如果发现新 ID，则创建初始数据
                 if (res.error.code === 'PGRST116') return pushToCloud();
                 throw res.error;
             }
@@ -148,7 +159,7 @@ function pullFromCloud() {
             }
         })
         .catch(function (e) {
-            alert("Sync Failed: " + (e.message || "Unknown error"));
+            alert("Sync Failed: " + (e.message || "Please check your internet connection."));
             updateSyncStatus("Sync Error", false);
         });
 }
@@ -244,7 +255,7 @@ function renderInventory() {
         '<button class="' + (state.viewMode === 'edit' ? 'active' : '') + '" onclick="setViewMode(\'edit\')">Edit</button>' +
         '<button class="' + (state.viewMode === 'summary' ? 'active' : '') + '" onclick="setViewMode(\'summary\')">Summary</button>' +
         '</div>' +
-        '<button onclick="sortProductsToggle()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:#fff; border:1px solid var(--border-color); color:var(--primary-color); border-radius:12px; font-weight:700;">' + sortText + '</button>';
+        '<button onclick="sortProductsToggle()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:var(--card-bg); border:1px solid var(--border-color); color:var(--primary-blue); border-radius:12px; font-weight:700;">' + sortText + '</button>';
     controls.appendChild(toggleBar);
 
     var categoryProducts = state.products[state.currentCategory];
@@ -255,7 +266,7 @@ function renderInventory() {
         // 为摘要视图添加统计页眉
         var statsHeader = document.createElement('div');
         statsHeader.style = "grid-column: 1 / -1; padding: 10px 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;";
-        statsHeader.innerHTML = '📊 Total: <span style="color:var(--primary-color);">' + categoryProducts.length + '</span> Products';
+        statsHeader.innerHTML = '📊 Total: <span style="color:var(--accent-gold);">' + categoryProducts.length + '</span> Products';
         list.appendChild(statsHeader);
 
         categoryProducts.forEach(function (name) {
@@ -422,13 +433,13 @@ if (document.querySelector('.close-modal')) {
 if (document.getElementById('connect-sync-btn')) {
     document.getElementById('connect-sync-btn').onclick = function () {
         var input = document.getElementById('sync-id-input');
-        var id = input.value.trim();
+        var id = input ? input.value.trim() : "";
         if (id) {
             state.syncId = id;
             saveToStorage(false);
             pullFromCloud();
         } else {
-            alert("请输入同步 ID。");
+            alert("Please enter a Sync ID.");
         }
     };
 }
