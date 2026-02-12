@@ -1,5 +1,5 @@
-// Version 1.6.5 - INV-aiden
-console.log("Loading INV-aiden core logic v1.6.5");
+// Version 1.6.6 - INV-aiden
+console.log("Loading INV-aiden core logic v1.6.6");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -478,23 +478,6 @@ function renderManageUI() {
         cList.appendChild(li);
     });
 
-    var manageCatSpan = document.getElementById('current-manage-cat-name');
-    if (manageCatSpan) manageCatSpan.innerText = state.currentCategory || "None";
-
-    var pList = document.getElementById('product-manage-list');
-    if (pList) {
-        pList.innerHTML = '';
-        if (state.currentCategory && state.products[state.currentCategory]) {
-            state.products[state.currentCategory].forEach(function (name, index) {
-                var li = document.createElement('li');
-                li.className = 'manage-item';
-                li.innerHTML =
-                    '<span>' + name + '</span>' +
-                    '<button class="btn-delete" onclick="removeProduct(' + index + ')">Delete</button>';
-                pList.appendChild(li);
-            });
-        }
-    }
 }
 
 // 交互动作
@@ -563,29 +546,6 @@ window.removeCategory = function (cat) {
     }
 };
 
-if (document.getElementById('add-product-btn')) {
-    document.getElementById('add-product-btn').onclick = function () {
-        var input = document.getElementById('new-product-name');
-        var name = input.value.trim();
-        if (name && state.currentCategory) {
-            if (state.products[state.currentCategory].indexOf(name) !== -1) {
-                return alert("Duplicate Product: '" + name + "' already exists in this category.");
-            }
-            state.products[state.currentCategory].push(name);
-            saveToStorage();
-            input.value = '';
-            renderInventory();
-            renderManageUI();
-        }
-    };
-}
-
-window.removeProduct = function (index) {
-    state.products[state.currentCategory].splice(index, 1);
-    saveToStorage();
-    renderInventory();
-    renderManageUI();
-};
 
 // PDF 导出
 if (document.getElementById('export-pdf-btn')) {

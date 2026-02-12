@@ -126,15 +126,11 @@
                     <hr>
 
                     <section class="management-section">
-                        <h3>Manage Products in <span id="current-manage-cat-name"></span></h3>
-                        <div class="add-form">
-                            <input type="text" id="new-product-name" placeholder="New product name"
-                                list="master-product-list" autocomplete="off">
-                            <button id="add-product-btn">Add</button>
-                        </div>
-                        <ul id="product-manage-list" class="manage-list"></ul>
+                        <h3>Account & Data</h3>
+                        <p class="small-hint" style="margin-bottom: 12px;">DANGER: This action cannot be undone.</p>
                         <button onclick="resetInventory()" class="btn-delete"
-                            style="width:100%; margin-top:20px; background:#FF9500;">Reset All Inventory to
+                            style="width:100%; background:#FF9500; padding: 14px; border-radius: 12px; font-weight: 700;">Reset
+                            All Inventory to
                             Zero</button>
                     </section>
 
@@ -154,7 +150,7 @@
         <!-- 智能建议下拉列表 (由 JS 动态填充) -->
         <datalist id="master-product-list"></datalist>
     </div>
-    <script src="src/main.js?v=1.6.5"></script>
+    <script src="src/main.js?v=1.6.6"></script>
 </body>
 
 </html>
