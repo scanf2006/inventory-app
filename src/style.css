@@ -209,6 +209,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-width: 0; /* 关键：允许 flex 子元素收缩以触发内容省略 / Crucial: allow flex child to shrink for ellipsis */
 }
 
 .item-info .item-name {
