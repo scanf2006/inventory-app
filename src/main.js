@@ -1,5 +1,5 @@
-// Version 1.4.0 - INV-aiden
-console.log("Loading INV-aiden core logic v1.4.0");
+// Version 1.5.0 - INV-aiden
+console.log("Loading INV-aiden core logic v1.5.0");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -31,7 +31,8 @@ var state = {
     inventory: safeGetJSON('lubricant_inventory', {}),
     categoryOrder: safeGetJSON('lubricant_category_order', Object.keys(INITIAL_PRODUCTS)),
     syncId: localStorage.getItem('lubricant_sync_id') || "",
-    viewMode: 'edit' // 'edit' (编辑) 或 'summary' (摘要)
+    viewMode: 'edit', // 'edit' or 'summary'
+    sortDirection: 'asc' // 'asc' or 'desc'
 };
 
 // Supabase 配置
@@ -188,17 +189,19 @@ function saveToStorage(autoPush) {
     }
 }
 
-// 数学逻辑工具
+// 数学逻辑工具 / Math logic tool
 function evaluateExpression(expr) {
     if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
-    var cleanExpr = expr.replace(/[^0-9+\. ]/g, '');
-    var parts = cleanExpr.split('+');
-    var total = 0;
-    for (var i = 0; i < parts.length; i++) {
-        var num = parseFloat(parts[i].trim());
-        if (!isNaN(num)) total += num;
+    // 允许数字、四则运算符、小数点及括号 / Allow numbers, operators, dots, and parens
+    var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
+    try {
+        // 使用 Function 构造器作为安全的 eval 代放 / Use Function constructor as a safer eval alternative
+        var result = new Function('return (' + cleanExpr + ')')();
+        var num = parseFloat(result);
+        return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+    } catch (e) {
+        return 0;
     }
-    return total;
 }
 
 // 渲染动态标签页
@@ -235,12 +238,13 @@ function renderInventory() {
     // 渲染切换栏与排序按钮到控制容器
     var toggleBar = document.createElement('div');
     toggleBar.className = 'view-toggle-bar';
+    var sortText = state.sortDirection === 'asc' ? 'Sort A-Z' : 'Sort Z-A';
     toggleBar.innerHTML =
         '<div class="segmented-control">' +
         '<button class="' + (state.viewMode === 'edit' ? 'active' : '') + '" onclick="setViewMode(\'edit\')">Edit</button>' +
         '<button class="' + (state.viewMode === 'summary' ? 'active' : '') + '" onclick="setViewMode(\'summary\')">Summary</button>' +
         '</div>' +
-        '<button onclick="sortProductsAZ()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:#fff; border:1px solid var(--border-color); color:var(--primary-color); border-radius:12px; font-weight:700;">Sort A-Z</button>';
+        '<button onclick="sortProductsToggle()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:#fff; border:1px solid var(--border-color); color:var(--primary-color); border-radius:12px; font-weight:700;">' + sortText + '</button>';
     controls.appendChild(toggleBar);
 
     var categoryProducts = state.products[state.currentCategory];
@@ -372,10 +376,12 @@ window.removeProductInline = function (index) {
     }
 };
 
-window.sortProductsAZ = function () {
+window.sortProductsToggle = function () {
     if (state.currentCategory && state.products[state.currentCategory]) {
+        state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
         state.products[state.currentCategory].sort(function (a, b) {
-            return a.toLowerCase().localeCompare(b.toLowerCase());
+            var res = a.toLowerCase().localeCompare(b.toLowerCase());
+            return state.sortDirection === 'asc' ? res : -res;
         });
         saveToStorage();
         renderInventory();
