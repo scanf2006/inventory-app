@@ -1,5 +1,5 @@
-// Version 1.7.6 - INV-aiden
-console.log("Loading INV-aiden core logic v1.7.6");
+// Version 1.7.7 - INV-aiden
+console.log("Loading INV-aiden core logic v1.7.7");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -602,6 +602,8 @@ if (document.getElementById('export-pdf-btn')) {
 
         // 临时切换至打印模式 (解除桌面端视口锁定)
         document.body.classList.add('printing');
+        // 强制滚动到顶部，确保 html2canvas 从 (0,0) 开始捕获 / Scroll to top to ensure capture starts at (0,0)
+        window.scrollTo(0, 0);
 
         html2pdf().set({
             margin: 10,
