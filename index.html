@@ -134,23 +134,38 @@
                             Zero</button>
                     </section>
 
+                    <div id="modal-overlay" class="modal-overlay hidden">
+                        <!-- Modal content injected by JS -->
+                    </div>
+
+                    <!-- Confirm Modal -->
+                    <div id="confirm-modal" class="modal-overlay hidden" style="z-index: 9999;">
+                        <div class="modal-content" style="max-width: 320px; text-align: center;">
+                            <h3 id="confirm-msg" style="margin-bottom: 20px;">Are you sure?</h3>
+                            <div class="quick-add-actions" style="justify-content: center;">
+                                <button id="confirm-yes-btn" class="btn-delete">Yes</button>
+                                <button id="confirm-no-btn" onclick="App.UI.closeConfirm()">No</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toast Container -->
+                    <div id="toast-container"></div>
                 </div>
-            </div>
-        </div>
 
-        <!-- PDF Template (Hidden) -->
-        <div id="pdf-template" class="pdf-template hidden">
-            <h1 style="text-align: center; margin-bottom: 5px;">Inventory Report</h1>
-            <p id="pdf-date" style="text-align: center; color: #666; margin-bottom: 20px;"></p>
+                <!-- PDF Template (Hidden) -->
+                <div id="pdf-template" class="pdf-template hidden">
+                    <h1 style="text-align: center; margin-bottom: 5px;">Inventory Report</h1>
+                    <p id="pdf-date" style="text-align: center; color: #666; margin-bottom: 20px;"></p>
 
-            <div id="pdf-content">
-                <!-- Data will be injected here as category blocks -->
+                    <div id="pdf-content">
+                        <!-- Data will be injected here as category blocks -->
+                    </div>
+                </div>
+                <!-- 智能建议下拉列表 (由 JS 动态填充) -->
+                <datalist id="master-product-list"></datalist>
             </div>
-        </div>
-        <!-- 智能建议下拉列表 (由 JS 动态填充) -->
-        <datalist id="master-product-list"></datalist>
-    </div>
-    <script src="src/main.js?v=1.7.8"></script>
+            <script src="src/main.js?v=1.7.8"></script>
 </body>
 
 </html>

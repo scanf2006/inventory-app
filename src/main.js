@@ -1,530 +1,567 @@
-// Version 1.7.8 - INV-aiden
-console.log("Loading INV-aiden core logic v1.7.8 (Rollback)");
+// Version 1.8.1 - INV-aiden
+// Security & Quality Hardening Re-implementation
 
-// 初始产品配置
-const INITIAL_PRODUCTS = {
-    "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
-    "Case Oil": ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
-    "Coolant": ["RED 50/50", "GREEN 50/50"],
-    "Others": ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
+const App = {
+    Config: {
+        SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
+        // Note: Supabase Anon Key is safe for client-side use assuming RLS is enabled.
+        SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
+        INITIAL_PRODUCTS: {
+            "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
+            "Case Oil": ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
+            "Coolant": ["RED 50/50", "GREEN 50/50"],
+            "Others": ["DEF", "Brake Blast", "MOLY 3% EP2", "CVT", "SAE 10W-30 Motor Oil", "OW16S(Quart)"]
+        }
+    },
+
+    State: {
+        currentCategory: "",
+        products: null,
+        inventory: null,
+        categoryOrder: null,
+        syncId: "",
+        viewMode: 'edit',
+        sortDirection: 'asc'
+    },
+
+    Services: {
+        supabase: null
+    },
+
+    Utils: {
+        safeGetJSON: function (key, defaultValue) {
+            try {
+                var item = localStorage.getItem(key);
+                if (!item || item === "undefined") return defaultValue;
+                return JSON.parse(item) || defaultValue;
+            } catch (e) { return defaultValue; }
+        },
+
+        debounce: function (func, wait) {
+            var timeout;
+            return function () {
+                var context = this, args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function () {
+                    func.apply(context, args);
+                }, wait);
+            };
+        },
+
+        // Safe Math Parser (Replaces functional eval)
+        safeEvaluate: function (expr) {
+            if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
+            // Allow only numbers, operators, parens, dots, spaces
+            var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
+            if (!cleanExpr) return 0;
+            try {
+                // Using Function is safer than eval, but still requires strict input sanitization above
+                var result = new Function('return (' + cleanExpr + ')')();
+                var num = parseFloat(result);
+                return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+            } catch (e) {
+                return 0;
+            }
+        }
+    },
+
+    UI: {
+        updateSyncStatus: function (status, isOnline) {
+            var el = document.getElementById('sync-status');
+            if (el) {
+                var span = el.querySelector('span');
+                if (span) {
+                    span.innerText = status;
+                    if (isOnline) el.classList.add('online');
+                    else el.classList.remove('online');
+                }
+            }
+        },
+
+        showToast: function (message, type) {
+            type = type || 'info';
+            var container = document.getElementById('toast-container');
+            if (!container) return; // Fallback if container missing
+
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+
+            var icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '⚠️';
+
+            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
+
+            setTimeout(function () {
+                toast.classList.add('hiding');
+                toast.addEventListener('animationend', function () {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                });
+            }, 3000);
+        },
+
+        confirm: function (msg, onConfirm) {
+            var overlay = document.getElementById('confirm-modal');
+            var msgEl = document.getElementById('confirm-msg');
+            var yesBtn = document.getElementById('confirm-yes-btn');
+            var noBtn = document.getElementById('confirm-no-btn');
+
+            if (!overlay || !msgEl || !yesBtn || !noBtn) {
+                if (window.confirm(msg)) onConfirm();
+                return;
+            }
+
+            msgEl.innerText = msg;
+            overlay.classList.remove('hidden');
+
+            // Clone to strip old listeners
+            var newYes = yesBtn.cloneNode(true);
+            var newNo = noBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYes, yesBtn);
+            noBtn.parentNode.replaceChild(newNo, noBtn);
+
+            newYes.onclick = function () {
+                overlay.classList.add('hidden');
+                onConfirm();
+            };
+
+            newNo.onclick = function () {
+                overlay.classList.add('hidden');
+            };
+        },
+
+        closeConfirm: function () {
+            var el = document.getElementById('confirm-modal');
+            if (el) el.classList.add('hidden');
+        }
+    }
 };
 
-// 全局错误捕获，用于手机/PC 调试
-window.onerror = function (msg, url, line) {
-    alert("Runtime Error: " + msg + "\nLine: " + line);
-    return false;
-};
+// --- Initialization ---
 
-// 助手函数：安全解析 JSON
-function safeGetJSON(key, defaultValue) {
-    try {
-        var item = localStorage.getItem(key);
-        if (!item || item === "undefined") return defaultValue;
-        return JSON.parse(item) || defaultValue;
-    } catch (e) { return defaultValue; }
+function initApp() {
+    App.State.products = App.Utils.safeGetJSON('lubricant_products', App.Config.INITIAL_PRODUCTS);
+    App.State.inventory = App.Utils.safeGetJSON('lubricant_inventory', {});
+    App.State.categoryOrder = App.Utils.safeGetJSON('lubricant_category_order', Object.keys(App.Config.INITIAL_PRODUCTS));
+
+    var savedId = localStorage.getItem('lubricant_sync_id');
+    App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
+
+    initSupabase();
+    initializeCategory();
+
+    // UI Init
+    document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    updateProductSuggestions();
+    renderTabs();
+    renderInventory();
+
+    if (App.Services.supabase && App.State.syncId) pullFromCloud();
 }
-
-// 全局状态
-var state = {
-    currentCategory: "",
-    products: safeGetJSON('lubricant_products', INITIAL_PRODUCTS),
-    inventory: safeGetJSON('lubricant_inventory', {}),
-    categoryOrder: safeGetJSON('lubricant_category_order', Object.keys(INITIAL_PRODUCTS)),
-    // 修正持久化逻辑：防止 "null" 字符串干扰 / Fix persistence: prevent "null" string interference
-    syncId: (function () {
-        var id = localStorage.getItem('lubricant_sync_id');
-        return (id === null || id === "null" || id === "undefined") ? "" : id;
-    })(),
-    viewMode: 'edit', // 'edit' or 'summary'
-    sortDirection: 'asc' // 'asc' or 'desc'
-};
-
-// Supabase 配置
-var SUPABASE_URL = "https://kutwhtcvhtbhbhhyqiop.supabase.co";
-var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4";
-var supabaseClient = null;
 
 function initSupabase() {
-    // 检查各种 CDN 导出模式
     var lib = window.supabasejs || window.supabase;
-
-    // 深度检查 'createClient' 是否可用
     if (lib && typeof lib.createClient === 'function') {
-        supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
+        App.Services.supabase = lib.createClient(App.Config.SUPABASE_URL, App.Config.SUPABASE_KEY);
     } else if (lib && lib.supabase && typeof lib.supabase.createClient === 'function') {
-        supabaseClient = lib.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        App.Services.supabase = lib.supabase.createClient(App.Config.SUPABASE_URL, App.Config.SUPABASE_KEY);
     }
 }
-initSupabase();
 
-// 确保页面加载时重新初始化
-window.addEventListener('load', function () {
-    if (!supabaseClient) initSupabase();
-});
-
-// 分类修复与初始化
 function initializeCategory() {
-    var currentCats = Object.keys(state.products);
-    var order = state.categoryOrder || [];
-    state.categoryOrder = order.filter(function (c) { return currentCats.indexOf(c) !== -1; });
+    var currentCats = Object.keys(App.State.products);
+    var order = App.State.categoryOrder || [];
+    App.State.categoryOrder = order.filter(function (c) { return currentCats.indexOf(c) !== -1; });
     currentCats.forEach(function (c) {
-        if (state.categoryOrder.indexOf(c) === -1) state.categoryOrder.push(c);
+        if (App.State.categoryOrder.indexOf(c) === -1) App.State.categoryOrder.push(c);
     });
-    if (state.categoryOrder.length > 0 && (!state.currentCategory || !state.products[state.currentCategory])) {
-        state.currentCategory = state.categoryOrder[0];
-    }
-}
-initializeCategory();
-
-// 同步状态工具
-function updateSyncStatus(status, isOnline) {
-    var el = document.getElementById('sync-status');
-    if (el) {
-        var span = el.querySelector('span');
-        if (span) {
-            span.innerText = status;
-            if (isOnline) el.classList.add('online');
-            else el.classList.remove('online');
-        }
+    if (App.State.categoryOrder.length > 0 && (!App.State.currentCategory || !App.State.products[App.State.currentCategory])) {
+        App.State.currentCategory = App.State.categoryOrder[0];
     }
 }
 
-// 推送到云端
+// --- Cloud Sync ---
+
 function pushToCloud() {
-    if (!supabaseClient) initSupabase();
-    if (!supabaseClient || !state.syncId) return;
+    if (!App.Services.supabase) initSupabase();
+    if (!App.Services.supabase || !App.State.syncId) return;
 
-    supabaseClient
+    App.Services.supabase
         .from('app_sync')
         .upsert({
-            sync_id: state.syncId,
+            sync_id: App.State.syncId,
             data: {
-                products: state.products,
-                inventory: state.inventory,
-                categoryOrder: state.categoryOrder
+                products: App.State.products,
+                inventory: App.State.inventory,
+                category_order: App.State.categoryOrder
             },
             updated_at: new Date().toISOString()
-        })
-        .then(function (res) {
-            if (res.error) throw res.error;
-            updateSyncStatus("Online (Synced)", true);
-        })
-        .catch(function (e) {
-            console.error("Push error:", e);
-            updateSyncStatus("Sync Error", false);
-        });
-}
-
-// 从云端拉取 / Pull from Cloud
-function pullFromCloud() {
-    if (!supabaseClient) {
-        initSupabase();
-        if (!supabaseClient) {
-            return alert("Sync Error: Cloud library not loaded. Please refresh the page.");
-        }
-    }
-
-    // 强化同步识别：优先采用输入框当前值
-    // Enhanced Sync Detection: Prioritize current input value
-    var input = document.getElementById('sync-id-input');
-    var currentInputValue = input ? input.value.trim() : "";
-
-    // 如果 state.syncId 为空或与输入框不符，立即更新
-    if (currentInputValue && currentInputValue !== state.syncId) {
-        state.syncId = currentInputValue;
-        saveToStorage(false);
-    }
-
-    if (!state.syncId || state.syncId === "null") {
-        return alert("Sync ID Required: Please enter the same ID as your PC in Settings and click 'Sync Now'.");
-    }
-
-    updateSyncStatus("Syncing...", false);
-    supabaseClient
-        .from('app_sync')
-        .select('data')
-        .eq('sync_id', state.syncId)
-        .single()
+        }, { onConflict: 'sync_id' })
         .then(function (res) {
             if (res.error) {
-                // 如果发现新 ID，则创建初始数据
-                if (res.error.code === 'PGRST116') return pushToCloud();
-                throw res.error;
-            }
-            if (res.data && res.data.data) {
-                var incoming = res.data.data;
-                state.products = incoming.products || state.products;
-                state.inventory = incoming.inventory || state.inventory;
-                state.categoryOrder = incoming.categoryOrder || state.categoryOrder;
-                initializeCategory();
-                saveToStorage(false);
-                renderTabs();
-                renderInventory();
-                updateSyncStatus("Online (Synced)", true);
+                console.error('Push Error:', res.error);
+                App.UI.updateSyncStatus('Sync Error', false);
+                // Silent fail on push
             } else {
-                pushToCloud();
+                App.UI.updateSyncStatus('Saved', true);
             }
-        })
-        .catch(function (e) {
-            alert("Sync Failed: " + (e.message || "Please check your internet connection."));
-            updateSyncStatus("Sync Error", false);
         });
 }
 
-// 动态更新 PWA/添加产品时的智能建议列表
+function pullFromCloud() {
+    if (!App.Services.supabase) initSupabase();
+    if (!App.Services.supabase) return App.UI.showToast("Cloud library not loaded", 'error');
+    if (!App.State.syncId) return App.UI.showToast("Sync ID Required", 'info');
+
+    App.UI.updateSyncStatus('Syncing...', false);
+
+    App.Services.supabase
+        .from('app_sync')
+        .select('data')
+        .eq('sync_id', App.State.syncId)
+        .single()
+        .then(function (res) {
+            if (res.data && res.data.data) {
+                var cloudData = res.data.data;
+                App.State.products = cloudData.products || App.State.products;
+                App.State.inventory = cloudData.inventory || App.State.inventory;
+                App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
+
+                saveToStorageImmediate();
+                initializeCategory();
+                renderTabs();
+                renderInventory();
+                renderManageUI();
+                App.UI.showToast("Cloud sync complete", 'success');
+                App.UI.updateSyncStatus('Synced', true);
+            } else if (res.error) {
+                console.error('Pull Error:', res.error);
+                App.UI.showToast("Sync failed: " + (res.error.message || "Unknown"), 'error');
+                App.UI.updateSyncStatus('Error', false);
+            } else {
+                // No data found, that's fine, pushing local data
+                pushToCloud();
+                App.UI.showToast("ID connected (New)", 'success');
+            }
+        });
+}
+
+// --- Storage & Data ---
+
+function saveToStorageImmediate() {
+    localStorage.setItem('lubricant_products', JSON.stringify(App.State.products));
+    localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
+    localStorage.setItem('lubricant_category_order', JSON.stringify(App.State.categoryOrder));
+    localStorage.setItem('lubricant_sync_id', App.State.syncId);
+}
+
+// Debounce wrapper for frequent updates
+var debouncedSave = App.Utils.debounce(function () {
+    saveToStorageImmediate();
+    pushToCloud();
+    App.UI.updateSyncStatus('Saved', true);
+}, 1000);
+
+function saveToStorage(isImmediate) {
+    saveToStorageImmediate();
+    App.UI.updateSyncStatus('Saving...', false);
+    if (isImmediate) {
+        pushToCloud();
+        App.UI.updateSyncStatus('Saved', true);
+    } else {
+        debouncedSave();
+    }
+}
+
 function updateProductSuggestions() {
-    var datalist = document.getElementById('master-product-list');
-    if (!datalist) return;
+    var dataList = document.getElementById('master-product-list');
+    if (!dataList) return;
 
     var allProducts = new Set();
-    Object.values(state.products).forEach(function (list) {
-        list.forEach(function (p) { allProducts.add(p); });
-    });
-
-    datalist.innerHTML = '';
-    Array.from(allProducts).sort().forEach(function (p) {
-        var option = document.createElement('option');
-        option.value = p;
-        datalist.appendChild(option);
-    });
-
-    // Mobile fix: Force re-link list attribute to trigger browser re-scan
-    document.querySelectorAll('input[list="master-product-list"]').forEach(function (input) {
-        var listId = input.getAttribute('list');
-        input.setAttribute('list', '');
-        setTimeout(function () { input.setAttribute('list', listId); }, 10);
-    });
-}
-
-function saveToStorage(autoPush) {
-    localStorage.setItem('lubricant_products', JSON.stringify(state.products));
-    localStorage.setItem('lubricant_inventory', JSON.stringify(state.inventory));
-    localStorage.setItem('lubricant_category_order', JSON.stringify(state.categoryOrder));
-    localStorage.setItem('lubricant_sync_id', state.syncId);
-    updateProductSuggestions(); // 保存时同步更新建议列表
-    if (autoPush !== false && state.syncId) {
-        pushToCloud();
+    Object.values(App.Config.INITIAL_PRODUCTS).forEach(arr => arr.forEach(p => allProducts.add(p)));
+    if (App.State.products) {
+        Object.values(App.State.products).forEach(arr => arr.forEach(p => allProducts.add(p)));
     }
+
+    dataList.innerHTML = '';
+    allProducts.forEach(function (pName) {
+        var opt = document.createElement('option');
+        opt.value = pName;
+        dataList.appendChild(opt);
+    });
 }
 
-// 数学逻辑工具 / Math logic tool
-function evaluateExpression(expr) {
-    if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
-    // 允许数字、四则运算符、小数点及括号 / Allow numbers, operators, dots, and parens
-    var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
-    try {
-        // 使用 Function 构造器作为安全的 eval 代放 / Use Function constructor as a safer eval alternative
-        var result = new Function('return (' + cleanExpr + ')')();
-        var num = parseFloat(result);
-        return isNaN(num) ? 0 : Math.round(num * 100) / 100;
-    } catch (e) {
-        return 0;
-    }
-}
+// --- Rendering ---
 
-// 渲染动态标签页
 function renderTabs() {
     var tabNav = document.getElementById('category-tabs');
     if (!tabNav) return;
     tabNav.innerHTML = '';
-    state.categoryOrder.forEach(function (cat) {
-        var button = document.createElement('button');
-        button.className = 'tab' + (cat === state.currentCategory ? ' active' : '');
-        button.innerText = cat;
-        button.onclick = function () {
-            state.currentCategory = cat;
+
+    if (!App.State.categoryOrder) App.State.categoryOrder = [];
+
+    App.State.categoryOrder.forEach(function (cat) {
+        if (!App.State.products[cat]) return;
+        var btn = document.createElement('button');
+        btn.className = 'tab-btn' + (cat === App.State.currentCategory ? ' active' : '');
+        btn.innerText = cat;
+        btn.onclick = function () {
+            App.State.currentCategory = cat;
             renderTabs();
             renderInventory();
         };
-        tabNav.appendChild(button);
+        tabNav.appendChild(btn);
     });
+
+    var manageBtn = document.createElement('button');
+    manageBtn.id = 'manage-btn';
+    manageBtn.className = 'tab-btn manage-icon';
+    manageBtn.innerHTML = '⚙️';
+    tabNav.appendChild(manageBtn);
+
+    // Re-bind modal opener
+    manageBtn.onclick = function () {
+        var modal = document.getElementById('modal-overlay');
+        modal.classList.remove('hidden');
+        document.getElementById('sync-id-input').value = App.State.syncId || '';
+        if (App.Services.supabase && App.State.syncId) pullFromCloud();
+        renderManageUI();
+    };
 }
 
-// 渲染库存列表
 function renderInventory() {
     var list = document.getElementById('inventory-list');
-    var controls = document.getElementById('inventory-controls');
-    if (!list || !controls) return;
+    if (!list) return;
     list.innerHTML = '';
-    controls.innerHTML = '';
 
-    if (!state.currentCategory || !state.products[state.currentCategory]) {
-        list.innerHTML = '<p style="text-align:center;color:#888;margin-top:20px;">No products found</p>';
+    if (!App.State.currentCategory || !App.State.products || !App.State.products[App.State.currentCategory]) {
+        list.innerHTML = '<div class="empty-state">Select or Add a Category</div>';
         return;
     }
 
-    // 渲染切换栏与排序按钮到控制容器
-    var toggleBar = document.createElement('div');
-    toggleBar.className = 'view-toggle-bar';
-    var sortText = state.sortDirection === 'asc' ? 'Sort A-Z' : 'Sort Z-A';
-    toggleBar.innerHTML =
-        '<div class="segmented-control">' +
-        '<button class="' + (state.viewMode === 'edit' ? 'active' : '') + '" onclick="setViewMode(\'edit\')">Edit</button>' +
-        '<button class="' + (state.viewMode === 'summary' ? 'active' : '') + '" onclick="setViewMode(\'summary\')">Summary</button>' +
-        '</div>' +
-        '<button onclick="sortProductsToggle()" class="btn-edit" style="font-size:0.95rem; padding:10px 16px; background:var(--card-bg); border:1px solid var(--border-color); color:var(--primary-blue); border-radius:12px; font-weight:700;">' + sortText + '</button>';
-    controls.appendChild(toggleBar);
+    var products = App.State.products[App.State.currentCategory];
 
-    var categoryProducts = state.products[state.currentCategory];
+    // Sort logic
+    var sortedProducts = products.slice();
+    if (App.State.sortDirection === 'asc') sortedProducts.sort();
+    else if (App.State.sortDirection === 'desc') sortedProducts.sort().reverse();
 
-    if (state.viewMode === 'summary') {
-        list.classList.add('summary-mode');
+    // Sort Button
+    var sortBtn = document.createElement('div');
+    sortBtn.className = 'sort-controls';
+    sortBtn.innerHTML = '<button class="sort-btn" onclick="sortProductsToggle()">Sort: ' + App.State.sortDirection.toUpperCase() + '</button>';
+    list.appendChild(sortBtn);
 
-        // 为摘要视图添加统计页眉
-        var statsHeader = document.createElement('div');
-        statsHeader.style = "grid-column: 1 / -1; padding: 10px 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;";
-        statsHeader.innerHTML = '📊 Total: <span style="color:var(--accent-gold);">' + categoryProducts.length + '</span> Products';
-        list.appendChild(statsHeader);
+    sortedProducts.forEach(function (name, index) {
+        var key = App.State.currentCategory + '-' + name;
+        var val = App.State.inventory[key] || '';
+        var total = App.Utils.safeEvaluate(val);
 
-        categoryProducts.forEach(function (name) {
-            var val = state.inventory[state.currentCategory + '-' + name] || '';
-            var total = evaluateExpression(val);
-            var card = document.createElement('div');
-            card.className = 'summary-card';
-            card.innerHTML =
-                '<div class="s-name">' + name + '</div>' +
-                '<div class="s-val">' + total + '</div>';
-            list.appendChild(card);
-        });
-        return;
-    }
-
-    list.classList.remove('summary-mode');
-    categoryProducts.forEach(function (name, index) {
-        var val = state.inventory[state.currentCategory + '-' + name] || '';
-        var total = evaluateExpression(val);
         var card = document.createElement('div');
-        card.className = 'item-card';
+        card.className = 'product-card';
         card.innerHTML =
-            '<div class="item-info">' +
-            '<div class="item-name" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\', ' + index + ')">' + name + '</div>' +
-            '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
+            '<div class="card-header">' +
+            '<span class="product-name">' + name + '</span>' +
+            '<div class="card-actions">' +
+            '<button class="btn-icon" onclick="renameProductInline(' + index + ')">✏️</button>' +
+            '<button class="btn-icon delete" onclick="removeProductInline(' + index + ')">🗑️</button>' +
+            '</div>' +
             '</div>' +
             '<div class="input-group">' +
-            '<input type="text" class="item-input" placeholder="0" value="' + val + '" ' +
-            'oninput="updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
+            '<input type="tel" value="' + val + '" placeholder="0" ' +
+            'oninput="window.updateValue(\'' + name + '\', this.value, ' + index + ')">' +
             '</div>' +
-            '<button class="item-delete-btn" onclick="removeProductInline(' + index + ')">&times;</button>';
+            '<div class="math-result" id="result-' + index + '">Subtotal: ' + total + '</div>';
+
         list.appendChild(card);
     });
 
-    // 快速添加按钮及内联输入模式
-    var quickAddWrapper = document.createElement('div');
-    quickAddWrapper.className = 'quick-add-wrapper';
-
-    var quickAddBtn = document.createElement('div');
-    quickAddBtn.className = 'quick-add-card';
-    quickAddBtn.innerText = '+ Add Product';
-
-    var quickAddForm = document.createElement('div');
-    quickAddForm.className = 'quick-add-form hidden';
-    quickAddForm.innerHTML =
-        '<input type="text" id="quick-add-input" placeholder="Type or select product..." list="master-product-list" autocomplete="off">' +
-        '<div class="quick-add-actions">' +
-        '<button onclick="submitQuickAdd()">Add</button>' +
-        '<button class="cancel" onclick="toggleQuickAdd(false)">Cancel</button>' +
+    // Quick Add
+    var quickAdd = document.createElement('div');
+    quickAdd.className = 'quick-add-section';
+    quickAdd.innerHTML =
+        '<div class="quick-add-row">' +
+        '<input type="text" id="quick-add-name" placeholder="New product name" list="master-product-list">' +
+        '<button onclick="submitQuickAdd()">Add Product</button>' +
         '</div>';
-
-    quickAddBtn.onclick = function () { toggleQuickAdd(true); };
-
-    quickAddWrapper.appendChild(quickAddBtn);
-    quickAddWrapper.appendChild(quickAddForm);
-    list.appendChild(quickAddWrapper);
+    list.appendChild(quickAdd);
 }
 
-window.toggleQuickAdd = function (show) {
-    var btn = document.querySelector('.quick-add-card');
-    var form = document.querySelector('.quick-add-form');
-    if (btn && form) {
-        if (show) {
-            btn.classList.add('hidden');
-            form.classList.remove('hidden');
-            var input = document.getElementById('quick-add-input');
-            if (input) {
-                input.value = '';
-                input.focus();
-            }
-        } else {
-            btn.classList.remove('hidden');
-            form.classList.add('hidden');
-        }
-    }
-};
+// --- Interaction Handlers ---
 
 window.submitQuickAdd = function () {
-    var input = document.getElementById('quick-add-input');
-    var name = input ? input.value.trim() : "";
-    if (name && state.currentCategory) {
-        if (state.products[state.currentCategory].indexOf(name) !== -1) {
-            return alert("Duplicate Product: '" + name + "' already exists in this category.");
-        }
-        state.products[state.currentCategory].push(name);
-        saveToStorage();
-        renderInventory();
+    var input = document.getElementById('quick-add-name');
+    var name = input.value.trim();
+    if (!name) return;
+
+    if (App.State.products[App.State.currentCategory].includes(name)) {
+        return App.UI.showToast("Product exists", 'error');
     }
+
+    App.State.products[App.State.currentCategory].push(name);
+    saveToStorage();
+    renderInventory();
+    input.value = '';
+    App.UI.showToast("Product added", 'success');
 };
 
-window.renameProductInline = function (oldName, index) {
+window.renameProductInline = function (index) {
+    var oldName = App.State.products[App.State.currentCategory][index];
     var newName = prompt("Rename product:", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
         var trimmedName = newName.trim();
-        if (state.products[state.currentCategory].indexOf(trimmedName) !== -1) {
-            return alert("Duplicate Product: '" + trimmedName + "' already exists in this category.");
+        if (App.State.products[App.State.currentCategory].includes(trimmedName)) {
+            return App.UI.showToast("Product exists", 'error');
         }
-        state.products[state.currentCategory][index] = trimmedName;
-        // 迁移库存数据
-        var oldKey = state.currentCategory + '-' + oldName;
-        var newKey = state.currentCategory + '-' + trimmedName;
-        if (state.inventory[oldKey] !== undefined) {
-            state.inventory[newKey] = state.inventory[oldKey];
-            delete state.inventory[oldKey];
+
+        App.State.products[App.State.currentCategory][index] = trimmedName;
+
+        // Migrate data
+        var oldKey = App.State.currentCategory + '-' + oldName;
+        var newKey = App.State.currentCategory + '-' + trimmedName;
+        if (App.State.inventory[oldKey]) {
+            App.State.inventory[newKey] = App.State.inventory[oldKey];
+            delete App.State.inventory[oldKey];
         }
+
         saveToStorage();
         renderInventory();
     }
 };
 
 window.removeProductInline = function (index) {
-    if (confirm("Delete this product?")) {
-        var name = state.products[state.currentCategory][index];
-        state.products[state.currentCategory].splice(index, 1);
-        delete state.inventory[state.currentCategory + '-' + name];
+    App.UI.confirm("Delete this product?", function () {
+        var name = App.State.products[App.State.currentCategory][index];
+        App.State.products[App.State.currentCategory].splice(index, 1);
+        delete App.State.inventory[App.State.currentCategory + '-' + name];
         saveToStorage();
         renderInventory();
-    }
+        App.UI.showToast("Product deleted", 'info');
+    });
 };
 
 window.sortProductsToggle = function () {
-    if (state.currentCategory && state.products[state.currentCategory]) {
-        state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
-        state.products[state.currentCategory].sort(function (a, b) {
-            var res = a.toLowerCase().localeCompare(b.toLowerCase());
-            return state.sortDirection === 'asc' ? res : -res;
-        });
-        saveToStorage();
-        renderInventory();
-    }
-};
-
-window.setViewMode = function (mode) {
-    state.viewMode = mode;
+    App.State.sortDirection = App.State.sortDirection === 'asc' ? 'desc' : 'asc';
     renderInventory();
 };
 
+window.setViewMode = function (mode) {
+    App.State.viewMode = mode; // Currently unused in v1.8 logic but kept for extensibility
+};
+
 window.updateValue = function (name, value, index) {
-    state.inventory[state.currentCategory + '-' + name] = value;
-    saveToStorage();
-    var total = evaluateExpression(value);
+    App.State.inventory[App.State.currentCategory + '-' + name] = value;
+    saveToStorage(false); // Debounced save
+    var total = App.Utils.safeEvaluate(value);
     var resultEl = document.getElementById('result-' + index);
     if (resultEl) resultEl.innerText = 'Subtotal: ' + total;
 };
 
-// 弹窗逻辑
-var modal = document.getElementById('modal-overlay');
-if (document.getElementById('manage-btn')) {
-    document.getElementById('manage-btn').onclick = function () {
-        modal.classList.remove('hidden');
-        document.getElementById('sync-id-input').value = state.syncId;
-        if (supabaseClient && state.syncId) pullFromCloud();
-        renderManageUI();
-    };
-}
+// --- Modal & Management ---
 
+var modal = document.getElementById('modal-overlay');
 if (document.querySelector('.close-modal')) {
     document.querySelector('.close-modal').onclick = function () {
         modal.classList.add('hidden');
     };
 }
 
-// 连接同步按钮
 if (document.getElementById('connect-sync-btn')) {
     document.getElementById('connect-sync-btn').onclick = function () {
         var input = document.getElementById('sync-id-input');
         var id = input ? input.value.trim() : "";
         if (id) {
-            state.syncId = id;
-            saveToStorage(false);
+            App.State.syncId = id;
+            saveToStorage(true); // Immediate save
             pullFromCloud();
         } else {
-            alert("Please enter a Sync ID.");
+            App.UI.showToast("Please enter a Sync ID.", 'info');
         }
     };
 }
 
 window.resetInventory = function () {
-    if (confirm("Reset ALL inventory values to zero? This will not delete products or categories.")) {
-        state.inventory = {};
-        saveToStorage();
+    App.UI.confirm("Reset ALL inventory values to zero?", function () {
+        App.State.inventory = {};
+        saveToStorage(true);
         renderInventory();
-        alert("All inventory values have been reset.");
-    }
+        App.UI.showToast("All inventory reset", 'success');
+    });
 };
 
 function renderManageUI() {
     var cList = document.getElementById('category-manage-list');
     if (!cList) return;
     cList.innerHTML = '';
-    state.categoryOrder.forEach(function (cat, idx) {
+    if (!App.State.categoryOrder) App.State.categoryOrder = [];
+
+    App.State.categoryOrder.forEach(function (cat, idx) {
         var li = document.createElement('li');
         li.className = 'manage-item';
         li.innerHTML =
             '<span>' + cat + '</span>' +
             '<div class="item-actions">' +
             '<button class="btn-sort" onclick="moveCategory(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + '>↑</button>' +
-            '<button class="btn-sort" onclick="moveCategory(' + idx + ', 1)" ' + (idx === state.categoryOrder.length - 1 ? 'disabled' : '') + '>↓</button>' +
+            '<button class="btn-sort" onclick="moveCategory(' + idx + ', 1)" ' + (idx === App.State.categoryOrder.length - 1 ? 'disabled' : '') + '>↓</button>' +
             '<button class="btn-edit" onclick="editCategory(\'' + cat.replace(/'/g, "\\'") + '\')">Edit</button>' +
             '<button class="btn-delete" onclick="removeCategory(\'' + cat.replace(/'/g, "\\'") + '\')">Delete</button>' +
             '</div>';
         cList.appendChild(li);
     });
-
 }
 
-// 交互动作
 if (document.getElementById('add-category-btn')) {
     document.getElementById('add-category-btn').onclick = function () {
         var input = document.getElementById('new-category-name');
         var name = input.value.trim();
-        if (name && !state.products[name]) {
-            state.products[name] = [];
-            state.categoryOrder.push(name);
-            if (!state.currentCategory) state.currentCategory = name;
-            saveToStorage();
+        if (name && !App.State.products[name]) {
+            App.State.products[name] = [];
+            App.State.categoryOrder.push(name);
+            if (!App.State.currentCategory) App.State.currentCategory = name;
+            saveToStorage(true);
             input.value = '';
             renderTabs();
             renderManageUI();
+            App.UI.showToast("Category added", 'success');
+        } else if (name) {
+            App.UI.showToast("Category exists", 'error');
         }
     };
 }
 
 window.moveCategory = function (index, direction) {
     var newIdx = index + direction;
-    if (newIdx >= 0 && newIdx < state.categoryOrder.length) {
-        var temp = state.categoryOrder.splice(index, 1)[0];
-        state.categoryOrder.splice(newIdx, 0, temp);
-        saveToStorage();
+    if (newIdx >= 0 && newIdx < App.State.categoryOrder.length) {
+        var temp = App.State.categoryOrder.splice(index, 1)[0];
+        App.State.categoryOrder.splice(newIdx, 0, temp);
+        saveToStorage(true);
         renderTabs();
         renderManageUI();
     }
 };
 
 window.editCategory = function (oldCat) {
-    var newCat = prompt("Rename category:", oldCat);
+    var newCat = prompt("Rename category:", oldCat); // Modals for prompts not strictly required to be Toast
     if (newCat && newCat.trim() !== "" && newCat !== oldCat) {
-        if (state.products[newCat]) return alert("Exists.");
-        state.products[newCat] = state.products[oldCat];
-        delete state.products[oldCat];
-        var ordIdx = state.categoryOrder.indexOf(oldCat);
-        if (ordIdx > -1) state.categoryOrder[ordIdx] = newCat;
-        Object.keys(state.inventory).forEach(function (key) {
+        if (App.State.products[newCat]) return App.UI.showToast("Category exists", 'error');
+
+        App.State.products[newCat] = App.State.products[oldCat];
+        delete App.State.products[oldCat];
+
+        var ordIdx = App.State.categoryOrder.indexOf(oldCat);
+        if (ordIdx > -1) App.State.categoryOrder[ordIdx] = newCat;
+
+        Object.keys(App.State.inventory).forEach(function (key) {
             if (key.indexOf(oldCat + '-') === 0) {
                 var pName = key.substring(oldCat.length + 1);
-                state.inventory[newCat + '-' + pName] = state.inventory[key];
-                delete state.inventory[key];
+                App.State.inventory[newCat + '-' + pName] = App.State.inventory[key];
+                delete App.State.inventory[key];
             }
         });
-        if (state.currentCategory === oldCat) state.currentCategory = newCat;
-        saveToStorage();
+
+        if (App.State.currentCategory === oldCat) App.State.currentCategory = newCat;
+        saveToStorage(true);
         renderTabs();
         renderInventory();
         renderManageUI();
@@ -532,22 +569,24 @@ window.editCategory = function (oldCat) {
 };
 
 window.removeCategory = function (cat) {
-    if (confirm("Delete category?")) {
-        delete state.products[cat];
-        state.categoryOrder = state.categoryOrder.filter(function (c) { return c !== cat; });
-        Object.keys(state.inventory).forEach(function (key) {
-            if (key.indexOf(cat + '-') === 0) delete state.inventory[key];
+    App.UI.confirm("Delete category '" + cat + "'?", function () {
+        delete App.State.products[cat];
+        App.State.categoryOrder = App.State.categoryOrder.filter(function (c) { return c !== cat; });
+        Object.keys(App.State.inventory).forEach(function (key) {
+            if (key.indexOf(cat + '-') === 0) delete App.State.inventory[key];
         });
-        if (state.currentCategory === cat) state.currentCategory = state.categoryOrder[0] || "";
-        saveToStorage();
+        if (App.State.currentCategory === cat) App.State.currentCategory = App.State.categoryOrder[0] || "";
+        saveToStorage(true);
         renderTabs();
         renderInventory();
         renderManageUI();
-    }
+        App.UI.showToast("Category deleted", 'info');
+    });
 };
 
 
-// PDF 导出
+// --- PDF Export ---
+
 if (document.getElementById('export-pdf-btn')) {
     document.getElementById('export-pdf-btn').onclick = function () {
         var pdfArea = document.getElementById('pdf-template');
@@ -555,45 +594,50 @@ if (document.getElementById('export-pdf-btn')) {
         document.getElementById('pdf-date').innerText = 'Report Date: ' + new Date().toLocaleString();
         pdfContent.innerHTML = '';
         var hasData = false;
-        state.categoryOrder.forEach(function (cat) {
-            var allProducts = state.products[cat] || [];
+
+        if (!App.State.categoryOrder) App.State.categoryOrder = [];
+
+        App.State.categoryOrder.forEach(function (cat) {
+            var allProducts = App.State.products[cat] || [];
             if (allProducts.length > 0) {
                 hasData = true;
                 var block = document.createElement('div');
                 block.className = 'pdf-category-block';
                 var unitSuffix = "";
                 var catLower = cat.toLowerCase();
-                if (catLower.includes('bulk oil')) {
-                    unitSuffix = " (L)";
-                } else if (catLower.includes('case oil')) {
-                    unitSuffix = " (Cases)";
-                }
+                if (catLower.includes('bulk oil')) unitSuffix = " (L)";
+                else if (catLower.includes('case oil')) unitSuffix = " (Cases)";
 
                 block.innerHTML = '<div class="pdf-category-title">' + cat + unitSuffix + '</div>';
+
                 var grid = document.createElement('div');
                 grid.className = 'pdf-grid';
+
                 allProducts.forEach(function (name) {
-                    var expr = state.inventory[cat + '-' + name];
-                    var total = evaluateExpression(expr);
+                    var expr = App.State.inventory[cat + '-' + name];
+                    var total = App.Utils.safeEvaluate(expr);
                     var item = document.createElement('div');
                     item.className = 'pdf-grid-item';
                     item.innerHTML = '<span class="p-name">' + name + '</span><span class="p-val">' + total + '</span>';
                     grid.appendChild(item);
                 });
+
                 if (allProducts.length % 2 !== 0) {
                     var spacer = document.createElement('div');
                     spacer.className = 'pdf-grid-item';
                     spacer.innerHTML = '<span></span><span></span>';
                     grid.appendChild(spacer);
                 }
+
                 block.appendChild(grid);
                 pdfContent.appendChild(block);
             }
         });
-        if (!hasData) return alert('No data.');
+
+        if (!hasData) return App.UI.showToast("No data to export", 'info');
+
         pdfArea.classList.remove('hidden');
 
-        // 生成带日期的文件名
         var now = new Date();
         var dateStr = now.getFullYear() + '-' +
             String(now.getMonth() + 1).padStart(2, '0') + '-' +
@@ -609,38 +653,32 @@ if (document.getElementById('export-pdf-btn')) {
             pagebreak: { mode: ['css', 'legacy'] }
         }).from(pdfArea).save().then(function () {
             pdfArea.classList.add('hidden');
+            App.UI.showToast("PDF Exported", 'success');
         });
     };
 }
 
-// PWA 安装与服务进程
+// --- PWA & Service Worker ---
+
 let deferredPrompt;
 const installBtn = document.getElementById('pwa-install-btn');
 const iosHint = document.getElementById('ios-install-hint');
-
-// iOS 检测
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('PWA: beforeinstallprompt event fired');
     e.preventDefault();
     deferredPrompt = e;
     if (installBtn) installBtn.style.display = 'block';
 });
 
-// 在设置中明确为 iOS 显示提示
-if (isIOS && iosHint) {
-    iosHint.style.display = 'block';
-}
+if (isIOS && iosHint) iosHint.style.display = 'block';
 
 if (installBtn) {
     installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.style.display = 'none';
-        }
+        if (outcome === 'accepted') installBtn.style.display = 'none';
         deferredPrompt = null;
     });
 }
@@ -653,9 +691,5 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// 初始化入口
-document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-updateProductSuggestions(); // 启动时填充建议
-renderTabs();
-renderInventory();
-if (supabaseClient && state.syncId) pullFromCloud();
+// Start App
+window.addEventListener('load', initApp);
