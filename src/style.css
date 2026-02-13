@@ -283,11 +283,17 @@ body {
 .item-info .item-name {
     font-weight: 700;
     font-size: 1.25rem;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--text-main);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.item-info .item-name:hover {
+    color: var(--accent-gold);
 }
 
 .item-info .item-result {

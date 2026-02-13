@@ -353,11 +353,10 @@ function renderInventory() {
         card.className = 'item-card';
         card.innerHTML =
             '<div class="item-info">' +
-            '<div class="item-name">' + name + '</div>' +
+            '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(' + index + ')">' + name + '</div>' +
             '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
-            '<button class="btn-edit" onclick="renameProductInline(' + index + ')">✏️</button>' +
             '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
             'oninput="window.updateValue(\'' + name + '\', this.value, ' + index + ')">' +
             '<button class="item-delete-btn" onclick="removeProductInline(' + index + ')">🗑️</button>' +
