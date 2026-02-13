@@ -199,29 +199,27 @@ function initializeCategory() {
 
 // --- Cloud Sync ---
 
-function pushToCloud() {
-    if (!App.Services.supabase) initSupabase();
-    if (!App.Services.supabase || !App.State.syncId) return;
-
-    App.Services.supabase
-        .from('app_sync')
-        .upsert({
-            sync_id: App.State.syncId,
-            data: {
-                products: App.State.products,
-                inventory: App.State.inventory,
-                category_order: App.State.categoryOrder,
-                last_updated_ts: App.State.lastUpdated // Stored inside JSON to avoid DB schema changes
-            },
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'sync_id' })
-        .then(function (res) {
-            if (res.error) {
-                App.UI.updateSyncStatus('Sync Offline', false);
-            } else {
-                App.UI.updateSyncStatus('Cloud Synced', true);
-            }
-        });
+console.log("[Sync] Pushing to cloud...", { sync_id: App.State.syncId, ts: App.State.lastUpdated });
+App.Services.supabase
+    .from('app_sync')
+    .upsert({
+        sync_id: App.State.syncId,
+        data: {
+            products: App.State.products,
+            inventory: App.State.inventory,
+            category_order: App.State.categoryOrder,
+            last_updated_ts: App.State.lastUpdated // Stored inside JSON to avoid DB schema changes
+        },
+        updated_at: new Date().toISOString()
+    }, { onConflict: 'sync_id' })
+    .then(function (res) {
+        console.log("[Sync] Push result:", res);
+        if (res.error) {
+            App.UI.updateSyncStatus('Sync Offline', false);
+        } else {
+            App.UI.updateSyncStatus('Cloud Synced', true);
+        }
+    });
 }
 
 function pullFromCloud() {
@@ -237,13 +235,16 @@ function pullFromCloud() {
         .eq('sync_id', App.State.syncId)
         .single()
         .then(function (res) {
+            console.log("[Sync] Pulling result:", res);
             if (res.data && res.data.data) {
                 var cloudData = res.data.data;
                 var cloudTS = cloudData.last_updated_ts || new Date(res.data.updated_at).getTime();
                 var localTS = App.State.lastUpdated;
+                console.log("[Sync] Comparing TS: Cloud=" + cloudTS + " Local=" + localTS);
 
                 // Conflict Resolution: Only pull if cloud is newer than local
                 if (cloudTS > localTS) {
+                    console.log("[Sync] Cloud is newer, updating local state.");
                     App.State.products = cloudData.products || App.State.products;
                     App.State.inventory = cloudData.inventory || App.State.inventory;
                     App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
@@ -257,18 +258,22 @@ function pullFromCloud() {
                     App.UI.showToast("Sync: Cloud state loaded", 'success');
                     App.UI.updateSyncStatus('Synced', true);
                 } else if (cloudTS < localTS) {
+                    console.log("[Sync] Local is newer, triggering push.");
                     // Local is newer, push to cloud
                     pushToCloud();
                 } else {
+                    console.log("[Sync] Already in sync.");
                     App.UI.updateSyncStatus('Synced', true);
                 }
             } else if (res.error && res.error.code !== 'PGRST116') { // PGRST116 is "not found"
                 App.UI.updateSyncStatus('Sync Offline', false);
             } else if (!res.data) {
+                console.log("[Sync] No cloud data found, creating new entry.");
                 pushToCloud();
             }
         })
-        .catch(function () {
+        .catch(function (err) {
+            console.error("[Sync] Pull error:", err);
             App.UI.updateSyncStatus('Sync Offline', false);
         });
 }
@@ -277,6 +282,7 @@ function pullFromCloud() {
 
 function saveToStorageImmediate(skipTimestamp) {
     if (!skipTimestamp) App.State.lastUpdated = Date.now();
+    console.log("[Storage] Saving immediate. skipTS=" + skipTimestamp + " TS=" + App.State.lastUpdated);
     localStorage.setItem('lubricant_products', JSON.stringify(App.State.products));
     localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
     localStorage.setItem('lubricant_category_order', JSON.stringify(App.State.categoryOrder));
