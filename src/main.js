@@ -359,6 +359,13 @@ function renderInventory() {
     if (!list) return;
     list.innerHTML = '';
 
+    // Apply layout class based on view mode
+    if (App.State.viewMode === 'preview') {
+        list.className = 'inventory-list preview-layout';
+    } else {
+        list.className = 'inventory-list';
+    }
+
     if (!App.State.currentCategory || !App.State.products || !App.State.products[App.State.currentCategory]) {
         list.innerHTML = '<div class="empty-state">Select or Add a Category</div>';
         return;

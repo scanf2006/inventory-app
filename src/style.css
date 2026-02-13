@@ -231,6 +231,20 @@ body {
     gap: 15px;
 }
 
+.inventory-list.preview-layout {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 手机端双列 / 2 columns on mobile */
+    gap: 10px;
+    padding: 12px;
+}
+
+@media (min-width: 768px) {
+    .inventory-list.preview-layout {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
 .item-card {
     background: var(--card-bg);
     padding: 22px;
@@ -254,17 +268,42 @@ body {
 }
 
 .item-card.preview-mode {
-    padding: 14px 22px;
-    border-left: 4px solid var(--accent-gold);
+    padding: 12px 15px;
+    border-radius: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    border-left: none;
+    border-top: 3px solid var(--accent-gold);
+    min-height: unset;
+    background: rgba(255, 255, 255, 0.03);
+    /* 稍微变暗区分 / Slightly darker */
+}
+
+.item-card.preview-mode .item-info {
+    min-height: unset;
+    width: 100%;
 }
 
 .item-card.preview-mode .item-name {
-    margin-bottom: 0;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.2;
     cursor: default;
 }
 
 .item-card.preview-mode .item-name:hover {
     color: var(--text-main);
+}
+
+.item-card.preview-mode .item-result {
+    font-size: 0.85rem;
+    color: var(--accent-gold);
+    font-weight: 700;
 }
 
 .product-count-badge {
