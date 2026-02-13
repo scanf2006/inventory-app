@@ -817,3 +817,21 @@ hr {
         width: 100%;
     }
 }
+
+/* 打印模式隔离 (桌面端修复) / Printing Mode Isolation (Desktop Fix) */
+body.printing {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+body.printing #app {
+    display: none !important;
+}
+
+body.printing #pdf-template {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 9999;
+}
