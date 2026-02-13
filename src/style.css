@@ -730,6 +730,7 @@ hr {
     box-shadow: none !important;
     overflow: visible;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .pdf-category-block {
