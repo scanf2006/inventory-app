@@ -769,22 +769,22 @@ hr {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0;
-    border-top: 1px solid #ddd;
-    border-left: 1px solid #ddd;
+    border-top: 1px solid #000;
+    border-left: 1px solid #000;
 }
 
 .pdf-grid-item {
     display: flex;
     justify-content: space-between;
     padding: 6px 10px;
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
     font-size: 0.85rem;
 }
 
 /* Enhanced separator for 2-column layout */
 .pdf-grid-item:nth-child(odd) {
-    border-right: 2px solid #aaa;
+    border-right: 1px solid #000;
     /* Simplified from double to solid to avoid artifacts */
 }
 
