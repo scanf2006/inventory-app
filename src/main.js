@@ -1,5 +1,5 @@
-// Version 1.7.0 - INV-aiden
-console.log("Loading INV-aiden core logic v1.7.0");
+// Version 1.7.1 - INV-aiden
+console.log("Loading INV-aiden core logic v1.7.1");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -605,7 +605,8 @@ if (document.getElementById('export-pdf-btn')) {
             filename: fileName,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         }).from(pdfArea).save().then(function () { pdfArea.classList.add('hidden'); });
     };
 }

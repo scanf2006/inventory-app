@@ -723,6 +723,8 @@ hr {
 /* 紧凑型 PDF 样式 */
 .pdf-template {
     padding: 30px;
+    padding-bottom: 80px;
+    /* Added large buffer to prevent edge-artifacts */
     background: white;
     color: black;
     font-family: 'Inter', sans-serif;
@@ -732,8 +734,10 @@ hr {
 }
 
 .pdf-category-block {
-    margin-bottom: 15px;
-    break-inside: avoid;
+    margin-bottom: 25px;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    /* Legacy support */
 }
 
 .pdf-category-title {
@@ -744,6 +748,8 @@ hr {
     font-size: 1rem;
     border-left: 4px solid #000;
     margin-bottom: 8px;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
 }
 
 .pdf-grid {
@@ -765,8 +771,8 @@ hr {
 
 /* Enhanced separator for 2-column layout */
 .pdf-grid-item:nth-child(odd) {
-    border-right: 3px double #888;
-    /* 双线分割更清晰 */
+    border-right: 2px solid #aaa;
+    /* Simplified from double to solid to avoid artifacts */
 }
 
 .pdf-grid-item .p-name {
