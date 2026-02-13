@@ -40,6 +40,10 @@
     outline: none;
 }
 
+.hidden {
+    display: none !important;
+}
+
 body {
     margin: 0;
     font-family: 'Inter', -apple-system, sans-serif;
@@ -378,8 +382,26 @@ body {
     transition: opacity 0.2s;
 }
 
+.item-delete-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.4rem;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+    min-width: 44px;
+    /* Apple/Google 推荐的最小点击区域 / Minimum hit area recommended */
+    min-height: 44px;
+}
+
 .item-card:hover .item-delete-btn {
     opacity: 1;
+    background: rgba(255, 59, 48, 0.1);
 }
 
 @media (max-width: 768px) {
