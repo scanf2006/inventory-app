@@ -730,9 +730,7 @@ hr {
     box-shadow: none !important;
     overflow: visible;
     box-sizing: border-box;
-    width: 794px !important;
-    /* A4 width at 96 DPI */
-    margin: 0 auto;
+    /* Removed fixed width and margin for rollback */
 }
 
 .pdf-category-block {
@@ -816,26 +814,4 @@ hr {
         top: 0;
         width: 100%;
     }
-}
-
-/* 打印模式隔离 (桌面端修复) / Printing Mode Isolation (Desktop Fix) */
-body.printing {
-    overflow: visible !important;
-    height: auto !important;
-}
-
-/*
-   注意：不要隐藏 #app，否则会导致渲染树塌陷生成空白 PDF
-   Note: Do NOT hide #app, or it renders blank PDF due to tree collapse
-*/
-
-body.printing #pdf-template {
-    display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    z-index: 9999;
-    background: white;
-    /* 确保背景不透明，覆盖在 App 之上 / Ensure opaque background to overlay App */
 }

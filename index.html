@@ -138,21 +138,19 @@
             </div>
         </div>
 
+        <!-- PDF Template (Hidden) -->
+        <div id="pdf-template" class="pdf-template hidden">
+            <h1 style="text-align: center; margin-bottom: 5px;">Inventory Report</h1>
+            <p id="pdf-date" style="text-align: center; color: #666; margin-bottom: 20px;"></p>
+
+            <div id="pdf-content">
+                <!-- Data will be injected here as category blocks -->
+            </div>
+        </div>
         <!-- 智能建议下拉列表 (由 JS 动态填充) -->
         <datalist id="master-product-list"></datalist>
     </div>
-
-    <!-- PDF Template (Moved to Body for Desktop Isolation) -->
-    <div id="pdf-template" class="pdf-template hidden">
-        <h1 style="text-align: center; margin-bottom: 5px;">Inventory Report</h1>
-        <p id="pdf-date" style="text-align: center; color: #666; margin-bottom: 20px;"></p>
-
-        <div id="pdf-content">
-            <!-- Data will be injected here as category blocks -->
-        </div>
-    </div>
-
-    <script src="src/main.js?v=1.7.7"></script>
+    <script src="src/main.js?v=1.7.8"></script>
 </body>
 
 </html>

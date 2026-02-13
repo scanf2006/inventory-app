@@ -1,5 +1,5 @@
-// Version 1.7.7 - INV-aiden
-console.log("Loading INV-aiden core logic v1.7.7");
+// Version 1.7.8 - INV-aiden
+console.log("Loading INV-aiden core logic v1.7.8 (Rollback)");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -600,21 +600,15 @@ if (document.getElementById('export-pdf-btn')) {
             String(now.getDate()).padStart(2, '0');
         var fileName = 'INV_aiden_Report_' + dateStr + '.pdf';
 
-        // 临时切换至打印模式 (解除桌面端视口锁定)
-        document.body.classList.add('printing');
-        // 强制滚动到顶部，确保 html2canvas 从 (0,0) 开始捕获 / Scroll to top to ensure capture starts at (0,0)
-        window.scrollTo(0, 0);
-
         html2pdf().set({
             margin: 10,
             filename: fileName,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, windowWidth: 800 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, // Removed scrollY, windowWidth
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
         }).from(pdfArea).save().then(function () {
             pdfArea.classList.add('hidden');
-            document.body.classList.remove('printing'); // 恢复应用界面
         });
     };
 }
