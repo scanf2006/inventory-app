@@ -353,13 +353,13 @@ function renderInventory() {
         card.className = 'item-card';
         card.innerHTML =
             '<div class="item-info">' +
-            '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(' + index + ')">' + name + '</div>' +
+            '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</div>' +
             '<div class="item-result" id="result-' + index + '">tal:<br>' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
             '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
-            'oninput="window.updateValue(\'' + name + '\', this.value, ' + index + ')">' +
-            '<button class="item-delete-btn" onclick="removeProductInline(' + index + ')">🗑️</button>' +
+            'oninput="window.updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
+            '<button class="item-delete-btn" onclick="removeProductInline(\'' + name.replace(/'/g, "\\'") + '\')">🗑️</button>' +
             '</div>';
 
         list.appendChild(card);
@@ -415,8 +415,11 @@ window.submitQuickAdd = function () {
     App.UI.showToast("Product added", 'success');
 };
 
-window.renameProductInline = function (index) {
-    var oldName = App.State.products[App.State.currentCategory][index];
+window.renameProductInline = function (oldName) {
+    if (!oldName) return;
+    var index = App.State.products[App.State.currentCategory].indexOf(oldName);
+    if (index === -1) return;
+
     var newName = prompt("Rename product:", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
         var trimmedName = newName.trim();
@@ -438,9 +441,12 @@ window.renameProductInline = function (index) {
     }
 };
 
-window.removeProductInline = function (index) {
+window.removeProductInline = function (name) {
+    if (!name) return;
+    var index = App.State.products[App.State.currentCategory].indexOf(name);
+    if (index === -1) return;
+
     App.UI.confirm("Delete this product?", function () {
-        var name = App.State.products[App.State.currentCategory][index];
         App.State.products[App.State.currentCategory].splice(index, 1);
         delete App.State.inventory[App.State.currentCategory + '-' + name];
         saveToStorage(true);
