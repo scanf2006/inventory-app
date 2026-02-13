@@ -173,7 +173,20 @@ function initApp() {
         };
     }
 
-    if (App.Services.supabase && App.State.syncId) pullFromCloud();
+    if (App.Services.supabase && App.State.syncId) {
+        pullFromCloud();
+
+        // Auto-Sync Triggers
+        window.addEventListener('focus', function () { pullFromCloud(true); });
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') pullFromCloud(true);
+        });
+
+        // Background Polling (30s)
+        setInterval(function () {
+            if (document.visibilityState === 'visible') pullFromCloud(true);
+        }, 30000);
+    }
 }
 
 function initSupabase() {
@@ -203,7 +216,6 @@ function pushToCloud() {
     if (!App.Services.supabase) initSupabase();
     if (!App.Services.supabase || !App.State.syncId) return;
 
-    console.log("[Sync] Pushing to cloud...", { sync_id: App.State.syncId, ts: App.State.lastUpdated });
     App.Services.supabase
         .from('app_sync')
         .upsert({
@@ -217,7 +229,6 @@ function pushToCloud() {
             updated_at: new Date().toISOString()
         }, { onConflict: 'sync_id' })
         .then(function (res) {
-            console.log("[Sync] Push result:", res);
             if (res.error) {
                 App.UI.updateSyncStatus('Sync Offline', false);
             } else {
@@ -226,12 +237,12 @@ function pushToCloud() {
         });
 }
 
-function pullFromCloud() {
+function pullFromCloud(isSilent) {
     if (!App.Services.supabase) initSupabase();
     if (!App.Services.supabase) return;
     if (!App.State.syncId) return;
 
-    App.UI.updateSyncStatus('Checking...', false);
+    if (!isSilent) App.UI.updateSyncStatus('Checking...', false);
 
     App.Services.supabase
         .from('app_sync')
@@ -239,16 +250,13 @@ function pullFromCloud() {
         .eq('sync_id', App.State.syncId)
         .single()
         .then(function (res) {
-            console.log("[Sync] Pulling result:", res);
             if (res.data && res.data.data) {
                 var cloudData = res.data.data;
                 var cloudTS = cloudData.last_updated_ts || new Date(res.data.updated_at).getTime();
                 var localTS = App.State.lastUpdated;
-                console.log("[Sync] Comparing TS: Cloud=" + cloudTS + " Local=" + localTS);
 
                 // Conflict Resolution: Only pull if cloud is newer than local
                 if (cloudTS > localTS) {
-                    console.log("[Sync] Cloud is newer, updating local state.");
                     App.State.products = cloudData.products || App.State.products;
                     App.State.inventory = cloudData.inventory || App.State.inventory;
                     App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
@@ -259,25 +267,21 @@ function pullFromCloud() {
                     renderTabs();
                     renderInventory();
                     renderManageUI();
-                    App.UI.showToast("Sync: Cloud state loaded", 'success');
+                    if (!isSilent) App.UI.showToast("Sync: Cloud state loaded", 'success');
                     App.UI.updateSyncStatus('Synced', true);
                 } else if (cloudTS < localTS) {
-                    console.log("[Sync] Local is newer, triggering push.");
                     // Local is newer, push to cloud
                     pushToCloud();
                 } else {
-                    console.log("[Sync] Already in sync.");
                     App.UI.updateSyncStatus('Synced', true);
                 }
             } else if (res.error && res.error.code !== 'PGRST116') { // PGRST116 is "not found"
                 App.UI.updateSyncStatus('Sync Offline', false);
             } else if (!res.data) {
-                console.log("[Sync] No cloud data found, creating new entry.");
                 pushToCloud();
             }
         })
         .catch(function (err) {
-            console.error("[Sync] Pull error:", err);
             App.UI.updateSyncStatus('Sync Offline', false);
         });
 }
@@ -286,7 +290,6 @@ function pullFromCloud() {
 
 function saveToStorageImmediate(skipTimestamp) {
     if (!skipTimestamp) App.State.lastUpdated = Date.now();
-    console.log("[Storage] Saving immediate. skipTS=" + skipTimestamp + " TS=" + App.State.lastUpdated);
     localStorage.setItem('lubricant_products', JSON.stringify(App.State.products));
     localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
     localStorage.setItem('lubricant_category_order', JSON.stringify(App.State.categoryOrder));
@@ -367,16 +370,28 @@ function renderInventory() {
     if (App.State.sortDirection === 'asc') sortedProducts.sort();
     else if (App.State.sortDirection === 'desc') sortedProducts.sort().reverse();
 
-    // Sort Controls Wrapper (Matched with CSS .inventory-controls if needed, but in index.html it's separate)
+    // Sort & View Controls Wrapper
     var controls = document.getElementById('inventory-controls');
     if (controls) {
         controls.innerHTML = '';
         var bar = document.createElement('div');
         bar.className = 'view-toggle-bar';
-        bar.innerHTML = '<div class="segmented-control">' +
+        bar.innerHTML =
+            '<div class="segmented-control">' +
             '<button onclick="sortProductsToggle()" class="active">Sort: ' + App.State.sortDirection.toUpperCase() + '</button>' +
+            '</div>' +
+            '<div class="segmented-control">' +
+            '<button onclick="toggleViewMode(\'edit\')" class="' + (App.State.viewMode === 'edit' ? 'active' : '') + '">Edit</button>' +
+            '<button onclick="toggleViewMode(\'preview\')" class="' + (App.State.viewMode === 'preview' ? 'active' : '') + '">Preview</button>' +
             '</div>';
         controls.appendChild(bar);
+
+        // Product Variety Count
+        var countDiv = document.createElement('div');
+        countDiv.className = 'product-count-badge';
+        countDiv.style = 'margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;';
+        countDiv.innerText = 'Products: ' + sortedProducts.length;
+        controls.appendChild(countDiv);
     }
 
     sortedProducts.forEach(function (name, index) {
@@ -385,30 +400,41 @@ function renderInventory() {
         var total = App.Utils.safeEvaluate(val);
 
         var card = document.createElement('div');
-        card.className = 'item-card';
-        card.innerHTML =
-            '<div class="item-info">' +
-            '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</div>' +
-            '<div class="item-result" id="result-' + index + '">tal:<br>' + total + '</div>' +
-            '</div>' +
-            '<div class="input-group">' +
-            '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
-            'oninput="window.updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
-            '<button class="item-delete-btn" onclick="removeProductInline(\'' + name.replace(/'/g, "\\'") + '\')">🗑️</button>' +
-            '</div>';
+        card.className = 'item-card' + (App.State.viewMode === 'preview' ? ' preview-mode' : '');
+
+        if (App.State.viewMode === 'preview') {
+            card.innerHTML =
+                '<div class="item-info">' +
+                '<div class="item-name">' + name + '</div>' +
+                '<div class="item-result">tal:<br>' + total + '</div>' +
+                '</div>';
+        } else {
+            card.innerHTML =
+                '<div class="item-info">' +
+                '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</div>' +
+                '<div class="item-result" id="result-' + index + '">tal:<br>' + total + '</div>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
+                'oninput="window.updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
+                '<button class="item-delete-btn" onclick="removeProductInline(\'' + name.replace(/'/g, "\\'") + '\')">🗑️</button>' +
+                '</div>';
+        }
 
         list.appendChild(card);
     });
 
-    // Quick Add Card
-    var quickAddWrapper = document.createElement('div');
-    quickAddWrapper.className = 'quick-add-wrapper';
-    quickAddWrapper.innerHTML =
-        '<div class="quick-add-card" onclick="showQuickAddForm()">' +
-        '<span>+ Add Product</span>' +
-        '</div>' +
-        '<div id="quick-add-form-container" class="hidden"></div>';
-    list.appendChild(quickAddWrapper);
+    // Quick Add Card (Only in Edit Mode)
+    if (App.State.viewMode === 'edit') {
+        var quickAddWrapper = document.createElement('div');
+        quickAddWrapper.className = 'quick-add-wrapper';
+        quickAddWrapper.innerHTML =
+            '<div class="quick-add-card" onclick="showQuickAddForm()">' +
+            '<span>+ Add Product</span>' +
+            '</div>' +
+            '<div id="quick-add-form-container" class="hidden"></div>';
+        list.appendChild(quickAddWrapper);
+    }
 }
 
 window.showQuickAddForm = function () {
@@ -492,6 +518,11 @@ window.removeProductInline = function (name) {
 
 window.sortProductsToggle = function () {
     App.State.sortDirection = App.State.sortDirection === 'asc' ? 'desc' : 'asc';
+    renderInventory();
+};
+
+window.toggleViewMode = function (mode) {
+    App.State.viewMode = mode;
     renderInventory();
 };
 

@@ -253,6 +253,28 @@ body {
     }
 }
 
+.item-card.preview-mode {
+    padding: 14px 22px;
+    border-left: 4px solid var(--accent-gold);
+}
+
+.item-card.preview-mode .item-name {
+    margin-bottom: 0;
+    cursor: default;
+}
+
+.item-card.preview-mode .item-name:hover {
+    color: var(--text-main);
+}
+
+.product-count-badge {
+    background: rgba(255, 204, 0, 0.1);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+    padding: 4px 12px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
 /* 连续动画延迟 / Staggered delays */
 .item-card:nth-child(1) {
     animation-delay: 0.05s;
