@@ -1,5 +1,5 @@
-// Version 1.6.7 - INV-aiden
-console.log("Loading INV-aiden core logic v1.6.7");
+// Version 1.6.8 - INV-aiden
+console.log("Loading INV-aiden core logic v1.6.8");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -566,6 +566,7 @@ if (document.getElementById('export-pdf-btn')) {
                 grid.className = 'pdf-grid';
                 allProducts.forEach(function (name) {
                     var expr = state.inventory[cat + '-' + name];
+                    var total = evaluateExpression(expr);
                     var displayValue = total;
                     var catLower = cat.toLowerCase();
                     if (catLower.includes('bulk oil')) {
