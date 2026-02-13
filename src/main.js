@@ -20,7 +20,8 @@ const App = {
         categoryOrder: null,
         syncId: "",
         viewMode: 'edit',
-        sortDirection: 'asc'
+        sortDirection: 'asc',
+        lastUpdated: 0
     },
 
     Services: {
@@ -136,9 +137,18 @@ const App = {
 // --- Initialization ---
 
 function initApp() {
+    // Data Migration (Recovering data from v1.7.x)
+    if (!localStorage.getItem('lubricant_products') && localStorage.getItem('inventory_products')) {
+        localStorage.setItem('lubricant_products', localStorage.getItem('inventory_products'));
+        localStorage.setItem('lubricant_inventory', localStorage.getItem('inventory_data'));
+        localStorage.setItem('lubricant_category_order', localStorage.getItem('inventory_category_order'));
+        localStorage.setItem('lubricant_sync_id', localStorage.getItem('inventory_sync_id'));
+    }
+
     App.State.products = App.Utils.safeGetJSON('lubricant_products', App.Config.INITIAL_PRODUCTS);
     App.State.inventory = App.Utils.safeGetJSON('lubricant_inventory', {});
     App.State.categoryOrder = App.Utils.safeGetJSON('lubricant_category_order', Object.keys(App.Config.INITIAL_PRODUCTS));
+    App.State.lastUpdated = parseInt(localStorage.getItem('lubricant_last_updated') || '0');
 
     var savedId = localStorage.getItem('lubricant_sync_id');
     App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
@@ -202,67 +212,79 @@ function pushToCloud() {
                 inventory: App.State.inventory,
                 category_order: App.State.categoryOrder
             },
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            last_updated_ts: App.State.lastUpdated
         }, { onConflict: 'sync_id' })
         .then(function (res) {
             if (res.error) {
-                App.UI.updateSyncStatus('Sync Error', false);
+                App.UI.updateSyncStatus('Sync Offline', false);
             } else {
-                App.UI.updateSyncStatus('Saved', true);
+                App.UI.updateSyncStatus('Cloud Synced', true);
             }
         });
 }
 
 function pullFromCloud() {
     if (!App.Services.supabase) initSupabase();
-    if (!App.Services.supabase) return App.UI.showToast("Cloud library not loaded", 'error');
-    if (!App.State.syncId) return App.UI.showToast("Sync ID Required", 'info');
+    if (!App.Services.supabase) return;
+    if (!App.State.syncId) return;
 
-    App.UI.updateSyncStatus('Syncing...', false);
+    App.UI.updateSyncStatus('Checking...', false);
 
     App.Services.supabase
         .from('app_sync')
-        .select('data')
+        .select('data, updated_at, last_updated_ts')
         .eq('sync_id', App.State.syncId)
         .single()
         .then(function (res) {
             if (res.data && res.data.data) {
                 var cloudData = res.data.data;
-                App.State.products = cloudData.products || App.State.products;
-                App.State.inventory = cloudData.inventory || App.State.inventory;
-                App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
+                var cloudTS = res.data.last_updated_ts || new Date(res.data.updated_at).getTime();
+                var localTS = App.State.lastUpdated;
 
-                saveToStorageImmediate();
-                initializeCategory();
-                renderTabs();
-                renderInventory();
-                renderManageUI();
-                App.UI.showToast("Cloud sync complete", 'success');
-                App.UI.updateSyncStatus('Synced', true);
-            } else if (res.error) {
-                App.UI.showToast("Sync failed: " + (res.error.message || "Unknown"), 'error');
-                App.UI.updateSyncStatus('Error', false);
-            } else {
+                // Conflict Resolution: Only pull if cloud is newer than local
+                if (cloudTS > localTS) {
+                    App.State.products = cloudData.products || App.State.products;
+                    App.State.inventory = cloudData.inventory || App.State.inventory;
+                    App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
+                    App.State.lastUpdated = cloudTS;
+
+                    saveToStorageImmediate(true); // Skip timestamp update for pull
+                    initializeCategory();
+                    renderTabs();
+                    renderInventory();
+                    renderManageUI();
+                    App.UI.showToast("Sync: Cloud state loaded", 'success');
+                    App.UI.updateSyncStatus('Synced', true);
+                } else if (cloudTS < localTS) {
+                    // Local is newer, push to cloud
+                    pushToCloud();
+                } else {
+                    App.UI.updateSyncStatus('Synced', true);
+                }
+            } else if (res.error && res.error.code !== 'PGRST116') { // PGRST116 is "not found"
+                App.UI.updateSyncStatus('Sync Error', false);
+            } else if (!res.data) {
                 pushToCloud();
-                App.UI.showToast("ID connected (New)", 'success');
             }
         });
 }
 
 // --- Storage & Data ---
 
-function saveToStorageImmediate() {
+function saveToStorageImmediate(skipTimestamp) {
+    if (!skipTimestamp) App.State.lastUpdated = Date.now();
     localStorage.setItem('lubricant_products', JSON.stringify(App.State.products));
     localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
     localStorage.setItem('lubricant_category_order', JSON.stringify(App.State.categoryOrder));
     localStorage.setItem('lubricant_sync_id', App.State.syncId);
+    localStorage.setItem('lubricant_last_updated', App.State.lastUpdated);
 }
 
 var debouncedSave = App.Utils.debounce(function () {
     saveToStorageImmediate();
     pushToCloud();
-    App.UI.updateSyncStatus('Saved', true);
-}, 1000);
+}, 300);
 
 function saveToStorage(isImmediate) {
     saveToStorageImmediate();
