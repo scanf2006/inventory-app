@@ -1,5 +1,5 @@
-// Version 1.6.6 - INV-aiden
-console.log("Loading INV-aiden core logic v1.6.6");
+// Version 1.6.7 - INV-aiden
+console.log("Loading INV-aiden core logic v1.6.7");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -566,10 +566,17 @@ if (document.getElementById('export-pdf-btn')) {
                 grid.className = 'pdf-grid';
                 allProducts.forEach(function (name) {
                     var expr = state.inventory[cat + '-' + name];
-                    var total = evaluateExpression(expr);
+                    var displayValue = total;
+                    var catLower = cat.toLowerCase();
+                    if (catLower.includes('bulk oil')) {
+                        displayValue += ' L';
+                    } else if (catLower.includes('case oil')) {
+                        displayValue += ' Cases';
+                    }
+
                     var item = document.createElement('div');
                     item.className = 'pdf-grid-item';
-                    item.innerHTML = '<span class="p-name">' + name + '</span><span class="p-val">' + total + '</span>';
+                    item.innerHTML = '<span class="p-name">' + name + '</span><span class="p-val">' + displayValue + '</span>';
                     grid.appendChild(item);
                 });
                 if (allProducts.length % 2 !== 0) {
