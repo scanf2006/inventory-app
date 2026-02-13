@@ -1,10 +1,9 @@
-// Version 1.8.1 - INV-aiden
-// Security & Quality Hardening Re-implementation
+// Version 1.8.2 - INV-aiden
+// UI Consistency Fix & Hardening
 
 const App = {
     Config: {
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
-        // Note: Supabase Anon Key is safe for client-side use assuming RLS is enabled.
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         INITIAL_PRODUCTS: {
             "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
@@ -48,14 +47,11 @@ const App = {
             };
         },
 
-        // Safe Math Parser (Replaces functional eval)
         safeEvaluate: function (expr) {
             if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
-            // Allow only numbers, operators, parens, dots, spaces
             var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
             if (!cleanExpr) return 0;
             try {
-                // Using Function is safer than eval, but still requires strict input sanitization above
                 var result = new Function('return (' + cleanExpr + ')')();
                 var num = parseFloat(result);
                 return isNaN(num) ? 0 : Math.round(num * 100) / 100;
@@ -81,7 +77,7 @@ const App = {
         showToast: function (message, type) {
             type = type || 'info';
             var container = document.getElementById('toast-container');
-            if (!container) return; // Fallback if container missing
+            if (!container) return;
 
             var toast = document.createElement('div');
             toast.className = 'toast ' + type;
@@ -115,7 +111,6 @@ const App = {
             msgEl.innerText = msg;
             overlay.classList.remove('hidden');
 
-            // Clone to strip old listeners
             var newYes = yesBtn.cloneNode(true);
             var newNo = noBtn.cloneNode(true);
             yesBtn.parentNode.replaceChild(newYes, yesBtn);
@@ -156,6 +151,17 @@ function initApp() {
     updateProductSuggestions();
     renderTabs();
     renderInventory();
+
+    // Footer button binding
+    var manageBtn = document.getElementById('manage-btn');
+    if (manageBtn) {
+        manageBtn.onclick = function () {
+            var modalOverlay = document.getElementById('modal-overlay');
+            modalOverlay.classList.remove('hidden');
+            document.getElementById('sync-id-input').value = App.State.syncId || '';
+            renderManageUI();
+        };
+    }
 
     if (App.Services.supabase && App.State.syncId) pullFromCloud();
 }
@@ -200,9 +206,7 @@ function pushToCloud() {
         }, { onConflict: 'sync_id' })
         .then(function (res) {
             if (res.error) {
-                console.error('Push Error:', res.error);
                 App.UI.updateSyncStatus('Sync Error', false);
-                // Silent fail on push
             } else {
                 App.UI.updateSyncStatus('Saved', true);
             }
@@ -236,11 +240,9 @@ function pullFromCloud() {
                 App.UI.showToast("Cloud sync complete", 'success');
                 App.UI.updateSyncStatus('Synced', true);
             } else if (res.error) {
-                console.error('Pull Error:', res.error);
                 App.UI.showToast("Sync failed: " + (res.error.message || "Unknown"), 'error');
                 App.UI.updateSyncStatus('Error', false);
             } else {
-                // No data found, that's fine, pushing local data
                 pushToCloud();
                 App.UI.showToast("ID connected (New)", 'success');
             }
@@ -256,7 +258,6 @@ function saveToStorageImmediate() {
     localStorage.setItem('lubricant_sync_id', App.State.syncId);
 }
 
-// Debounce wrapper for frequent updates
 var debouncedSave = App.Utils.debounce(function () {
     saveToStorageImmediate();
     pushToCloud();
@@ -304,7 +305,7 @@ function renderTabs() {
     App.State.categoryOrder.forEach(function (cat) {
         if (!App.State.products[cat]) return;
         var btn = document.createElement('button');
-        btn.className = 'tab-btn' + (cat === App.State.currentCategory ? ' active' : '');
+        btn.className = 'tab' + (cat === App.State.currentCategory ? ' active' : '');
         btn.innerText = cat;
         btn.onclick = function () {
             App.State.currentCategory = cat;
@@ -313,21 +314,6 @@ function renderTabs() {
         };
         tabNav.appendChild(btn);
     });
-
-    var manageBtn = document.createElement('button');
-    manageBtn.id = 'manage-btn';
-    manageBtn.className = 'tab-btn manage-icon';
-    manageBtn.innerHTML = '⚙️';
-    tabNav.appendChild(manageBtn);
-
-    // Re-bind modal opener
-    manageBtn.onclick = function () {
-        var modal = document.getElementById('modal-overlay');
-        modal.classList.remove('hidden');
-        document.getElementById('sync-id-input').value = App.State.syncId || '';
-        if (App.Services.supabase && App.State.syncId) pullFromCloud();
-        renderManageUI();
-    };
 }
 
 function renderInventory() {
@@ -342,16 +328,21 @@ function renderInventory() {
 
     var products = App.State.products[App.State.currentCategory];
 
-    // Sort logic
     var sortedProducts = products.slice();
     if (App.State.sortDirection === 'asc') sortedProducts.sort();
     else if (App.State.sortDirection === 'desc') sortedProducts.sort().reverse();
 
-    // Sort Button
-    var sortBtn = document.createElement('div');
-    sortBtn.className = 'sort-controls';
-    sortBtn.innerHTML = '<button class="sort-btn" onclick="sortProductsToggle()">Sort: ' + App.State.sortDirection.toUpperCase() + '</button>';
-    list.appendChild(sortBtn);
+    // Sort Controls Wrapper (Matched with CSS .inventory-controls if needed, but in index.html it's separate)
+    var controls = document.getElementById('inventory-controls');
+    if (controls) {
+        controls.innerHTML = '';
+        var bar = document.createElement('div');
+        bar.className = 'view-toggle-bar';
+        bar.innerHTML = '<div class="segmented-control">' +
+            '<button onclick="sortProductsToggle()" class="active">Sort: ' + App.State.sortDirection.toUpperCase() + '</button>' +
+            '</div>';
+        controls.appendChild(bar);
+    }
 
     sortedProducts.forEach(function (name, index) {
         var key = App.State.currentCategory + '-' + name;
@@ -359,40 +350,60 @@ function renderInventory() {
         var total = App.Utils.safeEvaluate(val);
 
         var card = document.createElement('div');
-        card.className = 'product-card';
+        card.className = 'item-card';
         card.innerHTML =
-            '<div class="card-header">' +
-            '<span class="product-name">' + name + '</span>' +
-            '<div class="card-actions">' +
-            '<button class="btn-icon" onclick="renameProductInline(' + index + ')">✏️</button>' +
-            '<button class="btn-icon delete" onclick="removeProductInline(' + index + ')">🗑️</button>' +
-            '</div>' +
+            '<div class="item-info">' +
+            '<div class="item-name">' + name + '</div>' +
+            '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
-            '<input type="tel" value="' + val + '" placeholder="0" ' +
+            '<button class="btn-edit" onclick="renameProductInline(' + index + ')">✏️</button>' +
+            '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
             'oninput="window.updateValue(\'' + name + '\', this.value, ' + index + ')">' +
-            '</div>' +
-            '<div class="math-result" id="result-' + index + '">Subtotal: ' + total + '</div>';
+            '<button class="item-delete-btn" onclick="removeProductInline(' + index + ')">🗑️</button>' +
+            '</div>';
 
         list.appendChild(card);
     });
 
-    // Quick Add
-    var quickAdd = document.createElement('div');
-    quickAdd.className = 'quick-add-section';
-    quickAdd.innerHTML =
-        '<div class="quick-add-row">' +
-        '<input type="text" id="quick-add-name" placeholder="New product name" list="master-product-list">' +
-        '<button onclick="submitQuickAdd()">Add Product</button>' +
-        '</div>';
-    list.appendChild(quickAdd);
+    // Quick Add Card
+    var quickAddWrapper = document.createElement('div');
+    quickAddWrapper.className = 'quick-add-wrapper';
+    quickAddWrapper.innerHTML =
+        '<div class="quick-add-card" onclick="showQuickAddForm()">' +
+        '<span>+ Add Product</span>' +
+        '</div>' +
+        '<div id="quick-add-form-container" class="hidden"></div>';
+    list.appendChild(quickAddWrapper);
 }
 
-// --- Interaction Handlers ---
+window.showQuickAddForm = function () {
+    var container = document.getElementById('quick-add-form-container');
+    if (!container) return;
+    container.innerHTML =
+        '<div class="quick-add-form">' +
+        '<input type="text" id="quick-add-name" placeholder="New product name" list="master-product-list">' +
+        '<div class="quick-add-actions">' +
+        '<button onclick="submitQuickAdd()">Add</button>' +
+        '<button class="cancel" onclick="hideQuickAddForm()">Cancel</button>' +
+        '</div>' +
+        '</div>';
+    container.classList.remove('hidden');
+    document.querySelector('.quick-add-card').classList.add('hidden');
+    document.getElementById('quick-add-name').focus();
+};
+
+window.hideQuickAddForm = function () {
+    var container = document.getElementById('quick-add-form-container');
+    if (container) {
+        container.classList.add('hidden');
+        document.querySelector('.quick-add-card').classList.remove('hidden');
+    }
+};
 
 window.submitQuickAdd = function () {
     var input = document.getElementById('quick-add-name');
-    var name = input.value.trim();
+    var name = input ? input.value.trim() : "";
     if (!name) return;
 
     if (App.State.products[App.State.currentCategory].includes(name)) {
@@ -400,9 +411,8 @@ window.submitQuickAdd = function () {
     }
 
     App.State.products[App.State.currentCategory].push(name);
-    saveToStorage();
+    saveToStorage(true);
     renderInventory();
-    input.value = '';
     App.UI.showToast("Product added", 'success');
 };
 
@@ -417,7 +427,6 @@ window.renameProductInline = function (index) {
 
         App.State.products[App.State.currentCategory][index] = trimmedName;
 
-        // Migrate data
         var oldKey = App.State.currentCategory + '-' + oldName;
         var newKey = App.State.currentCategory + '-' + trimmedName;
         if (App.State.inventory[oldKey]) {
@@ -425,7 +434,7 @@ window.renameProductInline = function (index) {
             delete App.State.inventory[oldKey];
         }
 
-        saveToStorage();
+        saveToStorage(true);
         renderInventory();
     }
 };
@@ -435,7 +444,7 @@ window.removeProductInline = function (index) {
         var name = App.State.products[App.State.currentCategory][index];
         App.State.products[App.State.currentCategory].splice(index, 1);
         delete App.State.inventory[App.State.currentCategory + '-' + name];
-        saveToStorage();
+        saveToStorage(true);
         renderInventory();
         App.UI.showToast("Product deleted", 'info');
     });
@@ -446,13 +455,9 @@ window.sortProductsToggle = function () {
     renderInventory();
 };
 
-window.setViewMode = function (mode) {
-    App.State.viewMode = mode; // Currently unused in v1.8 logic but kept for extensibility
-};
-
 window.updateValue = function (name, value, index) {
     App.State.inventory[App.State.currentCategory + '-' + name] = value;
-    saveToStorage(false); // Debounced save
+    saveToStorage(false);
     var total = App.Utils.safeEvaluate(value);
     var resultEl = document.getElementById('result-' + index);
     if (resultEl) resultEl.innerText = 'Subtotal: ' + total;
@@ -460,10 +465,9 @@ window.updateValue = function (name, value, index) {
 
 // --- Modal & Management ---
 
-var modal = document.getElementById('modal-overlay');
 if (document.querySelector('.close-modal')) {
     document.querySelector('.close-modal').onclick = function () {
-        modal.classList.add('hidden');
+        document.getElementById('modal-overlay').classList.add('hidden');
     };
 }
 
@@ -473,7 +477,7 @@ if (document.getElementById('connect-sync-btn')) {
         var id = input ? input.value.trim() : "";
         if (id) {
             App.State.syncId = id;
-            saveToStorage(true); // Immediate save
+            saveToStorage(true);
             pullFromCloud();
         } else {
             App.UI.showToast("Please enter a Sync ID.", 'info');
@@ -514,7 +518,7 @@ function renderManageUI() {
 if (document.getElementById('add-category-btn')) {
     document.getElementById('add-category-btn').onclick = function () {
         var input = document.getElementById('new-category-name');
-        var name = input.value.trim();
+        var name = input ? input.value.trim() : "";
         if (name && !App.State.products[name]) {
             App.State.products[name] = [];
             App.State.categoryOrder.push(name);
@@ -542,7 +546,7 @@ window.moveCategory = function (index, direction) {
 };
 
 window.editCategory = function (oldCat) {
-    var newCat = prompt("Rename category:", oldCat); // Modals for prompts not strictly required to be Toast
+    var newCat = prompt("Rename category:", oldCat);
     if (newCat && newCat.trim() !== "" && newCat !== oldCat) {
         if (App.State.products[newCat]) return App.UI.showToast("Category exists", 'error');
 
@@ -583,7 +587,6 @@ window.removeCategory = function (cat) {
         App.UI.showToast("Category deleted", 'info');
     });
 };
-
 
 // --- PDF Export ---
 
@@ -648,7 +651,7 @@ if (document.getElementById('export-pdf-btn')) {
             margin: 10,
             filename: fileName,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, // Removed scrollY, windowWidth
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
         }).from(pdfArea).save().then(function () {
