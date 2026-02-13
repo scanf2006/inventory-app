@@ -204,6 +204,7 @@ function pushToCloud() {
     if (!App.Services.supabase || !App.State.syncId) return;
 
     App.Services.supabase
+        .from('app_sync')
         .upsert({
             sync_id: App.State.syncId,
             data: {
@@ -262,10 +263,13 @@ function pullFromCloud() {
                     App.UI.updateSyncStatus('Synced', true);
                 }
             } else if (res.error && res.error.code !== 'PGRST116') { // PGRST116 is "not found"
-                App.UI.updateSyncStatus('Sync Error', false);
+                App.UI.updateSyncStatus('Sync Offline', false);
             } else if (!res.data) {
                 pushToCloud();
             }
+        })
+        .catch(function () {
+            App.UI.updateSyncStatus('Sync Offline', false);
         });
 }
 
