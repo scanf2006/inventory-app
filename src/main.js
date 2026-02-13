@@ -99,14 +99,12 @@ const App = {
         },
 
         confirm: function (msg, onConfirm) {
-            console.log("[UI] Opening confirm dialog:", msg);
             var overlay = document.getElementById('confirm-modal');
             var msgEl = document.getElementById('confirm-msg');
             var yesBtn = document.getElementById('confirm-yes-btn');
             var noBtn = document.getElementById('confirm-no-btn');
 
             if (!overlay || !msgEl || !yesBtn || !noBtn) {
-                console.warn("[UI] Confirm modal elements missing, using native confirm.");
                 if (window.confirm(msg)) onConfirm();
                 return;
             }
@@ -114,26 +112,19 @@ const App = {
             msgEl.innerText = msg;
             overlay.classList.remove('hidden');
 
-            // Use direct assignment to clear previous listeners without cloning if possible,
-            // but since these were added via property or HTML, standard way is to replace.
-            // Let's keep replacement but add more logs.
             var newYes = yesBtn.cloneNode(true);
             var newNo = noBtn.cloneNode(true);
             yesBtn.parentNode.replaceChild(newYes, yesBtn);
             noBtn.parentNode.replaceChild(newNo, noBtn);
 
-            console.log("[UI] Modal buttons rebound.");
-
             newYes.onclick = function (e) {
                 e.stopPropagation();
-                console.log("[UI] Confirm YES clicked.");
                 overlay.classList.add('hidden');
                 onConfirm();
             };
 
             newNo.onclick = function (e) {
                 e.stopImmediatePropagation();
-                console.log("[UI] Confirm NO clicked.");
                 overlay.classList.add('hidden');
             };
         },
@@ -521,16 +512,11 @@ window.renameProductInline = function (oldName) {
 };
 
 window.removeProductInline = function (name) {
-    console.log("[Product] Requesting removal:", name);
     if (!name) return;
     var index = App.State.products[App.State.currentCategory].indexOf(name);
-    if (index === -1) {
-        console.error("[Product] Not found in state:", name);
-        return;
-    }
+    if (index === -1) return;
 
     App.UI.confirm("Delete this product?", function () {
-        console.log("[Product] Removal confirmed:", name);
         App.State.products[App.State.currentCategory].splice(index, 1);
         delete App.State.inventory[App.State.currentCategory + '-' + name];
         saveToStorage(true);
