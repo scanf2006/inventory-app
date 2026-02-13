@@ -730,7 +730,9 @@ hr {
     box-shadow: none !important;
     overflow: visible;
     box-sizing: border-box;
-    width: 100%;
+    width: 794px !important;
+    /* A4 width at 96 DPI */
+    margin: 0 auto;
 }
 
 .pdf-category-block {
