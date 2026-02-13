@@ -204,16 +204,15 @@ function pushToCloud() {
     if (!App.Services.supabase || !App.State.syncId) return;
 
     App.Services.supabase
-        .from('app_sync')
         .upsert({
             sync_id: App.State.syncId,
             data: {
                 products: App.State.products,
                 inventory: App.State.inventory,
-                category_order: App.State.categoryOrder
+                category_order: App.State.categoryOrder,
+                last_updated_ts: App.State.lastUpdated // Stored inside JSON to avoid DB schema changes
             },
-            updated_at: new Date().toISOString(),
-            last_updated_ts: App.State.lastUpdated
+            updated_at: new Date().toISOString()
         }, { onConflict: 'sync_id' })
         .then(function (res) {
             if (res.error) {
@@ -233,13 +232,13 @@ function pullFromCloud() {
 
     App.Services.supabase
         .from('app_sync')
-        .select('data, updated_at, last_updated_ts')
+        .select('data, updated_at')
         .eq('sync_id', App.State.syncId)
         .single()
         .then(function (res) {
             if (res.data && res.data.data) {
                 var cloudData = res.data.data;
-                var cloudTS = res.data.last_updated_ts || new Date(res.data.updated_at).getTime();
+                var cloudTS = cloudData.last_updated_ts || new Date(res.data.updated_at).getTime();
                 var localTS = App.State.lastUpdated;
 
                 // Conflict Resolution: Only pull if cloud is newer than local
