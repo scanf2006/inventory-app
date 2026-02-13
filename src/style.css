@@ -726,6 +726,9 @@ hr {
     background: white;
     color: black;
     font-family: 'Inter', sans-serif;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible;
 }
 
 .pdf-category-block {
