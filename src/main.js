@@ -1,5 +1,5 @@
-// Version 1.6.8 - INV-aiden
-console.log("Loading INV-aiden core logic v1.6.8");
+// Version 1.6.9 - INV-aiden
+console.log("Loading INV-aiden core logic v1.6.9");
 
 // 初始产品配置
 const INITIAL_PRODUCTS = {
@@ -561,23 +561,23 @@ if (document.getElementById('export-pdf-btn')) {
                 hasData = true;
                 var block = document.createElement('div');
                 block.className = 'pdf-category-block';
-                block.innerHTML = '<div class="pdf-category-title">' + cat + '</div>';
+                var unitSuffix = "";
+                var catLower = cat.toLowerCase();
+                if (catLower.includes('bulk oil')) {
+                    unitSuffix = " (L)";
+                } else if (catLower.includes('case oil')) {
+                    unitSuffix = " (Cases)";
+                }
+
+                block.innerHTML = '<div class="pdf-category-title">' + cat + unitSuffix + '</div>';
                 var grid = document.createElement('div');
                 grid.className = 'pdf-grid';
                 allProducts.forEach(function (name) {
                     var expr = state.inventory[cat + '-' + name];
                     var total = evaluateExpression(expr);
-                    var displayValue = total;
-                    var catLower = cat.toLowerCase();
-                    if (catLower.includes('bulk oil')) {
-                        displayValue += ' L';
-                    } else if (catLower.includes('case oil')) {
-                        displayValue += ' Cases';
-                    }
-
                     var item = document.createElement('div');
                     item.className = 'pdf-grid-item';
-                    item.innerHTML = '<span class="p-name">' + name + '</span><span class="p-val">' + displayValue + '</span>';
+                    item.innerHTML = '<span class="p-name">' + name + '</span><span class="p-val">' + total + '</span>';
                     grid.appendChild(item);
                 });
                 if (allProducts.length % 2 !== 0) {
