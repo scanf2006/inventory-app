@@ -199,27 +199,31 @@ function initializeCategory() {
 
 // --- Cloud Sync ---
 
-console.log("[Sync] Pushing to cloud...", { sync_id: App.State.syncId, ts: App.State.lastUpdated });
-App.Services.supabase
-    .from('app_sync')
-    .upsert({
-        sync_id: App.State.syncId,
-        data: {
-            products: App.State.products,
-            inventory: App.State.inventory,
-            category_order: App.State.categoryOrder,
-            last_updated_ts: App.State.lastUpdated // Stored inside JSON to avoid DB schema changes
-        },
-        updated_at: new Date().toISOString()
-    }, { onConflict: 'sync_id' })
-    .then(function (res) {
-        console.log("[Sync] Push result:", res);
-        if (res.error) {
-            App.UI.updateSyncStatus('Sync Offline', false);
-        } else {
-            App.UI.updateSyncStatus('Cloud Synced', true);
-        }
-    });
+function pushToCloud() {
+    if (!App.Services.supabase) initSupabase();
+    if (!App.Services.supabase || !App.State.syncId) return;
+
+    console.log("[Sync] Pushing to cloud...", { sync_id: App.State.syncId, ts: App.State.lastUpdated });
+    App.Services.supabase
+        .from('app_sync')
+        .upsert({
+            sync_id: App.State.syncId,
+            data: {
+                products: App.State.products,
+                inventory: App.State.inventory,
+                category_order: App.State.categoryOrder,
+                last_updated_ts: App.State.lastUpdated // Stored inside JSON to avoid DB schema changes
+            },
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'sync_id' })
+        .then(function (res) {
+            console.log("[Sync] Push result:", res);
+            if (res.error) {
+                App.UI.updateSyncStatus('Sync Offline', false);
+            } else {
+                App.UI.updateSyncStatus('Cloud Synced', true);
+            }
+        });
 }
 
 function pullFromCloud() {
