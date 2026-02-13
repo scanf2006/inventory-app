@@ -354,7 +354,7 @@ function renderInventory() {
         card.innerHTML =
             '<div class="item-info">' +
             '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(' + index + ')">' + name + '</div>' +
-            '<div class="item-result" id="result-' + index + '">Subtotal: ' + total + '</div>' +
+            '<div class="item-result" id="result-' + index + '">tal:<br>' + total + '</div>' +
             '</div>' +
             '<div class="input-group">' +
             '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
@@ -459,7 +459,7 @@ window.updateValue = function (name, value, index) {
     saveToStorage(false);
     var total = App.Utils.safeEvaluate(value);
     var resultEl = document.getElementById('result-' + index);
-    if (resultEl) resultEl.innerText = 'Subtotal: ' + total;
+    if (resultEl) resultEl.innerHTML = 'tal:<br>' + total;
 };
 
 // --- Modal & Management ---
