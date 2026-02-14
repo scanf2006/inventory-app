@@ -1056,3 +1056,13 @@ hr {
     border-radius: 12px;
     font-weight: 700;
 }
+
+.version-tag {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0.5;
+    margin-top: 30px;
+    padding-bottom: 20px;
+    font-family: monospace;
+}
