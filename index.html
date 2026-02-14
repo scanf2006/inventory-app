@@ -100,15 +100,14 @@
                     <hr>
                     <section class="management-section">
                         <h3>App Installation</h3>
-                        <button id="pwa-install-btn" class="primary-btn"
-                            style="width:100%; display:none; margin-bottom:10px; background:#5856D6;">📥 Install App to
+                        <button id="pwa-install-btn" class="primary-btn pwa-install-button d-none w-full">📥 Install App
+                            to
                             Home Screen</button>
-                        <div id="ios-install-hint"
-                            style="display:none; padding:15px; background:rgba(88, 86, 214, 0.1); border-radius:12px; border:1px solid #5856D6; margin-bottom:10px;">
-                            <p style="font-weight:700; color:#5856D6; margin-bottom:8px;">iPhone/iPad User?</p>
-                            <p style="font-size:0.85rem; line-height:1.4;">Apple doesn't allow automatic installation.
+                        <div id="ios-install-hint" class="ios-install-hint-box d-none">
+                            <p class="ios-hint-title">iPhone/iPad User?</p>
+                            <p class="ios-hint-text">Apple doesn't allow automatic installation.
                                 To install: <br>1. Tap the <strong>Share</strong> button <span
-                                    style="font-size:1.1rem;">⎋</span> at the bottom.<br>2. Select <strong>"Add to Home
+                                    class="icon-inline">⎋</span> at the bottom.<br>2. Select <strong>"Add to Home
                                     Screen"</strong>.</p>
                         </div>
                         <p class="small-hint">Install for offline use and quick access from your home screen.</p>
@@ -128,9 +127,8 @@
 
                     <section class="management-section">
                         <h3>Account & Data</h3>
-                        <p class="small-hint" style="margin-bottom: 12px;">DANGER: This action cannot be undone.</p>
-                        <button onclick="resetInventory()" class="btn-delete"
-                            style="width:100%; background:#FF9500; padding: 14px; border-radius: 12px; font-weight: 700;">Reset
+                        <p class="small-hint mb-12">DANGER: This action cannot be undone.</p>
+                        <button onclick="resetInventory()" class="btn-delete danger-zone-reset w-full">Reset
                             All Inventory to
                             Zero</button>
                     </section>
@@ -141,8 +139,8 @@
         <!-- Confirm Modal (Moved to top-level) -->
         <div id="confirm-modal" class="modal-overlay hidden" style="z-index: 9999;">
             <div class="modal-content">
-                <h3 id="confirm-msg" style="margin-bottom: 20px;">Are you sure?</h3>
-                <div class="quick-add-actions" style="justify-content: center;">
+                <h3 id="confirm-msg" class="mb-20">Are you sure?</h3>
+                <div class="quick-add-actions text-center" style="justify-content: center;">
                     <button id="confirm-yes-btn" class="btn-delete">Yes</button>
                     <button id="confirm-no-btn" onclick="App.UI.closeConfirm()">No</button>
                 </div>

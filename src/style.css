@@ -56,8 +56,8 @@ body {
 #app {
     display: flex;
     flex-direction: column;
-    height: 100vh;
     height: 100dvh;
+    /* 优先使用动态视口高度 / Prefer dynamic viewport height */
 }
 
 /* 页眉 - 玻璃拟态 / Header - Glassmorphism */
@@ -371,18 +371,6 @@ body {
 }
 
 .item-delete-btn {
-    background: none;
-    border: none;
-    color: #FF3B30;
-    font-size: 1.2rem;
-    padding: 10px;
-    margin-right: -10px;
-    cursor: pointer;
-    opacity: 0.3;
-    transition: opacity 0.2s;
-}
-
-.item-delete-btn {
     background: transparent;
     border: none;
     font-size: 1.4rem;
@@ -395,8 +383,8 @@ body {
     transition: all 0.2s;
     opacity: 0;
     min-width: 44px;
-    /* Apple/Google 推荐的最小点击区域 / Minimum hit area recommended */
     min-height: 44px;
+    color: #FF3B30;
 }
 
 .item-card:hover .item-delete-btn {
@@ -416,8 +404,6 @@ body {
     align-items: center;
     gap: 8px;
 }
-
-/* 移除已废弃的排序按钮样式 */
 
 .item-input {
     width: 140px;
@@ -1007,4 +993,66 @@ hr {
         opacity: 0;
         transform: translateY(-20px);
     }
+}
+
+/* --- Utility Classes (Audit Cleanup) --- */
+.w-full {
+    width: 100% !important;
+}
+
+.mb-8 {
+    margin-bottom: 8px !important;
+}
+
+.mb-10 {
+    margin-bottom: 10px !important;
+}
+
+.mb-12 {
+    margin-bottom: 12px !important;
+}
+
+.mb-20 {
+    margin-bottom: 20px !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.d-none {
+    display: none !important;
+}
+
+.pwa-install-button {
+    background: #5856D6 !important;
+}
+
+.ios-install-hint-box {
+    padding: 15px;
+    background: rgba(88, 86, 214, 0.1);
+    border-radius: 12px;
+    border: 1px solid #5856D6;
+    margin-bottom: 10px;
+}
+
+.ios-hint-title {
+    font-weight: 700;
+    color: #5856D6;
+}
+
+.ios-hint-text {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.icon-inline {
+    font-size: 1.1rem;
+}
+
+.danger-zone-reset {
+    background: #FF9500 !important;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
 }

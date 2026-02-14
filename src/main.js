@@ -1,5 +1,5 @@
-// Version 1.8.2 - INV-aiden
-// UI Consistency Fix & Hardening
+// Version 1.9.4 - INV-aiden
+// Comprehensive Audit & Cleanup
 
 const App = {
     Config: {
@@ -215,7 +215,6 @@ function initializeCategory() {
 // --- Cloud Sync ---
 
 function pushToCloud() {
-    if (!App.Services.supabase) initSupabase();
     if (!App.Services.supabase || !App.State.syncId) return;
 
     App.Services.supabase
@@ -240,9 +239,7 @@ function pushToCloud() {
 }
 
 function pullFromCloud(isSilent) {
-    if (!App.Services.supabase) initSupabase();
-    if (!App.Services.supabase) return;
-    if (!App.State.syncId) return;
+    if (!App.Services.supabase || !App.State.syncId) return;
 
     if (!isSilent) App.UI.updateSyncStatus('Checking...', false);
 
@@ -775,4 +772,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // Start App
-window.addEventListener('load', initApp);
+window.addEventListener('load', function () {
+    initSupabase();
+    initApp();
+});
