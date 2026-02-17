@@ -695,7 +695,7 @@ window.removeCategory = function (cat) {
     });
 };
 
-// --- PDF Export ---
+// --- PDF Export & Data Management ---
 
 if (document.getElementById('export-pdf-btn')) {
     document.getElementById('export-pdf-btn').onclick = function () {
@@ -724,7 +724,8 @@ if (document.getElementById('export-pdf-btn')) {
                 grid.className = 'pdf-grid';
 
                 allProducts.forEach(function (name) {
-                    var expr = App.State.inventory[cat + '-' + name];
+                    var key = App.Utils.getProductKey(cat, name);
+                    var expr = App.State.inventory[key];
                     var total = App.Utils.safeEvaluate(expr);
                     var item = document.createElement('div');
                     item.className = 'pdf-grid-item';
@@ -766,6 +767,102 @@ if (document.getElementById('export-pdf-btn')) {
             App.UI.showToast("PDF Exported", 'success');
         });
     };
+}
+
+// Data Export (JSON)
+if (document.getElementById('export-json-btn')) {
+    document.getElementById('export-json-btn').onclick = function () {
+        var data = {
+            products: App.State.products,
+            inventory: App.State.inventory,
+            categoryOrder: App.State.categoryOrder,
+            exportDate: new Date().toISOString(),
+            version: '1.9.4'
+        };
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = 'inventory_backup_' + dateStr + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        App.UI.showToast("Data Exported", 'success');
+    };
+}
+
+// Data Import (JSON)
+if (document.getElementById('import-json-btn')) {
+    var fileInput = document.getElementById('import-file-input');
+
+    document.getElementById('import-json-btn').onclick = function () {
+        if (fileInput) fileInput.click();
+    };
+
+    if (fileInput) {
+        fileInput.onchange = function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    var data = JSON.parse(e.target.result);
+
+                    // Basic Validation
+                    if (!data.products || !data.inventory) {
+                        throw new Error("Invalid inventory file format");
+                    }
+
+                    // Merge Strategy: Overwrite existing keys, keep new ones
+                    // Actually, for "Restore", a deep merge or replacement is often better.
+                    // Here we will do a safe merge:
+                    // 1. Merge Products
+                    Object.keys(data.products).forEach(function (cat) {
+                        if (!App.State.products[cat]) {
+                            App.State.products[cat] = [];
+                        }
+                        // Add products that don't exist
+                        data.products[cat].forEach(function (p) {
+                            if (!App.State.products[cat].includes(p)) {
+                                App.State.products[cat].push(p);
+                            }
+                        });
+                    });
+
+                    // 2. Update Inventory Values (Overwrite if exists in import)
+                    Object.assign(App.State.inventory, data.inventory);
+
+                    // 3. Update Category Order (Append new categories)
+                    if (data.categoryOrder) {
+                        data.categoryOrder.forEach(function (cat) {
+                            if (!App.State.categoryOrder.includes(cat)) {
+                                App.State.categoryOrder.push(cat);
+                            }
+                        });
+                    }
+
+                    saveToStorage(true);
+                    initializeCategory();
+                    renderTabs();
+                    renderInventory();
+                    renderManageUI();
+
+                    App.UI.showToast("Data Imported Successfully", 'success');
+
+                    // Reset input
+                    fileInput.value = '';
+
+                } catch (err) {
+                    console.error(err);
+                    App.UI.showToast("Import Failed: " + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+    }
 }
 
 // --- PWA & Service Worker ---
