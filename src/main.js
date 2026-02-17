@@ -59,6 +59,17 @@ const App = {
             } catch (e) {
                 return 0;
             }
+        },
+
+        // Helper: Generate unique inventory key
+        getProductKey: function (category, product) {
+            return category + '-' + product;
+        },
+
+        // Helper: Get product list for current category safely
+        getCurrentProducts: function () {
+            if (!App.State.currentCategory || !App.State.products) return [];
+            return App.State.products[App.State.currentCategory] || [];
         }
     },
 
@@ -365,12 +376,17 @@ function renderInventory() {
         list.className = 'inventory-list';
     }
 
-    if (!App.State.currentCategory || !App.State.products || !App.State.products[App.State.currentCategory]) {
-        list.innerHTML = '<div class="empty-state">Select or Add a Category</div>';
-        return;
+    if (!App.State.currentCategory || !App.Utils.getCurrentProducts().length) {
+        // Check if category exists but empty, or category not selected
+        if (App.State.currentCategory && App.State.products[App.State.currentCategory]) {
+            // Valid category, just empty
+        } else {
+            list.innerHTML = '<div class="empty-state">Select or Add a Category</div>';
+            return;
+        }
     }
 
-    var products = App.State.products[App.State.currentCategory];
+    var products = App.Utils.getCurrentProducts();
 
     var sortedProducts = products.slice();
     if (App.State.sortDirection === 'asc') sortedProducts.sort();
@@ -401,7 +417,7 @@ function renderInventory() {
     }
 
     sortedProducts.forEach(function (name, index) {
-        var key = App.State.currentCategory + '-' + name;
+        var key = App.Utils.getProductKey(App.State.currentCategory, name);
         var val = App.State.inventory[key] || '';
         var total = App.Utils.safeEvaluate(val);
 
@@ -472,11 +488,12 @@ window.submitQuickAdd = function () {
     var name = input ? input.value.trim() : "";
     if (!name) return;
 
-    if (App.State.products[App.State.currentCategory].includes(name)) {
+    var currentProds = App.Utils.getCurrentProducts();
+    if (currentProds.includes(name)) {
         return App.UI.showToast("Product exists", 'error');
     }
 
-    App.State.products[App.State.currentCategory].push(name);
+    currentProds.push(name);
     saveToStorage(true);
     renderInventory();
     App.UI.showToast("Product added", 'success');
@@ -484,20 +501,22 @@ window.submitQuickAdd = function () {
 
 window.renameProductInline = function (oldName) {
     if (!oldName) return;
-    var index = App.State.products[App.State.currentCategory].indexOf(oldName);
+    var currentProds = App.Utils.getCurrentProducts();
+    var index = currentProds.indexOf(oldName);
     if (index === -1) return;
 
     var newName = prompt("Rename product:", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
         var trimmedName = newName.trim();
-        if (App.State.products[App.State.currentCategory].includes(trimmedName)) {
+        if (currentProds.includes(trimmedName)) {
             return App.UI.showToast("Product exists", 'error');
         }
 
-        App.State.products[App.State.currentCategory][index] = trimmedName;
+        currentProds[index] = trimmedName;
 
-        var oldKey = App.State.currentCategory + '-' + oldName;
-        var newKey = App.State.currentCategory + '-' + trimmedName;
+        var oldKey = App.Utils.getProductKey(App.State.currentCategory, oldName);
+        var newKey = App.Utils.getProductKey(App.State.currentCategory, trimmedName);
+
         if (App.State.inventory[oldKey]) {
             App.State.inventory[newKey] = App.State.inventory[oldKey];
             delete App.State.inventory[oldKey];
@@ -510,12 +529,14 @@ window.renameProductInline = function (oldName) {
 
 window.removeProductInline = function (name) {
     if (!name) return;
-    var index = App.State.products[App.State.currentCategory].indexOf(name);
+    var currentProds = App.Utils.getCurrentProducts();
+    var index = currentProds.indexOf(name);
     if (index === -1) return;
 
     App.UI.confirm("Delete this product?", function () {
-        App.State.products[App.State.currentCategory].splice(index, 1);
-        delete App.State.inventory[App.State.currentCategory + '-' + name];
+        currentProds.splice(index, 1);
+        var key = App.Utils.getProductKey(App.State.currentCategory, name);
+        delete App.State.inventory[key];
         saveToStorage(true);
         renderInventory();
         App.UI.showToast("Product deleted", 'info');
@@ -533,7 +554,8 @@ window.toggleViewMode = function (mode) {
 };
 
 window.updateValue = function (name, value, index) {
-    App.State.inventory[App.State.currentCategory + '-' + name] = value;
+    var key = App.Utils.getProductKey(App.State.currentCategory, name);
+    App.State.inventory[key] = value;
     saveToStorage(false);
     var total = App.Utils.safeEvaluate(value);
     var resultEl = document.getElementById('result-' + index);
@@ -633,10 +655,14 @@ window.editCategory = function (oldCat) {
         var ordIdx = App.State.categoryOrder.indexOf(oldCat);
         if (ordIdx > -1) App.State.categoryOrder[ordIdx] = newCat;
 
+        // Efficiently update inventory keys using new standardized check
         Object.keys(App.State.inventory).forEach(function (key) {
-            if (key.indexOf(oldCat + '-') === 0) {
-                var pName = key.substring(oldCat.length + 1);
-                App.State.inventory[newCat + '-' + pName] = App.State.inventory[key];
+            // Check if key starts with category + '-'
+            var prefix = oldCat + '-';
+            if (key.indexOf(prefix) === 0) {
+                var pName = key.substring(prefix.length);
+                var newKey = App.Utils.getProductKey(newCat, pName);
+                App.State.inventory[newKey] = App.State.inventory[key];
                 delete App.State.inventory[key];
             }
         });
@@ -653,9 +679,13 @@ window.removeCategory = function (cat) {
     App.UI.confirm("Delete category '" + cat + "'?", function () {
         delete App.State.products[cat];
         App.State.categoryOrder = App.State.categoryOrder.filter(function (c) { return c !== cat; });
+
+        // Cleanup inventory keys
+        var prefix = cat + '-';
         Object.keys(App.State.inventory).forEach(function (key) {
-            if (key.indexOf(cat + '-') === 0) delete App.State.inventory[key];
+            if (key.indexOf(prefix) === 0) delete App.State.inventory[key];
         });
+
         if (App.State.currentCategory === cat) App.State.currentCategory = App.State.categoryOrder[0] || "";
         saveToStorage(true);
         renderTabs();
