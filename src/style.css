@@ -732,52 +732,72 @@ body {
 }
 
 .btn-sort {
-    background: var(--primary-blue);
-    color: var(--accent-gold);
-    border: 1px solid rgba(255, 204, 0, 0.3);
-    border-radius: 8px;
-    padding: 8px 14px;
+    background: #002D72;
+    /* 更深邃的深蓝以提升对比度 / Deeper blue */
+    color: #FFD60A;
+    /* 高亮度活力金 / High-brightness gold */
+    border: 1px solid rgba(255, 214, 10, 0.4);
+    border-radius: 10px;
+    padding: 10px 16px;
     font-size: 1.1rem;
     font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.4s var(--spring-ease);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.02em;
 }
 
 .btn-sort:active {
-    transform: scale(0.9);
+    transform: scale(0.92);
     background: var(--accent-gold);
     color: #000;
 }
 
 .btn-sort:disabled {
-    opacity: 0.3;
+    opacity: 0.2;
     pointer-events: none;
 }
 
 .btn-edit {
-    background: rgba(0, 55, 133, 0.1);
-    color: var(--primary-blue);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    transition: all 0.2s;
+    background: #E8F0FE;
+    /* 更清晰的浅蓝背景 / Clearer light blue */
+    color: #0A53BE;
+    /* 深邃的主题蓝文字 / Deep theme blue text */
+    border: 1.5px solid #0A53BE;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s var(--spring-ease);
+    box-shadow: 0 2px 8px rgba(10, 83, 190, 0.1);
 }
 
 .btn-edit:active {
-    background: var(--primary-blue);
-    color: white;
+    transform: scale(0.94);
+    background: #0A53BE;
+    color: #FFFFFF;
 }
 
 .btn-delete {
-    background: #FF3B30;
+    background: var(--danger-color);
     color: white;
     border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.3s var(--spring-ease);
+    box-shadow: 0 4px 12px rgba(255, 69, 58, 0.2);
+}
+
+.btn-delete:active {
+    transform: scale(0.94);
+    filter: brightness(0.9);
 }
 
 hr {
