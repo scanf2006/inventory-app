@@ -47,20 +47,22 @@
         --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
-    /* 暗色模式按钮适配 / Dark Mode Button Overrides */
+    /* 暗色模式按钮适配 / Dark Mode Ultra-High Contrast */
     .btn-sort {
-        background: #0040DD !important;
-        /* 更亮的蓝色以区分黑色背景 / Lighter blue */
-        color: #FFD60A !important;
-        border-color: rgba(255, 214, 10, 0.6) !important;
+        background: #FFD60A !important;
+        /* 极致活力金 / Ultimate Gold */
+        color: #000000 !important;
+        /* 纯黑文字 / Solid Black */
+        border: 2px solid #000 !important;
+        box-shadow: 0 0 10px rgba(255, 214, 10, 0.3) !important;
     }
 
     .btn-edit {
-        background: #2C2C2E !important;
-        /* 深灰背景 / Dark gray bg */
+        background: #0A84FF !important;
+        /* 系统鲜蓝 / System Blue */
         color: #FFFFFF !important;
-        /* 纯白文字 / White text */
-        border-color: #0A84FF !important;
+        /* 纯白文字 / Pure White */
+        border: 2px solid #FFFFFF !important;
     }
 
     .item-card.preview-mode {
@@ -752,55 +754,51 @@ body {
 }
 
 .btn-sort {
-    background: #002D72;
-    /* 更深邃的深蓝以提升对比度 / Deeper blue */
-    color: #FFD60A;
-    /* 高亮度活力金 / High-brightness gold */
-    border: 1px solid rgba(255, 214, 10, 0.4);
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 1.1rem;
-    font-weight: 800;
+    background: #FFD60A;
+    /* 极致活力金 / Ultimate Gold */
+    color: #000000;
+    /* 纯黑文字 / Solid Black */
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 1.15rem;
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.4s var(--spring-ease);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(255, 214, 10, 0.2);
     letter-spacing: 0.02em;
 }
 
 .btn-sort:active {
     transform: scale(0.92);
-    background: var(--accent-gold);
-    color: #000;
+    filter: brightness(0.9);
 }
 
 .btn-sort:disabled {
-    opacity: 0.2;
+    opacity: 0.3;
     pointer-events: none;
 }
 
 .btn-edit {
-    background: #E8F0FE;
-    /* 更清晰的浅蓝背景 / Clearer light blue */
-    color: #0A53BE;
-    /* 深邃的主题蓝文字 / Deep theme blue text */
-    border: 1.5px solid #0A53BE;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 0.9rem;
+    background: #0A53BE;
+    color: #FFFFFF;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     transition: all 0.3s var(--spring-ease);
-    box-shadow: 0 2px 8px rgba(10, 83, 190, 0.1);
+    box-shadow: 0 4px 12px rgba(10, 83, 190, 0.2);
 }
 
 .btn-edit:active {
     transform: scale(0.94);
-    background: #0A53BE;
-    color: #FFFFFF;
+    filter: brightness(1.2);
 }
 
 .btn-delete {
