@@ -603,11 +603,10 @@ function renderManageUI() {
         var li = document.createElement('li');
         li.className = 'manage-item';
         li.innerHTML =
-            '<span>' + cat + '</span>' +
+            '<span style="cursor: pointer;" onclick="editCategory(\'' + cat.replace(/'/g, "\\'") + '\')">' + cat + '</span>' +
             '<div class="item-actions">' +
             '<button class="btn-sort" onclick="moveCategory(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + '>↑</button>' +
             '<button class="btn-sort" onclick="moveCategory(' + idx + ', 1)" ' + (idx === App.State.categoryOrder.length - 1 ? 'disabled' : '') + '>↓</button>' +
-            '<button class="btn-edit" onclick="editCategory(\'' + cat.replace(/'/g, "\\'") + '\')">Edit</button>' +
             '<button class="btn-delete" onclick="removeCategory(\'' + cat.replace(/'/g, "\\'") + '\')">Delete</button>' +
             '</div>';
         cList.appendChild(li);
