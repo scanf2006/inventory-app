@@ -400,11 +400,11 @@ function renderInventory() {
         bar.className = 'view-toggle-bar';
         bar.innerHTML =
             '<div class="segmented-control">' +
-            '<button onclick="sortProductsToggle()" class="active">Sort: ' + App.State.sortDirection.toUpperCase() + '</button>' +
+            '<button onclick="sortProductsToggle()" class="btn-sort">Sort: ' + App.State.sortDirection.toUpperCase() + '</button>' +
             '</div>' +
             '<div class="segmented-control">' +
-            '<button onclick="toggleViewMode(\'edit\')" class="' + (App.State.viewMode === 'edit' ? 'active' : '') + '">Edit</button>' +
-            '<button onclick="toggleViewMode(\'preview\')" class="' + (App.State.viewMode === 'preview' ? 'active' : '') + '">Preview</button>' +
+            '<button onclick="toggleViewMode(\'edit\')" class="btn-edit ' + (App.State.viewMode === 'edit' ? 'active' : '') + '">Edit</button>' +
+            '<button onclick="toggleViewMode(\'preview\')" class="btn-edit ' + (App.State.viewMode === 'preview' ? 'active' : '') + '">Preview</button>' +
             '</div>';
         controls.appendChild(bar);
 
