@@ -46,6 +46,26 @@
         --glass-header: rgba(0, 0, 0, 0.9);
         --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1);
     }
+
+    /* 暗色模式按钮适配 / Dark Mode Button Overrides */
+    .btn-sort {
+        background: #0040DD !important;
+        /* 更亮的蓝色以区分黑色背景 / Lighter blue */
+        color: #FFD60A !important;
+        border-color: rgba(255, 214, 10, 0.6) !important;
+    }
+
+    .btn-edit {
+        background: #2C2C2E !important;
+        /* 深灰背景 / Dark gray bg */
+        color: #FFFFFF !important;
+        /* 纯白文字 / White text */
+        border-color: #0A84FF !important;
+    }
+
+    .item-card.preview-mode {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
 }
 
 .hidden {
