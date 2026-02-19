@@ -1,10 +1,11 @@
-const CACHE_NAME = 'inv-aiden-v1.9.7';
+const CACHE_NAME = 'inv-aiden-v1.9.8';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './src/main.js',
-    './src/style.css',
+    './src/style.css?v=1.9.8',
     './manifest.json',
+    './assets/icon.svg',
     'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
     'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
 ];
