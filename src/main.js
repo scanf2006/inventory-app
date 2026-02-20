@@ -70,6 +70,11 @@ const App = {
         getCurrentProducts: function () {
             if (!App.State.currentCategory || !App.State.products) return [];
             return App.State.products[App.State.currentCategory] || [];
+        },
+
+        // Helper: Escape single quotes safely for HTML injections
+        escapeStr: function (str) {
+            return str ? str.replace(/'/g, "\\'") : '';
         }
     },
 
@@ -428,18 +433,18 @@ function renderInventory() {
             card.innerHTML =
                 '<div class="item-info">' +
                 '<div class="item-name">' + name + '</div>' +
-                '<div class="item-result">tal:<br>' + total + '</div>' +
+                '<div class="item-result">Total:<br>' + total + '</div>' +
                 '</div>';
         } else {
             card.innerHTML =
                 '<div class="item-info">' +
-                '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</div>' +
-                '<div class="item-result" id="result-' + index + '">tal:<br>' + total + '</div>' +
+                '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + App.Utils.escapeStr(name) + '\')">' + name + '</div>' +
+                '<div class="item-result" id="result-' + index + '">Total:<br>' + total + '</div>' +
                 '</div>' +
                 '<div class="input-group">' +
                 '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
-                'oninput="window.updateValue(\'' + name.replace(/'/g, "\\'") + '\', this.value, ' + index + ')">' +
-                '<button class="item-delete-btn" onclick="removeProductInline(\'' + name.replace(/'/g, "\\'") + '\')">🗑️</button>' +
+                'oninput="window.updateValue(\'' + App.Utils.escapeStr(name) + '\', this.value, ' + index + ')">' +
+                '<button class="item-delete-btn" onclick="removeProductInline(\'' + App.Utils.escapeStr(name) + '\')">🗑️</button>' +
                 '</div>';
         }
 
@@ -559,7 +564,7 @@ window.updateValue = function (name, value, index) {
     saveToStorage(false);
     var total = App.Utils.safeEvaluate(value);
     var resultEl = document.getElementById('result-' + index);
-    if (resultEl) resultEl.innerHTML = 'tal:<br>' + total;
+    if (resultEl) resultEl.innerHTML = 'Total:<br>' + total;
 };
 
 // --- Modal & Management ---
@@ -603,11 +608,11 @@ function renderManageUI() {
         var li = document.createElement('li');
         li.className = 'manage-item';
         li.innerHTML =
-            '<span style="cursor: pointer;" onclick="editCategory(\'' + cat.replace(/'/g, "\\'") + '\')">' + cat + '</span>' +
+            '<span style="cursor: pointer;" onclick="editCategory(\'' + App.Utils.escapeStr(cat) + '\')">' + cat + '</span>' +
             '<div class="item-actions">' +
             '<button class="btn-sort" onclick="moveCategory(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + '>↑</button>' +
             '<button class="btn-sort" onclick="moveCategory(' + idx + ', 1)" ' + (idx === App.State.categoryOrder.length - 1 ? 'disabled' : '') + '>↓</button>' +
-            '<button class="btn-delete" onclick="removeCategory(\'' + cat.replace(/'/g, "\\'") + '\')">Delete</button>' +
+            '<button class="btn-delete" onclick="removeCategory(\'' + App.Utils.escapeStr(cat) + '\')">Delete</button>' +
             '</div>';
         cList.appendChild(li);
     });
