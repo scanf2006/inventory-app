@@ -29,7 +29,9 @@
             document.head.appendChild(s);
         }
     </script>
-    <link rel="stylesheet" href="src/app-v29.css">
+    <!-- Chart.js for Desktop Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="src/app-v30.css">
 </head>
 
 <body>
@@ -66,6 +68,15 @@
         <!-- Main Content -->
         <main class="content-area">
             <div id="inventory-controls" class="inventory-controls"></div>
+
+            <!-- v3.0.0 Desktop Only: Chart Dashboard -->
+            <div id="desktop-chart-container" class="desktop-only hidden">
+                <h2 class="chart-title">常用关键油量监控 (Common Oils Monitor)</h2>
+                <div class="chart-wrapper">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>
+
             <div id="inventory-list" class="inventory-list">
                 <!-- Products rendered via JS -->
             </div>
@@ -125,6 +136,19 @@
 
                     <hr>
                     <section class="management-section">
+                        <h3>Dashboard Config (Desktop)</h3>
+                        <div class="add-form" style="flex-direction: column; gap: 4px;">
+                            <input type="text" id="common-oils-input" placeholder="e.g. 5W20S, 5W30S, AW68"
+                                title="Comma separated list of products to track on desktop dashboard">
+                            <button id="save-common-oils-btn" class="w-full mt-2" style="margin-top: 8px;">Update Common
+                                Oils</button>
+                        </div>
+                        <p class="small-hint">These products will be monitored on the Desktop Dashboard Bar Chart.
+                            Separate by commas.</p>
+                    </section>
+
+                    <hr>
+                    <section class="management-section">
                         <h3>Data Management</h3>
                         <div class="data-actions" style="display: flex; gap: 10px; margin-top: 10px;">
                             <button id="export-json-btn" class="secondary-btn w-full">📤 Export JSON</button>
@@ -143,7 +167,7 @@
                             Zero</button>
                     </section>
 
-                    <div class="version-tag" id="app-version-display">v2.9.0</div>
+                    <div class="version-tag" id="app-version-display">v3.0.0 Dashboard Edition</div>
                 </div>
             </div>
         </div>
