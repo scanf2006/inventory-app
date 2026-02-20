@@ -16,212 +16,208 @@ const App = {
     State: {
         currentCategory: "",
         products: null,
-        State: {
-            currentCategory: "",
-            products: null,
-            inventory: null,
-            categoryOrder: null,
-            commonOils: ["5W20S", "5W20B", "5W30S", "5W30B"], // v3.0 Desktop dashboard config
-            syncId: "",
-            viewMode: 'edit',
-            sortDirection: 'asc',
-            lastUpdated: 0,
-            chartInstance: null // v3.0 Chart.js instance tracking
+        inventory: null,
+        categoryOrder: null,
+        commonOils: ["5W20S", "5W20B", "5W30S", "5W30B"], // v3.0 Desktop dashboard config
+        syncId: "",
+        viewMode: 'edit',
+        sortDirection: 'asc',
+        lastUpdated: 0,
+        chartInstance: null // v3.0 Chart.js instance tracking
+    },
+
+    Services: {
+        supabase: null
+    },
+
+    Utils: {
+        safeGetJSON: function (key, defaultValue) {
+            try {
+                var item = localStorage.getItem(key);
+                if (!item || item === "undefined") return defaultValue;
+                return JSON.parse(item) || defaultValue;
+            } catch (e) { return defaultValue; }
         },
 
-        Services: {
-            supabase: null
+        debounce: function (func, wait) {
+            var timeout;
+            return function () {
+                var context = this, args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function () {
+                    func.apply(context, args);
+                }, wait);
+            };
         },
 
-        Utils: {
-            safeGetJSON: function (key, defaultValue) {
-                try {
-                    var item = localStorage.getItem(key);
-                    if (!item || item === "undefined") return defaultValue;
-                    return JSON.parse(item) || defaultValue;
-                } catch (e) { return defaultValue; }
-            },
-
-            debounce: function (func, wait) {
-                var timeout;
-                return function () {
-                    var context = this, args = arguments;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(function () {
-                        func.apply(context, args);
-                    }, wait);
-                };
-            },
-
-            safeEvaluate: function (expr) {
-                if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
-                var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
-                if (!cleanExpr) return 0;
-                try {
-                    var result = new Function('return (' + cleanExpr + ')')();
-                    var num = parseFloat(result);
-                    return isNaN(num) ? 0 : Math.round(num * 100) / 100;
-                } catch (e) {
-                    return 0;
-                }
-            },
-
-            // Helper: Generate unique inventory key
-            getProductKey: function (category, product) {
-                return category + '-' + product;
-            },
-
-            // Helper: Get product list for current category safely
-            getCurrentProducts: function () {
-                if (!App.State.currentCategory || !App.State.products) return [];
-                return App.State.products[App.State.currentCategory] || [];
-            },
-
-            // Helper: Escape single quotes safely for HTML injections
-            escapeStr: function (str) {
-                return str ? str.replace(/'/g, "\\'") : '';
+        safeEvaluate: function (expr) {
+            if (!expr || typeof expr !== 'string' || expr.trim() === '') return 0;
+            var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, '');
+            if (!cleanExpr) return 0;
+            try {
+                var result = new Function('return (' + cleanExpr + ')')();
+                var num = parseFloat(result);
+                return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+            } catch (e) {
+                return 0;
             }
         },
 
-        UI: {
-            isDesktop: function () {
-                return window.innerWidth >= 768;
-            },
+        // Helper: Generate unique inventory key
+        getProductKey: function (category, product) {
+            return category + '::' + product;
+        },
 
-            updateSyncStatus: function (status, isOnline) {
-                var el = document.getElementById('sync-status');
-                if (el) {
-                    var span = el.querySelector('span');
-                    if (span) {
-                        span.innerText = status;
-                        if (isOnline) el.classList.add('online');
-                        else el.classList.remove('online');
-                    }
-                }
-            },
+        // Helper: Get product list for current category safely
+        getCurrentProducts: function () {
+            if (!App.State.currentCategory || !App.State.products) return [];
+            return App.State.products[App.State.currentCategory] || [];
+        },
 
-            showToast: function (message, type) {
-                type = type || 'info';
-                var container = document.getElementById('toast-container');
-                if (!container) return;
-
-                var toast = document.createElement('div');
-                toast.className = 'toast ' + type;
-
-                var icon = 'ℹ️';
-                if (type === 'success') icon = '✅';
-                if (type === 'error') icon = '⚠️';
-
-                toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
-                container.appendChild(toast);
-
-                setTimeout(function () {
-                    toast.classList.add('hiding');
-                    toast.addEventListener('animationend', function () {
-                        if (toast.parentNode) toast.parentNode.removeChild(toast);
-                    });
-                }, 3000);
-            },
-
-            confirm: function (msg, onConfirm) {
-                var overlay = document.getElementById('confirm-modal');
-                var msgEl = document.getElementById('confirm-msg');
-                var yesBtn = document.getElementById('confirm-yes-btn');
-                var noBtn = document.getElementById('confirm-no-btn');
-
-                if (!overlay || !msgEl || !yesBtn || !noBtn) {
-                    if (window.confirm(msg)) onConfirm();
-                    return;
-                }
-
-                msgEl.innerText = msg;
-                overlay.classList.remove('hidden');
-
-                var newYes = yesBtn.cloneNode(true);
-                var newNo = noBtn.cloneNode(true);
-                yesBtn.parentNode.replaceChild(newYes, yesBtn);
-                noBtn.parentNode.replaceChild(newNo, noBtn);
-
-                newYes.onclick = function (e) {
-                    e.stopPropagation();
-                    overlay.classList.add('hidden');
-                    onConfirm();
-                };
-
-                newNo.onclick = function (e) {
-                    e.stopImmediatePropagation();
-                    overlay.classList.add('hidden');
-                };
-            },
-
-            closeConfirm: function () {
-                var el = document.getElementById('confirm-modal');
-                if (el) el.classList.add('hidden');
-            }
+        // Helper: Escape single quotes safely for HTML injections
+        escapeStr: function (str) {
+            return str ? str.replace(/'/g, "\\'") : '';
         }
     },
 
-    // --- Initialization ---
+    UI: {
+        isDesktop: function () {
+            return window.innerWidth >= 768;
+        },
 
-    initApp: function () {
-        // Data Migration (Recovering data from v1.7.x)
-        if (!localStorage.getItem('lubricant_products') && localStorage.getItem('inventory_products')) {
-            localStorage.setItem('lubricant_products', localStorage.getItem('inventory_products'));
-            localStorage.setItem('lubricant_inventory', localStorage.getItem('inventory_data'));
-            localStorage.setItem('lubricant_category_order', localStorage.getItem('inventory_category_order'));
-            localStorage.setItem('lubricant_sync_id', localStorage.getItem('inventory_sync_id'));
-        }
+        updateSyncStatus: function (status, isOnline) {
+            var el = document.getElementById('sync-status');
+            if (el) {
+                var span = el.querySelector('span');
+                if (span) {
+                    span.innerText = status;
+                    if (isOnline) el.classList.add('online');
+                    else el.classList.remove('online');
+                }
+            }
+        },
 
-        App.State.products = App.Utils.safeGetJSON('lubricant_products', App.Config.INITIAL_PRODUCTS);
-        App.State.inventory = App.Utils.safeGetJSON('lubricant_inventory', {});
-        App.State.categoryOrder = App.Utils.safeGetJSON('lubricant_category_order', Object.keys(App.Config.INITIAL_PRODUCTS));
+        showToast: function (message, type) {
+            type = type || 'info';
+            var container = document.getElementById('toast-container');
+            if (!container) return;
 
-        // v3.0 Common Oils Setup
-        var defaultOils = ["5W20S", "5W20B", "5W30S", "5W30B"];
-        App.State.commonOils = App.Utils.safeGetJSON('lubricant_common_oils', defaultOils);
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
 
-        App.State.lastUpdated = parseInt(localStorage.getItem('lubricant_last_updated') || '0');
+            var icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '⚠️';
 
-        var savedId = localStorage.getItem('lubricant_sync_id');
-        App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
+            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
 
-        initSupabase();
-        initializeCategory();
+            setTimeout(function () {
+                toast.classList.add('hiding');
+                toast.addEventListener('animationend', function () {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                });
+            }, 3000);
+        },
 
-        // UI Init
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        updateProductSuggestions();
-        renderTabs();
-        renderInventory();
+        confirm: function (msg, onConfirm) {
+            var overlay = document.getElementById('confirm-modal');
+            var msgEl = document.getElementById('confirm-msg');
+            var yesBtn = document.getElementById('confirm-yes-btn');
+            var noBtn = document.getElementById('confirm-no-btn');
 
-        // Footer button binding
-        var manageBtn = document.getElementById('manage-btn');
-        if (manageBtn) {
-            manageBtn.onclick = function () {
-                var modalOverlay = document.getElementById('modal-overlay');
-                modalOverlay.classList.remove('hidden');
-                document.getElementById('sync-id-input').value = App.State.syncId || '';
-                document.getElementById('common-oils-input').value = App.State.commonOils.join(', ');
-                renderManageUI();
+            if (!overlay || !msgEl || !yesBtn || !noBtn) {
+                if (window.confirm(msg)) onConfirm();
+                return;
+            }
+
+            msgEl.innerText = msg;
+            overlay.classList.remove('hidden');
+
+            var newYes = yesBtn.cloneNode(true);
+            var newNo = noBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYes, yesBtn);
+            noBtn.parentNode.replaceChild(newNo, noBtn);
+
+            newYes.onclick = function (e) {
+                e.stopPropagation();
+                overlay.classList.add('hidden');
+                onConfirm();
             };
-        }
 
-        if (App.Services.supabase && App.State.syncId) {
-            pullFromCloud();
+            newNo.onclick = function (e) {
+                e.stopImmediatePropagation();
+                overlay.classList.add('hidden');
+            };
+        },
 
-            // Auto-Sync Triggers
-            window.addEventListener('focus', function () { pullFromCloud(true); });
-            document.addEventListener('visibilitychange', function () {
-                if (document.visibilityState === 'visible') pullFromCloud(true);
-            });
-
-            // Background Polling (30s)
-            setInterval(function () {
-                if (document.visibilityState === 'visible') pullFromCloud(true);
-            }, 30000);
+        closeConfirm: function () {
+            var el = document.getElementById('confirm-modal');
+            if (el) el.classList.add('hidden');
         }
     }
 };
+
+// --- Initialization ---
+
+function initApp() {
+    // Data Migration (Recovering data from v1.7.x)
+    if (!localStorage.getItem('lubricant_products') && localStorage.getItem('inventory_products')) {
+        localStorage.setItem('lubricant_products', localStorage.getItem('inventory_products'));
+        localStorage.setItem('lubricant_inventory', localStorage.getItem('inventory_data'));
+        localStorage.setItem('lubricant_category_order', localStorage.getItem('inventory_category_order'));
+        localStorage.setItem('lubricant_sync_id', localStorage.getItem('inventory_sync_id'));
+    }
+
+    App.State.products = App.Utils.safeGetJSON('lubricant_products', App.Config.INITIAL_PRODUCTS);
+    App.State.inventory = App.Utils.safeGetJSON('lubricant_inventory', {});
+    App.State.categoryOrder = App.Utils.safeGetJSON('lubricant_category_order', Object.keys(App.Config.INITIAL_PRODUCTS));
+
+    // v3.0 Common Oils Setup
+    var defaultOils = ["5W20S", "5W20B", "5W30S", "5W30B"];
+    App.State.commonOils = App.Utils.safeGetJSON('lubricant_common_oils', defaultOils);
+
+    App.State.lastUpdated = parseInt(localStorage.getItem('lubricant_last_updated') || '0');
+
+    var savedId = localStorage.getItem('lubricant_sync_id');
+    App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
+
+    initSupabase();
+    initializeCategory();
+
+    // UI Init
+    document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    updateProductSuggestions();
+    renderTabs();
+    renderInventory();
+
+    // Footer button binding
+    var manageBtn = document.getElementById('manage-btn');
+    if (manageBtn) {
+        manageBtn.onclick = function () {
+            var modalOverlay = document.getElementById('modal-overlay');
+            modalOverlay.classList.remove('hidden');
+            document.getElementById('sync-id-input').value = App.State.syncId || '';
+            document.getElementById('common-oils-input').value = App.State.commonOils.join(', ');
+            renderManageUI();
+        };
+    }
+
+    if (App.Services.supabase && App.State.syncId) {
+        pullFromCloud();
+
+        // Auto-Sync Triggers
+        window.addEventListener('focus', function () { pullFromCloud(true); });
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') pullFromCloud(true);
+        });
+
+        // Background Polling (30s)
+        setInterval(function () {
+            if (document.visibilityState === 'visible') pullFromCloud(true);
+        }, 30000);
+    }
+}
 
 function initSupabase() {
     var lib = window.supabasejs || window.supabase;
