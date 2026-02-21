@@ -968,6 +968,21 @@ function renderDesktopChart() {
         var gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
         var fontColor = isDark ? '#EEE' : '#333';
 
+        // Dynamic Color Logic based on thresholds
+        var bgColors = data.map(function (val) {
+            if (val < 100) return 'rgba(255, 69, 58, 0.85)';    // Danger Red
+            if (val >= 100 && val < 500) return 'rgba(255, 214, 10, 0.85)'; // Warning Yellow
+            if (val >= 1000) return 'rgba(48, 209, 88, 0.85)';  // Healthy Green
+            return 'rgba(10, 132, 255, 0.85)';                  // Default Blue (500-1000)
+        });
+
+        var borderColors = data.map(function (val) {
+            if (val < 100) return '#FF453A';
+            if (val >= 100 && val < 500) return '#FFD60A';
+            if (val >= 1000) return '#30D158';
+            return '#0A84FF';
+        });
+
         App.State.chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -975,19 +990,33 @@ function renderDesktopChart() {
                 datasets: [{
                     label: 'Stock Level (Liters)',
                     data: data,
-                    backgroundColor: 'rgba(255, 214, 10, 0.85)',
-                    borderColor: '#FFD60A',
+                    backgroundColor: bgColors,
+                    borderColor: borderColors,
                     borderWidth: 1,
-                    borderRadius: 4,
-                    hoverBackgroundColor: 'rgba(10, 83, 190, 0.85)',
+                    borderRadius: 6,
+                    hoverBackgroundColor: 'rgba(255, 255, 255, 0.6)',
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: { duration: 800, easing: 'easeOutQuart' },
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutElastic',
+                    delay: function (context) { return context.dataIndex * 100; }
+                },
                 plugins: {
-                    legend: { labels: { color: fontColor } }
+                    legend: { labels: { color: fontColor } },
+                    datalabels: {
+                        color: function (context) {
+                            return isDark ? '#FFF' : '#000';
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        font: { weight: 'bold', size: 14, family: 'Outfit' },
+                        formatter: Math.round,
+                        offset: 4
+                    }
                 },
                 scales: {
                     y: {
