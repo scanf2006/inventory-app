@@ -887,6 +887,117 @@ if (document.getElementById('import-json-btn')) {
     }
 }
 
+// --- v3.0 Desktop Chart Integration ---
+function renderDesktopChart() {
+    // Add try/catch to absolutely prevent chart errors from breaking the page initialization
+    try {
+        var ctxContainer = document.getElementById('desktop-chart-container');
+        var canvas = document.getElementById('inventoryChart');
+        if (!ctxContainer || !canvas || !window.Chart) return;
+
+        // Force commonOils to be an array in case of legacy storage corruption
+        var targetOils = App.State.commonOils || [];
+        if (typeof targetOils === 'string') {
+            targetOils = targetOils.split(',').map(function (s) { return s.trim(); });
+            App.State.commonOils = targetOils;
+        }
+
+        var aggregatedData = {};
+        targetOils.forEach(function (oil) { aggregatedData[oil] = 0; });
+
+        // Safely scan products
+        if (App.State.products && typeof App.State.products === 'object') {
+            Object.keys(App.State.products).forEach(function (category) {
+                var prods = App.State.products[category];
+                if (!Array.isArray(prods)) return;
+
+                prods.forEach(function (prod) {
+                    if (typeof prod !== 'string') return;
+                    var trimmedProd = prod.trim();
+                    if (targetOils.includes(trimmedProd) || targetOils.includes(prod)) {
+                        var key = App.Utils.getProductKey(category, prod);
+                        var valStr = App.State.inventory[key] || '';
+                        var amount = App.Utils.safeEvaluate(valStr);
+
+                        var matchedOil = targetOils.includes(trimmedProd) ? trimmedProd : prod;
+                        aggregatedData[matchedOil] += amount;
+                    }
+                });
+            });
+        }
+
+        var labels = targetOils;
+        var data = targetOils.map(function (oil) { return aggregatedData[oil]; });
+
+        var ctx = canvas.getContext('2d');
+
+        if (App.State.chartInstance) {
+            App.State.chartInstance.destroy();
+        }
+
+        var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+        var fontColor = isDark ? '#EEE' : '#333';
+
+        App.State.chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Stock Level (Gallons/Counts)',
+                    data: data,
+                    backgroundColor: 'rgba(255, 214, 10, 0.85)',
+                    borderColor: '#FFD60A',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    hoverBackgroundColor: 'rgba(10, 83, 190, 0.85)',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: { labels: { color: fontColor } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { color: fontColor }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: fontColor, font: { weight: 'bold' } }
+                    }
+                }
+            }
+        });
+
+        // Only reveal the container after completely successful chart init
+        ctxContainer.classList.remove('hidden');
+
+    } catch (chartErr) {
+        console.error("Desktop Chart Initialization Failed:", chartErr);
+        // Do not block app execution
+    }
+}
+
+// Bind Settings Config Action
+if (document.getElementById('save-common-oils-btn')) {
+    document.getElementById('save-common-oils-btn').onclick = function () {
+        var input = document.getElementById('common-oils-input');
+        if (input) {
+            var val = input.value;
+            var newList = val.split(',').map(function (item) { return item.trim(); }).filter(function (item) { return item !== ""; });
+            App.State.commonOils = newList;
+            saveToStorage(true);
+            renderDesktopChart();
+            App.UI.showToast("Dashboard Config Updated!", 'success');
+        }
+    };
+}
+
 // --- PWA & Service Worker ---
 
 let deferredPrompt;
