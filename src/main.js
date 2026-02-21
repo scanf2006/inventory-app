@@ -428,6 +428,15 @@ function renderInventory() {
     if (App.State.sortDirection === 'asc') sortedProducts.sort();
     else if (App.State.sortDirection === 'desc') sortedProducts.sort().reverse();
 
+    // Filter out zero-stock items in Desktop or Preview mode
+    if (App.State.viewMode === 'preview' || App.UI.isDesktop()) {
+        sortedProducts = sortedProducts.filter(function (name) {
+            var key = App.Utils.getProductKey(App.State.currentCategory, name);
+            var valStr = App.State.inventory[key] || '';
+            return App.Utils.safeEvaluate(valStr) > 0;
+        });
+    }
+
     // Sort & View Controls Wrapper
     var controls = document.getElementById('inventory-controls');
     if (controls) {
