@@ -1354,3 +1354,12 @@ hr {
     font-family: 'Outfit', monospace;
     letter-spacing: 0.1em;
 }
+
+/* 增强 Update Common Oils 按钮的纵深与触感 */
+#save-common-oils-btn.secondary-btn {
+    padding: 18px 24px !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    border-radius: 16px !important;
+    min-height: 56px !important;
+}
