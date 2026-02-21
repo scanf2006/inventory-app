@@ -932,9 +932,12 @@ function renderDesktopChart() {
         var aggregatedData = {};
         targetOils.forEach(function (oil) { aggregatedData[oil] = 0; });
 
-        // Safely scan products
+        // Safely scan products ONLY from Bulk Oil categories
         if (App.State.products && typeof App.State.products === 'object') {
             Object.keys(App.State.products).forEach(function (category) {
+                // Critical Fix: Only aggregate data from 'Bulk Oil' categories to avoid cross-category duplicates
+                if (category.toLowerCase().indexOf('bulk oil') === -1) return;
+
                 var prods = App.State.products[category];
                 if (!Array.isArray(prods)) return;
 
