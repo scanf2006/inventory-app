@@ -1,10 +1,16 @@
-// Version 1.9.4 - INV-aiden
-// Comprehensive Audit & Cleanup
-
 const App = {
     Config: {
+        VERSION: "v3.0.21",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
+        STORAGE_KEYS: {
+            PRODUCTS: 'lubricant_products',
+            INVENTORY: 'lubricant_inventory',
+            CATEGORY_ORDER: 'lubricant_category_order',
+            SYNC_ID: 'lubricant_sync_id',
+            COMMON_OILS: 'lubricant_common_oils',
+            LAST_UPDATED: 'lubricant_last_updated'
+        },
         INITIAL_PRODUCTS: {
             "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
             "Case Oil": ["0W20B", "5W20B", "AW32", "AW46", "5W40E", "5W30E", "UTH", "80W90GL5", "10W", "15W40 CK4", "10W30 CK4", "70-4 30W"],
@@ -34,7 +40,7 @@ const App = {
         safeGetJSON: function (key, defaultValue) {
             try {
                 var item = localStorage.getItem(key);
-                if (!item || item === "undefined") return defaultValue;
+                if (!item || item === "undefined" || item === "null") return defaultValue;
                 return JSON.parse(item) || defaultValue;
             } catch (e) { return defaultValue; }
         },
@@ -76,7 +82,16 @@ const App = {
 
         // Helper: Escape single quotes safely for HTML injections
         escapeStr: function (str) {
-            return str ? str.replace(/'/g, "\\'") : '';
+            if (!str) return "";
+            return String(str).replace(/'/g, "\\'");
+        },
+
+        // New Security Feature: Escape HTML to prevent XSS
+        escapeHTML: function (str) {
+            if (!str) return "";
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
     },
 
@@ -109,7 +124,7 @@ const App = {
             if (type === 'success') icon = '✅';
             if (type === 'error') icon = '⚠️';
 
-            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            toast.innerHTML = '<span>' + icon + '</span><span>' + App.Utils.escapeHTML(message) + '</span>';
             container.appendChild(toast);
 
             setTimeout(function () {
@@ -161,17 +176,18 @@ const App = {
 // --- Initialization ---
 
 function initApp() {
+    var SK = App.Config.STORAGE_KEYS;
     // Data Migration (Recovering data from v1.7.x)
-    if (!localStorage.getItem('lubricant_products') && localStorage.getItem('inventory_products')) {
-        localStorage.setItem('lubricant_products', localStorage.getItem('inventory_products'));
-        localStorage.setItem('lubricant_inventory', localStorage.getItem('inventory_data'));
-        localStorage.setItem('lubricant_category_order', localStorage.getItem('inventory_category_order'));
-        localStorage.setItem('lubricant_sync_id', localStorage.getItem('inventory_sync_id'));
+    if (!localStorage.getItem(SK.PRODUCTS) && localStorage.getItem('inventory_products')) {
+        localStorage.setItem(SK.PRODUCTS, localStorage.getItem('inventory_products'));
+        localStorage.setItem(SK.INVENTORY, localStorage.getItem('inventory_data'));
+        localStorage.setItem(SK.CATEGORY_ORDER, localStorage.getItem('inventory_category_order'));
+        localStorage.setItem(SK.SYNC_ID, localStorage.getItem('inventory_sync_id'));
     }
 
-    App.State.products = App.Utils.safeGetJSON('lubricant_products', App.Config.INITIAL_PRODUCTS);
-    App.State.inventory = App.Utils.safeGetJSON('lubricant_inventory', {});
-    App.State.categoryOrder = App.Utils.safeGetJSON('lubricant_category_order', Object.keys(App.Config.INITIAL_PRODUCTS));
+    App.State.products = App.Utils.safeGetJSON(SK.PRODUCTS, App.Config.INITIAL_PRODUCTS);
+    App.State.inventory = App.Utils.safeGetJSON(SK.INVENTORY, {});
+    App.State.categoryOrder = App.Utils.safeGetJSON(SK.CATEGORY_ORDER, Object.keys(App.Config.INITIAL_PRODUCTS));
 
     // Recovery mechanism for any keys corrupted with '::' during v3.0.1-v3.0.3 timeframe
     var hasCorruptKeys = false;
@@ -188,16 +204,16 @@ function initApp() {
     });
 
     if (hasCorruptKeys) {
-        localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
+        localStorage.setItem(SK.INVENTORY, JSON.stringify(App.State.inventory));
     }
 
     // v3.0 Common Oils Setup
     var defaultOils = ["5W20S", "5W20B", "5W30S", "5W30B"];
-    App.State.commonOils = App.Utils.safeGetJSON('lubricant_common_oils', defaultOils);
+    App.State.commonOils = App.Utils.safeGetJSON(SK.COMMON_OILS, defaultOils);
 
-    App.State.lastUpdated = parseInt(localStorage.getItem('lubricant_last_updated') || '0');
+    App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED) || '0');
 
-    var savedId = localStorage.getItem('lubricant_sync_id');
+    var savedId = localStorage.getItem(SK.SYNC_ID);
     App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
 
     initSupabase();
@@ -234,6 +250,12 @@ function initApp() {
         setInterval(function () {
             if (document.visibilityState === 'visible') pullFromCloud(true);
         }, 30000);
+    }
+
+    // Dynamic Version Display
+    var versionEl = document.getElementById('app-version-display');
+    if (versionEl) {
+        versionEl.innerText = App.Config.VERSION + ' Dashboard Edition';
     }
 }
 
@@ -334,13 +356,14 @@ function pullFromCloud(isSilent) {
 // --- Storage & Data ---
 
 function saveToStorageImmediate(skipTimestamp) {
+    var SK = App.Config.STORAGE_KEYS;
     if (!skipTimestamp) App.State.lastUpdated = Date.now();
-    localStorage.setItem('lubricant_products', JSON.stringify(App.State.products));
-    localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
-    localStorage.setItem('lubricant_category_order', JSON.stringify(App.State.categoryOrder));
-    localStorage.setItem('lubricant_sync_id', App.State.syncId);
-    localStorage.setItem('lubricant_common_oils', JSON.stringify(App.State.commonOils));
-    localStorage.setItem('lubricant_last_updated', App.State.lastUpdated);
+    localStorage.setItem(SK.PRODUCTS, JSON.stringify(App.State.products));
+    localStorage.setItem(SK.INVENTORY, JSON.stringify(App.State.inventory));
+    localStorage.setItem(SK.CATEGORY_ORDER, JSON.stringify(App.State.categoryOrder));
+    localStorage.setItem(SK.SYNC_ID, App.State.syncId);
+    localStorage.setItem(SK.COMMON_OILS, JSON.stringify(App.State.commonOils));
+    localStorage.setItem(SK.LAST_UPDATED, App.State.lastUpdated);
 }
 
 var debouncedSave = App.Utils.debounce(function () {
@@ -417,7 +440,7 @@ function renderInventory() {
         if (App.State.currentCategory && App.State.products[App.State.currentCategory]) {
             // Valid category, just empty
         } else {
-            list.innerHTML = '<div class="empty-state">Select or Add a Category</div>';
+            list.innerHTML = '<div class="empty-state">' + App.Utils.escapeHTML('Select or Add a Category') + '</div>';
             return;
         }
     }
@@ -465,24 +488,26 @@ function renderInventory() {
         var key = App.Utils.getProductKey(App.State.currentCategory, name);
         var val = App.State.inventory[key] || '';
         var total = App.Utils.safeEvaluate(val);
+        var safeName = App.Utils.escapeHTML(name);
+        var isPreview = App.State.viewMode === 'preview' || App.UI.isDesktop();
 
         var card = document.createElement('div');
-        card.className = 'item-card' + (App.State.viewMode === 'preview' ? ' preview-mode' : '');
+        card.className = 'item-card' + (isPreview ? ' preview-mode' : '');
 
-        if (App.State.viewMode === 'preview' || App.UI.isDesktop()) {
+        if (isPreview) {
             card.innerHTML =
                 '<div class="item-info">' +
-                '<div class="item-name">' + name + '</div>' +
+                '<div class="item-name">' + safeName + '</div>' +
                 '<div class="item-result">Total:<br>' + total + '</div>' +
                 '</div>';
         } else {
             card.innerHTML =
                 '<div class="item-info">' +
-                '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + App.Utils.escapeStr(name) + '\')">' + name + '</div>' +
+                '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + App.Utils.escapeStr(name) + '\')">' + safeName + '</div>' +
                 '<div class="item-result" id="result-' + index + '">Total:<br>' + total + '</div>' +
                 '</div>' +
                 '<div class="input-group">' +
-                '<input type="tel" class="item-input" value="' + val + '" placeholder="0" ' +
+                '<input type="tel" class="item-input" value="' + App.Utils.escapeHTML(val) + '" placeholder="0" ' +
                 'oninput="window.updateValue(\'' + App.Utils.escapeStr(name) + '\', this.value, ' + index + ')">' +
                 '<button class="item-delete-btn" onclick="removeProductInline(\'' + App.Utils.escapeStr(name) + '\')">🗑️</button>' +
                 '</div>';
@@ -654,12 +679,13 @@ function renderManageUI() {
     App.State.categoryOrder.forEach(function (cat, idx) {
         var li = document.createElement('li');
         li.className = 'manage-item';
+        var safeCat = App.Utils.escapeHTML(cat);
         li.innerHTML =
-            '<span style="cursor: pointer;" onclick="editCategory(\'' + App.Utils.escapeStr(cat) + '\')">' + cat + '</span>' +
-            '<div class="item-actions">' +
-            '<button class="btn-sort" onclick="moveCategory(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + '>↑</button>' +
-            '<button class="btn-sort" onclick="moveCategory(' + idx + ', 1)" ' + (idx === App.State.categoryOrder.length - 1 ? 'disabled' : '') + '>↓</button>' +
-            '<button class="btn-delete" onclick="removeCategory(\'' + App.Utils.escapeStr(cat) + '\')">Delete</button>' +
+            '<span class="category-name" style="cursor: pointer;" onclick="editCategory(\'' + App.Utils.escapeStr(cat) + '\')">' + safeCat + '</span>' +
+            '<div class="category-actions">' +
+            '<button class="btn-sort" onclick="moveCategory(' + idx + ', -1)" ' + (idx === 0 ? 'disabled' : '') + '>▲</button>' +
+            '<button class="btn-sort" onclick="moveCategory(' + idx + ', 1)" ' + (idx === App.State.categoryOrder.length - 1 ? 'disabled' : '') + '>▼</button>' +
+            '<button class="btn-delete" onclick="removeCategory(\'' + App.Utils.escapeStr(cat) + '\')">🗑️</button>' +
             '</div>';
         cList.appendChild(li);
     });
