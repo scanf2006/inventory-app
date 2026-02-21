@@ -850,6 +850,15 @@ if (document.getElementById('import-json-btn')) {
         if (fileInput) fileInput.click();
     };
 
+    // Purge Zero-Stock Items
+    if (document.getElementById('purge-zero-btn')) {
+        document.getElementById('purge-zero-btn').onclick = function () {
+            App.UI.confirm("Are you sure you want to PERMANENTLY delete all products with ZERO inventory? This cannot be undone.", function () {
+                purgeZeroStockItems();
+            });
+        };
+    }
+
     if (fileInput) {
         fileInput.onchange = function (e) {
             var file = e.target.files[0];
@@ -1136,3 +1145,35 @@ window.addEventListener('load', function () {
     initSupabase();
     initApp();
 });
+// --- Utility: Purge Zero Stock Items ---
+function purgeZeroStockItems() {
+    var count = 0;
+    Object.keys(App.State.products).forEach(function (category) {
+        var productList = App.State.products[category];
+        if (!Array.isArray(productList)) return;
+
+        App.State.products[category] = productList.filter(function (name) {
+            var key = App.Utils.getProductKey(category, name);
+            var valStr = App.State.inventory[key] || "";
+            var amount = App.Utils.safeEvaluate(valStr);
+
+            if (amount > 0) {
+                return true;
+            } else {
+                // If it's 0 or empty, delete from inventory registry and filter out from product list
+                delete App.State.inventory[key];
+                count++;
+                return false;
+            }
+        });
+    });
+
+    if (count > 0) {
+        saveToStorageImmediate();
+        pushToCloud();
+        renderInventory();
+        App.UI.showToast("Purged " + count + " item(s)", 'success');
+    } else {
+        App.UI.showToast("No zero-stock items found", 'info');
+    }
+}
