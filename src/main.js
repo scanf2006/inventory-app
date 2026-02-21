@@ -1008,6 +1008,11 @@ function renderDesktopChart() {
                     easing: 'easeOutElastic',
                     delay: function (context) { return context.dataIndex * 100; }
                 },
+                layout: {
+                    padding: {
+                        top: 30
+                    }
+                },
                 plugins: {
                     legend: { labels: { color: fontColor } },
                     datalabels: {
@@ -1024,6 +1029,7 @@ function renderDesktopChart() {
                 scales: {
                     y: {
                         beginAtZero: true,
+                        grace: '15%',
                         grid: { color: gridColor },
                         ticks: { color: fontColor }
                     },
