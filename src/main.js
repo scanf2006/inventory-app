@@ -973,7 +973,7 @@ function renderDesktopChart() {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Stock Level (Gallons/Counts)',
+                    label: 'Stock Level (Liters)',
                     data: data,
                     backgroundColor: 'rgba(255, 214, 10, 0.85)',
                     borderColor: '#FFD60A',
