@@ -638,6 +638,53 @@ body {
     transform: scale(0.92);
 }
 
+/* 复选框网格 (Dashboard Config) */
+.checkbox-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.checkbox-item {
+    background: rgba(118, 118, 128, 0.12);
+    color: var(--text-main);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.checkbox-item:active {
+    transform: scale(0.95);
+}
+
+.checkbox-item.active {
+    background: rgba(10, 83, 190, 0.15);
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+    .checkbox-item {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .checkbox-item.active {
+        background: rgba(255, 214, 10, 0.2);
+        color: var(--accent-gold);
+        border-color: var(--accent-gold);
+    }
+}
+
 /* 弹窗样式 / Premium Modals */
 .modal-overlay {
     position: fixed;

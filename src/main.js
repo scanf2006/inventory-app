@@ -216,7 +216,7 @@ function initApp() {
             var modalOverlay = document.getElementById('modal-overlay');
             modalOverlay.classList.remove('hidden');
             document.getElementById('sync-id-input').value = App.State.syncId || '';
-            document.getElementById('common-oils-input').value = App.State.commonOils.join(', ');
+            renderCommonOilsCheckboxes();
             renderManageUI();
         };
     }
@@ -1015,16 +1015,47 @@ function renderDesktopChart() {
 // Bind Settings Config Action
 if (document.getElementById('save-common-oils-btn')) {
     document.getElementById('save-common-oils-btn').onclick = function () {
-        var input = document.getElementById('common-oils-input');
-        if (input) {
-            var val = input.value;
-            var newList = val.split(',').map(function (item) { return item.trim(); }).filter(function (item) { return item !== ""; });
+        var listContainer = document.getElementById('common-oils-checkbox-list');
+        if (listContainer) {
+            var activeItems = listContainer.querySelectorAll('.checkbox-item.active');
+            var newList = Array.from(activeItems).map(function (el) { return el.innerText.trim(); });
             App.State.commonOils = newList;
             saveToStorage(true);
             renderDesktopChart();
             App.UI.showToast("Dashboard Config Updated!", 'success');
         }
     };
+}
+
+// Render dynamic common oils checkboxes
+function renderCommonOilsCheckboxes() {
+    var container = document.getElementById('common-oils-checkbox-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Collect all unique product names across all categories
+    var allProducts = new Set();
+    if (App.State.products) {
+        Object.keys(App.State.products).forEach(function (cat) {
+            (App.State.products[cat] || []).forEach(function (p) {
+                allProducts.add(p);
+            });
+        });
+    }
+
+    // Convert to sorted array
+    var prodArray = Array.from(allProducts).sort();
+
+    // Render checkbox item for each
+    prodArray.forEach(function (p) {
+        var el = document.createElement('div');
+        el.className = 'checkbox-item' + (App.State.commonOils.includes(p) ? ' active' : '');
+        el.innerText = p;
+        el.onclick = function () {
+            el.classList.toggle('active');
+        };
+        container.appendChild(el);
+    });
 }
 
 // --- PWA & Service Worker ---
