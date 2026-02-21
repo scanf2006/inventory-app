@@ -626,7 +626,9 @@ if (document.getElementById('connect-sync-btn')) {
         var id = input ? input.value.trim() : "";
         if (id) {
             App.State.syncId = id;
-            saveToStorage(true);
+            // Critical Fix: Do NOT save immediately as it creates a fresh timestamp and would trigger an empty push.
+            // Reset local TS to 0 to ensure Cloud data (if any) wins during pullFromCloud.
+            App.State.lastUpdated = 0;
             pullFromCloud();
         } else {
             App.UI.showToast("Please enter a Sync ID.", 'info');
