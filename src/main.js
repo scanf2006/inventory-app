@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.21",
+        VERSION: "v3.0.22",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -994,6 +994,14 @@ function renderDesktopChart() {
         }
 
         var filteredOils = targetOils.filter(function (oil) { return aggregatedData[oil] > 0; });
+
+        // Update Last Updated Subtitle
+        var subtitle = document.getElementById('chart-last-updated');
+        if (subtitle && App.State.lastUpdated) {
+            var d = new Date(App.State.lastUpdated);
+            var timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            subtitle.innerText = 'Last Inventory Update: ' + timeStr;
+        }
 
         var labels = filteredOils;
         var data = filteredOils.map(function (oil) { return aggregatedData[oil]; });

@@ -1242,15 +1242,28 @@ hr {
     }
 
     .chart-title {
-        font-size: 1.2rem;
-        font-weight: 800;
-        margin-bottom: 15px;
         color: var(--text-main);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 5px;
+        text-align: center;
+        letter-spacing: -0.02em;
+    }
+
+    .chart-subtitle {
+        text-align: center;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        margin-bottom: 25px;
+        font-weight: 500;
+        background: rgba(10, 132, 255, 0.05);
+        display: inline-block;
+        padding: 4px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(10, 132, 255, 0.1);
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
     }
 
     .chart-title::before {
