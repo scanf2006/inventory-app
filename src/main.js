@@ -944,8 +944,10 @@ function renderDesktopChart() {
             });
         }
 
-        var labels = targetOils;
-        var data = targetOils.map(function (oil) { return aggregatedData[oil]; });
+        var filteredOils = targetOils.filter(function (oil) { return aggregatedData[oil] > 0; });
+
+        var labels = filteredOils;
+        var data = filteredOils.map(function (oil) { return aggregatedData[oil]; });
 
         var ctx = canvas.getContext('2d');
 
