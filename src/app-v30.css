@@ -1363,3 +1363,16 @@ hr {
     border-radius: 16px !important;
     min-height: 56px !important;
 }
+
+/* 响应式控制类 / Responsive Utilities */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
+}
