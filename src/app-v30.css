@@ -428,6 +428,10 @@ body {
     margin-bottom: 2px;
     color: var(--text-main);
     transition: color 0.3s var(--smooth-ease);
+    /* 修复长文本重叠 / Fix long name overlap */
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.2;
 }
 
 .item-info .item-result {
@@ -472,6 +476,8 @@ body {
     flex-direction: row;
     align-items: center;
     gap: 8px;
+    /* 禁止输入框被挤压 / Prevent shrinking */
+    flex-shrink: 0;
 }
 
 .item-input {
@@ -499,6 +505,17 @@ body {
     border-color: var(--accent-gold);
     background: var(--card-bg);
     box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.1);
+}
+
+/* 适配超长商品名的列表卡片 / Cards with long names */
+@media (max-width: 480px) {
+    .item-info .item-name {
+        font-size: 1.1rem;
+    }
+
+    .item-input {
+        width: 110px;
+    }
 }
 
 /* 快速添加区域 */
