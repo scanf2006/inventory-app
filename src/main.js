@@ -65,7 +65,7 @@ const App = {
 
         // Helper: Generate unique inventory key
         getProductKey: function (category, product) {
-            return category + '::' + product;
+            return category + '-' + product;
         },
 
         // Helper: Get product list for current category safely
@@ -172,6 +172,24 @@ function initApp() {
     App.State.products = App.Utils.safeGetJSON('lubricant_products', App.Config.INITIAL_PRODUCTS);
     App.State.inventory = App.Utils.safeGetJSON('lubricant_inventory', {});
     App.State.categoryOrder = App.Utils.safeGetJSON('lubricant_category_order', Object.keys(App.Config.INITIAL_PRODUCTS));
+
+    // Recovery mechanism for any keys corrupted with '::' during v3.0.1-v3.0.3 timeframe
+    var hasCorruptKeys = false;
+    Object.keys(App.State.inventory).forEach(function (key) {
+        if (key.indexOf('::') !== -1) {
+            var newKey = key.replace('::', '-');
+            // Give preference to older existing data if conflict, otherwise take the new
+            if (!App.State.inventory[newKey]) {
+                App.State.inventory[newKey] = App.State.inventory[key];
+            }
+            delete App.State.inventory[key];
+            hasCorruptKeys = true;
+        }
+    });
+
+    if (hasCorruptKeys) {
+        localStorage.setItem('lubricant_inventory', JSON.stringify(App.State.inventory));
+    }
 
     // v3.0 Common Oils Setup
     var defaultOils = ["5W20S", "5W20B", "5W30S", "5W30B"];

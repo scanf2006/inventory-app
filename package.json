@@ -1,0 +1,24 @@
+{
+  "name": "inventory-app",
+  "version": "1.0.0",
+  "description": "A professional, mobile-first inventory management PWA designed for quick stocktaking and PDF reporting.\r 专为快速盘点和 PDF 报告设计的专业移动端优先库存管理 PWA。",
+  "main": "sw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scanf2006/inventory-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/scanf2006/inventory-app/issues"
+  },
+  "homepage": "https://github.com/scanf2006/inventory-app#readme",
+  "dependencies": {
+    "jsdom": "^28.1.0"
+  }
+}
