@@ -108,8 +108,8 @@
                             will also pull the latest data immediately.</p>
                     </section>
 
-                    <hr>
-                    <section class="management-section">
+                    <hr class="mobile-only">
+                    <section class="management-section mobile-only">
                         <h3>App Installation</h3>
                         <button id="pwa-install-btn" class="primary-btn pwa-install-button d-none w-full">📥 Install App
                             to
@@ -147,8 +147,8 @@
                             Separate by commas.</p>
                     </section>
 
-                    <hr>
-                    <section class="management-section">
+                    <hr class="mobile-only">
+                    <section class="management-section mobile-only">
                         <h3>Data Management</h3>
                         <div class="data-actions" style="display: flex; gap: 10px; margin-top: 10px;">
                             <button id="export-json-btn" class="secondary-btn w-full">📤 Export JSON</button>
@@ -157,9 +157,9 @@
                         <input type="file" id="import-file-input" accept=".json" style="display: none;">
                         <p class="small-hint">Backup your data or restore from a file.</p>
                     </section>
-                    <hr>
+                    <hr class="mobile-only">
 
-                    <section class="management-section">
+                    <section class="management-section mobile-only">
                         <h3>Account & Data</h3>
                         <p class="small-hint mb-12">DANGER: This action cannot be undone.</p>
                         <button onclick="resetInventory()" class="btn-delete danger-zone-reset w-full">Reset
@@ -167,7 +167,7 @@
                             Zero</button>
                     </section>
 
-                    <div class="version-tag" id="app-version-display">v3.0.7 Dashboard Edition</div>
+                    <div class="version-tag" id="app-version-display">v3.0.8 Dashboard Edition</div>
                 </div>
             </div>
         </div>
@@ -199,7 +199,7 @@
         <!-- Smart Suggestions (Moved to top-level) -->
         <datalist id="master-product-list"></datalist>
 
-        <script src="src/main.js?v=3.0.7"></script>
+        <script src="src/main.js?v=3.0.8"></script>
 </body>
 
 </html>
