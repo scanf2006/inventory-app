@@ -1033,13 +1033,15 @@ function renderCommonOilsCheckboxes() {
     if (!container) return;
     container.innerHTML = '';
 
-    // Collect all unique product names across all categories
+    // Collect unique product names ONLY from the 'Bulk Oil' category
     var allProducts = new Set();
     if (App.State.products) {
         Object.keys(App.State.products).forEach(function (cat) {
-            (App.State.products[cat] || []).forEach(function (p) {
-                allProducts.add(p);
-            });
+            if (cat.toLowerCase().indexOf('bulk oil') !== -1) {
+                (App.State.products[cat] || []).forEach(function (p) {
+                    allProducts.add(p);
+                });
+            }
         });
     }
 
