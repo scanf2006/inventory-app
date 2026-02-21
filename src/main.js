@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.22",
+        VERSION: "v3.0.23",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -9,7 +9,8 @@ const App = {
             CATEGORY_ORDER: 'lubricant_category_order',
             SYNC_ID: 'lubricant_sync_id',
             COMMON_OILS: 'lubricant_common_oils',
-            LAST_UPDATED: 'lubricant_last_updated'
+            LAST_UPDATED: 'lubricant_last_updated',
+            LAST_INVENTORY_UPDATE: 'lubricant_last_inventory_update'
         },
         INITIAL_PRODUCTS: {
             "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
@@ -29,6 +30,7 @@ const App = {
         viewMode: 'edit',
         sortDirection: 'asc',
         lastUpdated: 0,
+        lastInventoryUpdate: 0, // Specifically for inventory data changes
         chartInstance: null // v3.0 Chart.js instance tracking
     },
 
@@ -212,6 +214,7 @@ function initApp() {
     App.State.commonOils = App.Utils.safeGetJSON(SK.COMMON_OILS, defaultOils);
 
     App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED) || '0');
+    App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE) || '0');
 
     var savedId = localStorage.getItem(SK.SYNC_ID);
     App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
@@ -293,7 +296,8 @@ function pushToCloud() {
                 products: App.State.products,
                 inventory: App.State.inventory,
                 category_order: App.State.categoryOrder,
-                last_updated_ts: App.State.lastUpdated // Stored inside JSON to avoid DB schema changes
+                last_updated_ts: App.State.lastUpdated,
+                last_inventory_update_ts: App.State.lastInventoryUpdate
             },
             updated_at: new Date().toISOString()
         }, { onConflict: 'sync_id' })
@@ -328,8 +332,9 @@ function pullFromCloud(isSilent) {
                     App.State.inventory = cloudData.inventory || App.State.inventory;
                     App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
                     App.State.lastUpdated = cloudTS;
+                    App.State.lastInventoryUpdate = cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
 
-                    saveToStorageImmediate(true); // Skip timestamp update for pull
+                    saveToStorageImmediate(true); // Skip generic timestamp update for pull
                     initializeCategory();
                     renderTabs();
                     renderInventory();
@@ -364,6 +369,7 @@ function saveToStorageImmediate(skipTimestamp) {
     localStorage.setItem(SK.SYNC_ID, App.State.syncId);
     localStorage.setItem(SK.COMMON_OILS, JSON.stringify(App.State.commonOils));
     localStorage.setItem(SK.LAST_UPDATED, App.State.lastUpdated);
+    localStorage.setItem(SK.LAST_INVENTORY_UPDATE, App.State.lastInventoryUpdate);
 }
 
 var debouncedSave = App.Utils.debounce(function () {
@@ -630,8 +636,12 @@ window.toggleViewMode = function (mode) {
 
 window.updateValue = function (name, value, index) {
     var key = App.Utils.getProductKey(App.State.currentCategory, name);
-    App.State.inventory[key] = value;
-    saveToStorage(false);
+    // Track if inventory actually changes
+    if (App.State.inventory[key] !== value) {
+        App.State.inventory[key] = value;
+        App.State.lastInventoryUpdate = Date.now();
+        saveToStorage(false);
+    }
     var total = App.Utils.safeEvaluate(value);
     var resultEl = document.getElementById('result-' + index);
     if (resultEl) resultEl.innerHTML = 'Total:<br>' + total;
@@ -664,6 +674,7 @@ if (document.getElementById('connect-sync-btn')) {
 window.resetInventory = function () {
     App.UI.confirm("Reset ALL inventory values to zero?", function () {
         App.State.inventory = {};
+        App.State.lastInventoryUpdate = Date.now();
         saveToStorage(true);
         renderInventory();
         App.UI.showToast("All inventory reset", 'success');
@@ -930,6 +941,7 @@ if (document.getElementById('import-json-btn')) {
                         });
                     }
 
+                    App.State.lastInventoryUpdate = Date.now();
                     saveToStorage(true);
                     initializeCategory();
                     renderTabs();
@@ -997,10 +1009,12 @@ function renderDesktopChart() {
 
         // Update Last Updated Subtitle
         var subtitle = document.getElementById('chart-last-updated');
-        if (subtitle && App.State.lastUpdated) {
-            var d = new Date(App.State.lastUpdated);
+        if (subtitle && App.State.lastInventoryUpdate) {
+            var d = new Date(App.State.lastInventoryUpdate);
             var timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             subtitle.innerText = 'Last Inventory Update: ' + timeStr;
+        } else if (subtitle) {
+            subtitle.innerText = 'Last Inventory Update: Never';
         }
 
         var labels = filteredOils;
