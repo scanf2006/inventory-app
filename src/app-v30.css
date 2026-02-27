@@ -1492,7 +1492,7 @@ hr {
         padding: 2px 8px;
         border-radius: 6px;
         display: inline-block;
-        align-self: flex-end;
+        align-self: flex-start;
     }
 
     .text-right {
