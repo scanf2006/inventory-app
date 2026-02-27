@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.26",
+        VERSION: "v3.0.27",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -659,14 +659,22 @@ window.updateValue = function (name, value, index) {
         App.State.inventory[key] = value;
         App.State.lastInventoryUpdate = Date.now();
 
-        // v3.0.26 Push to history
-        App.State.history.unshift({
-            product: name,
-            category: App.State.currentCategory,
-            value: value,
-            timestamp: App.State.lastInventoryUpdate
-        });
-        if (App.State.history.length > 10) App.State.history = App.State.history.slice(0, 10);
+        // v3.0.27 Optimized History: Deduplicate consecutive updates for same product
+        var lastRec = App.State.history[0];
+        if (lastRec && lastRec.product === name && lastRec.category === App.State.currentCategory) {
+            // Update existing record timestamp and value
+            lastRec.value = value;
+            lastRec.timestamp = App.State.lastInventoryUpdate;
+        } else {
+            // New record
+            App.State.history.unshift({
+                product: name,
+                category: App.State.currentCategory,
+                value: value,
+                timestamp: App.State.lastInventoryUpdate
+            });
+            if (App.State.history.length > 10) App.State.history = App.State.history.slice(0, 10);
+        }
 
         saveToStorage(false);
     }
@@ -726,6 +734,16 @@ window.resetCategoryInventory = function () {
 
         if (changed) {
             App.State.lastInventoryUpdate = Date.now();
+
+            // v3.0.27 Log category reset to history
+            App.State.history.unshift({
+                product: "ALL ITEMS RESET",
+                category: cat,
+                value: "0 (Cleared)",
+                timestamp: App.State.lastInventoryUpdate
+            });
+            if (App.State.history.length > 10) App.State.history = App.State.history.slice(0, 10);
+
             saveToStorage(true);
             renderInventory();
             App.UI.showToast("Category '" + cat + "' reset to zero", 'success');
