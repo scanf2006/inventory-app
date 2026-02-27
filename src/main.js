@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.23",
+        VERSION: "v3.0.24",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -522,8 +522,17 @@ function renderInventory() {
         list.appendChild(card);
     });
 
-    // Quick Add Card (Only in Edit Mode and NOT on Desktop Dashboard)
+    // Category Reset and Quick Add Card (Only in Edit Mode and NOT on Desktop Dashboard)
     if (App.State.viewMode === 'edit' && !App.UI.isDesktop()) {
+        // 1. Reset Category Button
+        var resetWrapper = document.createElement('div');
+        resetWrapper.style = 'margin: 10px 0 20px 0;';
+        resetWrapper.innerHTML =
+            '<button onclick="resetCategoryInventory()" class="btn-delete danger-zone-reset w-full" style="opacity: 0.8; font-size: 0.85rem; padding: 12px;">' +
+            'Reset ' + App.Utils.escapeHTML(App.State.currentCategory) + ' to Zero</button>';
+        list.appendChild(resetWrapper);
+
+        // 2. Quick Add Card
         var quickAddWrapper = document.createElement('div');
         quickAddWrapper.className = 'quick-add-wrapper';
         quickAddWrapper.innerHTML =
@@ -678,6 +687,32 @@ window.resetInventory = function () {
         saveToStorage(true);
         renderInventory();
         App.UI.showToast("All inventory reset", 'success');
+    });
+};
+
+window.resetCategoryInventory = function () {
+    var cat = App.State.currentCategory;
+    if (!cat) return;
+
+    App.UI.confirm("Reset ALL items in '" + cat + "' to zero?", function () {
+        var products = App.State.products[cat] || [];
+        var changed = false;
+        products.forEach(function (pName) {
+            var key = App.Utils.getProductKey(cat, pName);
+            if (App.State.inventory[key]) {
+                delete App.State.inventory[key];
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            App.State.lastInventoryUpdate = Date.now();
+            saveToStorage(true);
+            renderInventory();
+            App.UI.showToast("Category '" + cat + "' reset to zero", 'success');
+        } else {
+            App.UI.showToast("No items to reset in this category", 'info');
+        }
     });
 };
 
