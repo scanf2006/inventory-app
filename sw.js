@@ -1,9 +1,9 @@
-const CACHE_NAME = 'inv-aiden-v3.0.27';
+const CACHE_NAME = 'inv-aiden-v3.0.28';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './src/main.js?v=3.0.27',
-    './src/app-v30.css?v=3.0.27',
+    './src/main.js?v=3.0.28',
+    './src/app-v30.css?v=3.0.28',
     './manifest.json',
     './assets/icon.svg',
     'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
