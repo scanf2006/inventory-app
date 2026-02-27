@@ -1406,6 +1406,14 @@ hr {
         display: none !important;
     }
 
+    /* v3.0.32 Chart Wrapper to prevent hover flickering */
+    .chart-wrapper {
+        position: relative;
+        height: 35vh;
+        min-height: 250px;
+        width: 100%;
+    }
+
     /* v3.0.26 Recent History Styling */
     .recent-history-container {
         margin-top: 30px;
