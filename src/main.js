@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.25",
+        VERSION: "v3.0.26",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -10,7 +10,8 @@ const App = {
             SYNC_ID: 'lubricant_sync_id',
             COMMON_OILS: 'lubricant_common_oils',
             LAST_UPDATED: 'lubricant_last_updated',
-            LAST_INVENTORY_UPDATE: 'lubricant_last_inventory_update'
+            LAST_INVENTORY_UPDATE: 'lubricant_last_inventory_update',
+            RECENT_HISTORY: 'lubricant_recent_history'
         },
         INITIAL_PRODUCTS: {
             "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
@@ -31,6 +32,7 @@ const App = {
         sortDirection: 'asc',
         lastUpdated: 0,
         lastInventoryUpdate: 0, // Specifically for inventory data changes
+        history: [], // v3.0.26 Recent update records
         chartInstance: null // v3.0 Chart.js instance tracking
     },
 
@@ -215,6 +217,7 @@ function initApp() {
 
     App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED) || '0');
     App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE) || '0');
+    App.State.history = App.Utils.safeGetJSON(SK.RECENT_HISTORY, []);
 
     var savedId = localStorage.getItem(SK.SYNC_ID);
     App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
@@ -297,7 +300,8 @@ function pushToCloud() {
                 inventory: App.State.inventory,
                 category_order: App.State.categoryOrder,
                 last_updated_ts: App.State.lastUpdated,
-                last_inventory_update_ts: App.State.lastInventoryUpdate
+                last_inventory_update_ts: App.State.lastInventoryUpdate,
+                recent_history: App.State.history
             },
             updated_at: new Date().toISOString()
         }, { onConflict: 'sync_id' })
@@ -333,6 +337,7 @@ function pullFromCloud(isSilent) {
                     App.State.categoryOrder = cloudData.category_order || App.State.categoryOrder;
                     App.State.lastUpdated = cloudTS;
                     App.State.lastInventoryUpdate = cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
+                    App.State.history = cloudData.recent_history || App.State.history;
 
                     saveToStorageImmediate(true); // Skip generic timestamp update for pull
                     initializeCategory();
@@ -370,6 +375,7 @@ function saveToStorageImmediate(skipTimestamp) {
     localStorage.setItem(SK.COMMON_OILS, JSON.stringify(App.State.commonOils));
     localStorage.setItem(SK.LAST_UPDATED, App.State.lastUpdated);
     localStorage.setItem(SK.LAST_INVENTORY_UPDATE, App.State.lastInventoryUpdate);
+    localStorage.setItem(SK.RECENT_HISTORY, JSON.stringify(App.State.history));
 }
 
 var debouncedSave = App.Utils.debounce(function () {
@@ -649,8 +655,19 @@ window.updateValue = function (name, value, index) {
     var key = App.Utils.getProductKey(App.State.currentCategory, name);
     // Track if inventory actually changes
     if (App.State.inventory[key] !== value) {
+        var oldVal = App.State.inventory[key];
         App.State.inventory[key] = value;
         App.State.lastInventoryUpdate = Date.now();
+
+        // v3.0.26 Push to history
+        App.State.history.unshift({
+            product: name,
+            category: App.State.currentCategory,
+            value: value,
+            timestamp: App.State.lastInventoryUpdate
+        });
+        if (App.State.history.length > 10) App.State.history = App.State.history.slice(0, 10);
+
         saveToStorage(false);
     }
     var total = App.Utils.safeEvaluate(value);
@@ -1140,10 +1157,44 @@ function renderDesktopChart() {
         // Only reveal the container after completely successful chart init
         ctxContainer.classList.remove('hidden');
 
+        // v3.0.26 Also render history on desktop
+        renderRecentUpdates();
+
     } catch (chartErr) {
         console.error("Desktop Chart Initialization Failed:", chartErr);
         // Do not block app execution
     }
+}
+
+function renderRecentUpdates() {
+    var list = document.getElementById('recent-history-list');
+    if (!list) return;
+
+    if (!App.State.history || App.State.history.length === 0) {
+        list.innerHTML = '<div class="empty-state" style="padding: 15px; color: var(--text-muted);">No recent activity</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    App.State.history.forEach(function (rec) {
+        var card = document.createElement('div');
+        card.className = 'history-item';
+
+        var date = new Date(rec.timestamp);
+        var timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        var dayStr = (date.getMonth() + 1) + '/' + date.getDate();
+
+        card.innerHTML =
+            '<div class="history-left">' +
+            '<span class="history-time">' + timeStr + ' (' + dayStr + ')</span>' +
+            '<span class="history-cat">' + App.Utils.escapeHTML(rec.category) + '</span>' +
+            '</div>' +
+            '<div class="history-right text-right">' +
+            '<span class="history-product">' + App.Utils.escapeHTML(rec.product) + '</span>' +
+            '<span class="history-value">' + App.Utils.escapeHTML(rec.value) + '</span>' +
+            '</div>';
+        list.appendChild(card);
+    });
 }
 
 // Bind Settings Config Action
