@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.29",
+        VERSION: "v3.0.30",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -673,7 +673,7 @@ window.updateValue = function (name, value, index) {
                 value: value,
                 timestamp: App.State.lastInventoryUpdate
             });
-            if (App.State.history.length > 10) App.State.history = App.State.history.slice(0, 10);
+            if (App.State.history.length > 6) App.State.history = App.State.history.slice(0, 6);
         }
 
         saveToStorage(false);
@@ -742,7 +742,7 @@ window.resetCategoryInventory = function () {
                 value: "0 (Cleared)",
                 timestamp: App.State.lastInventoryUpdate
             });
-            if (App.State.history.length > 10) App.State.history = App.State.history.slice(0, 10);
+            if (App.State.history.length > 6) App.State.history = App.State.history.slice(0, 6);
 
             saveToStorage(true);
             renderInventory();
