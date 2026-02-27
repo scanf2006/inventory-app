@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.24",
+        VERSION: "v3.0.25",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -490,6 +490,16 @@ function renderInventory() {
         controls.appendChild(countDiv);
     }
 
+    // [v3.0.25 Move] Reset Category Button (Only in Edit Mode at the TOP)
+    if (App.State.viewMode === 'edit' && !App.UI.isDesktop()) {
+        var resetWrapper = document.createElement('div');
+        resetWrapper.style = 'margin: 5px 0 15px 0;';
+        resetWrapper.innerHTML =
+            '<button onclick="resetCategoryInventory()" class="btn-delete danger-zone-reset w-full" style="opacity: 0.8; font-size: 0.85rem; padding: 12px; border-radius: 12px;">' +
+            'Reset ' + App.Utils.escapeHTML(App.State.currentCategory) + ' to Zero</button>';
+        list.appendChild(resetWrapper);
+    }
+
     sortedProducts.forEach(function (name, index) {
         var key = App.Utils.getProductKey(App.State.currentCategory, name);
         var val = App.State.inventory[key] || '';
@@ -522,17 +532,9 @@ function renderInventory() {
         list.appendChild(card);
     });
 
-    // Category Reset and Quick Add Card (Only in Edit Mode and NOT on Desktop Dashboard)
+    // Quick Add Card (Only in Edit Mode and NOT on Desktop Dashboard)
     if (App.State.viewMode === 'edit' && !App.UI.isDesktop()) {
-        // 1. Reset Category Button
-        var resetWrapper = document.createElement('div');
-        resetWrapper.style = 'margin: 10px 0 20px 0;';
-        resetWrapper.innerHTML =
-            '<button onclick="resetCategoryInventory()" class="btn-delete danger-zone-reset w-full" style="opacity: 0.8; font-size: 0.85rem; padding: 12px;">' +
-            'Reset ' + App.Utils.escapeHTML(App.State.currentCategory) + ' to Zero</button>';
-        list.appendChild(resetWrapper);
-
-        // 2. Quick Add Card
+        // Quick Add Card
         var quickAddWrapper = document.createElement('div');
         quickAddWrapper.className = 'quick-add-wrapper';
         quickAddWrapper.innerHTML =
