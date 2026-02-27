@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.32",
+        VERSION: "v3.0.33",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -1128,7 +1128,7 @@ function renderDesktopChart() {
                     borderColor: borderColors,
                     borderWidth: 1,
                     borderRadius: 6,
-                    hoverBackgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    hoverBackgroundColor: borderColors, // v3.0.33 Use solid border color on hover instead of white
                 }]
             },
             options: {
@@ -1137,7 +1137,14 @@ function renderDesktopChart() {
                 animation: {
                     duration: 1200,
                     easing: 'easeOutElastic',
-                    delay: function (context) { return context.dataIndex * 100; }
+                    delay: function (context) {
+                        // v3.0.33 Prevent delay on hover update to stop elastic flickering
+                        var delay = 0;
+                        if (context.type === 'data' && context.mode === 'default' && !context.active) {
+                            delay = context.dataIndex * 100;
+                        }
+                        return delay;
+                    }
                 },
                 layout: {
                     padding: {
