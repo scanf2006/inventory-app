@@ -334,7 +334,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color);
     box-shadow: var(--card-shadow), var(--inner-glow);
     backdrop-filter: blur(15px);
