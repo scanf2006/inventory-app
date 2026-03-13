@@ -1453,7 +1453,12 @@ function renderSnapshots(snapshots) {
         // 汇总各分类总量
         var summaryParts = [];
         var data = snap.snapshot_data || {};
-        Object.keys(data).forEach(function (cat) {
+        // 按桌面端分类顺序遍历
+        var orderedCats = (App.State.categoryOrder || []).concat(
+            Object.keys(data).filter(function (c) { return (App.State.categoryOrder || []).indexOf(c) === -1; })
+        );
+        orderedCats.forEach(function (cat) {
+            if (!data[cat]) return;
             var catTotal = 0;
             var items = data[cat] || {};
             Object.keys(items).forEach(function (p) { catTotal += (items[p] || 0); });
@@ -1484,7 +1489,12 @@ function renderSnapshots(snapshots) {
             var detailDiv = document.createElement('div');
             detailDiv.className = 'snapshot-detail';
             var detailHTML = '';
-            Object.keys(data).forEach(function (cat) {
+            // 按桌面端分类顺序遍历
+            var orderedCats = (App.State.categoryOrder || []).concat(
+                Object.keys(data).filter(function (c) { return (App.State.categoryOrder || []).indexOf(c) === -1; })
+            );
+            orderedCats.forEach(function (cat) {
+                if (!data[cat]) return;
                 var items = data[cat] || {};
                 var itemKeys = Object.keys(items).filter(function (k) { return items[k] > 0; });
                 if (itemKeys.length === 0) return;
@@ -1648,10 +1658,13 @@ function renderComparison(oldSnap, newSnap, label) {
     var oldData = oldSnap.snapshot_data || {};
     var newData = newSnap.snapshot_data || {};
 
-    // 收集所有分类
-    var allCats = {};
-    Object.keys(oldData).forEach(function (c) { allCats[c] = true; });
-    Object.keys(newData).forEach(function (c) { allCats[c] = true; });
+    // 按桌面端分类顺序收集并遍历分类
+    var allCatKeys = {};
+    Object.keys(oldData).forEach(function (c) { allCatKeys[c] = true; });
+    Object.keys(newData).forEach(function (c) { allCatKeys[c] = true; });
+    var orderedCats = (App.State.categoryOrder || []).concat(
+        Object.keys(allCatKeys).filter(function (c) { return (App.State.categoryOrder || []).indexOf(c) === -1; })
+    ).filter(function (c) { return allCatKeys[c]; });
 
     var html = '<div class="compare-header">' +
         '<span class="compare-label">📊 ' + label + ' Comparison</span>' +
@@ -1661,7 +1674,7 @@ function renderComparison(oldSnap, newSnap, label) {
     // 汇总统计
     var totalUp = 0, totalDown = 0, totalSame = 0;
 
-    Object.keys(allCats).forEach(function (cat) {
+    orderedCats.forEach(function (cat) {
         var oldItems = oldData[cat] || {};
         var newItems = newData[cat] || {};
 
