@@ -1506,4 +1506,116 @@ hr {
     .text-right {
         text-align: right;
     }
+
+    /* v3.1.0 Snapshot History Styling */
+    .snapshot-history-container {
+        margin-top: 15px;
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--card-shadow);
+        backdrop-filter: var(--glass-filter);
+    }
+
+    .snapshot-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--success-color);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .snapshot-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .snapshot-empty {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    .snapshot-card {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .snapshot-card:hover {
+        border-color: var(--success-color);
+        transform: translateX(3px);
+    }
+
+    .snapshot-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .snapshot-time {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--success-color);
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .snapshot-note {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        background: rgba(118, 118, 128, 0.12);
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-weight: 600;
+        max-width: 50%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .snapshot-summary {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    .snapshot-detail {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border-color);
+    }
+
+    .snapshot-cat-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 6px;
+        margin-bottom: 3px;
+    }
+
+    .snapshot-items-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+    }
+
+    .snapshot-item {
+        font-size: 0.7rem;
+        color: var(--text-main);
+    }
+
+    .snapshot-item b {
+        color: var(--primary-blue);
+    }
 }

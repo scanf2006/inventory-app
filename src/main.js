@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.0.37",
+        VERSION: "v3.1.0",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -262,6 +262,21 @@ function initApp() {
     var versionEl = document.getElementById('app-version-display');
     if (versionEl) {
         versionEl.innerText = App.Config.VERSION + ' Dashboard Edition';
+    }
+
+    // v3.1.0 Snapshot - 手机端保存按钮绑定
+    var snapshotBtn = document.getElementById('save-snapshot-btn');
+    if (snapshotBtn) {
+        snapshotBtn.onclick = function () {
+            var noteInput = document.getElementById('snapshot-note-input');
+            var note = noteInput ? noteInput.value.trim() : '';
+            saveSnapshot(note);
+        };
+    }
+
+    // v3.1.0 桌面端初始加载快照列表
+    if (App.UI.isDesktop()) {
+        loadSnapshots();
     }
 }
 
@@ -1342,4 +1357,148 @@ function purgeZeroStockItems() {
     } else {
         App.UI.showToast("No zero-stock items found", 'info');
     }
+}
+
+// --- v3.1.0 库存快照功能 ---
+
+// 保存快照到 Supabase（手机端调用）
+function saveSnapshot(note) {
+    if (!App.Services.supabase) {
+        return App.UI.showToast('Cloud sync not available', 'error');
+    }
+    if (!App.State.syncId) {
+        return App.UI.showToast('Please connect a Sync ID first', 'error');
+    }
+
+    // 构建快照数据：每个分类下每个商品的计算值
+    var snapshotData = {};
+    var totalItems = 0;
+    (App.State.categoryOrder || []).forEach(function (cat) {
+        var prods = App.State.products[cat] || [];
+        var catData = {};
+        prods.forEach(function (name) {
+            var key = App.Utils.getProductKey(cat, name);
+            var expr = App.State.inventory[key] || '';
+            var val = App.Utils.safeEvaluate(expr);
+            catData[name] = val;
+            totalItems++;
+        });
+        snapshotData[cat] = catData;
+    });
+
+    App.UI.showToast('Saving snapshot...', 'info');
+
+    App.Services.supabase
+        .from('inventory_snapshots')
+        .insert({
+            sync_id: App.State.syncId,
+            snapshot_data: snapshotData,
+            note: note || ''
+        })
+        .then(function (res) {
+            if (res.error) {
+                console.error('Snapshot save error:', res.error);
+                App.UI.showToast('Failed to save snapshot', 'error');
+            } else {
+                App.UI.showToast('Snapshot saved! (' + totalItems + ' items)', 'success');
+                // 清空备注输入框
+                var noteInput = document.getElementById('snapshot-note-input');
+                if (noteInput) noteInput.value = '';
+            }
+        })
+        .catch(function (err) {
+            console.error('Snapshot save exception:', err);
+            App.UI.showToast('Snapshot save failed', 'error');
+        });
+}
+
+// 从 Supabase 加载快照列表（桌面端调用）
+function loadSnapshots() {
+    if (!App.Services.supabase || !App.State.syncId) return;
+
+    App.Services.supabase
+        .from('inventory_snapshots')
+        .select('id, snapshot_data, note, created_at')
+        .eq('sync_id', App.State.syncId)
+        .order('created_at', { ascending: false })
+        .limit(10)
+        .then(function (res) {
+            if (res.data && res.data.length > 0) {
+                renderSnapshots(res.data);
+            } else {
+                renderSnapshots([]);
+            }
+        })
+        .catch(function (err) {
+            console.error('Load snapshots error:', err);
+        });
+}
+
+// 渲染快照列表（桌面端展示）
+function renderSnapshots(snapshots) {
+    var container = document.getElementById('snapshot-list');
+    if (!container) return;
+
+    if (!snapshots || snapshots.length === 0) {
+        container.innerHTML = '<div class="snapshot-empty">No snapshots yet. Save one from your phone!</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    snapshots.forEach(function (snap) {
+        var d = new Date(snap.created_at);
+        var timeStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+            ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // 汇总各分类总量
+        var summaryParts = [];
+        var data = snap.snapshot_data || {};
+        Object.keys(data).forEach(function (cat) {
+            var catTotal = 0;
+            var items = data[cat] || {};
+            Object.keys(items).forEach(function (p) { catTotal += (items[p] || 0); });
+            if (catTotal > 0) {
+                summaryParts.push(cat + ': ' + catTotal);
+            }
+        });
+
+        var noteHTML = snap.note ? '<span class="snapshot-note">' + App.Utils.escapeHTML(snap.note) + '</span>' : '';
+
+        var card = document.createElement('div');
+        card.className = 'snapshot-card';
+        card.innerHTML =
+            '<div class="snapshot-card-header">' +
+                '<span class="snapshot-time">' + timeStr + '</span>' +
+                noteHTML +
+            '</div>' +
+            '<div class="snapshot-summary">' + summaryParts.join(' · ') + '</div>';
+
+        // 点击展开详情
+        card.onclick = function () {
+            var detail = card.querySelector('.snapshot-detail');
+            if (detail) {
+                detail.classList.toggle('hidden');
+                return;
+            }
+            // 首次点击时生成详细列表
+            var detailDiv = document.createElement('div');
+            detailDiv.className = 'snapshot-detail';
+            var detailHTML = '';
+            Object.keys(data).forEach(function (cat) {
+                var items = data[cat] || {};
+                var itemKeys = Object.keys(items).filter(function (k) { return items[k] > 0; });
+                if (itemKeys.length === 0) return;
+                detailHTML += '<div class="snapshot-cat-label">' + App.Utils.escapeHTML(cat) + '</div>';
+                detailHTML += '<div class="snapshot-items-grid">';
+                itemKeys.forEach(function (p) {
+                    detailHTML += '<span class="snapshot-item">' + App.Utils.escapeHTML(p) + ': <b>' + items[p] + '</b></span>';
+                });
+                detailHTML += '</div>';
+            });
+            detailDiv.innerHTML = detailHTML;
+            card.appendChild(detailDiv);
+        };
+
+        container.appendChild(card);
+    });
 }

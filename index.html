@@ -36,7 +36,7 @@
         // Global Registration of Datalabels plugin
         Chart.register(ChartDataLabels);
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.0.37">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.1.0">
 </head>
 
 <body>
@@ -86,6 +86,13 @@
                     <h3 class="history-title">Recent Activity</h3>
                     <div id="recent-history-list" class="history-list">
                         <!-- History items rendered by JS -->
+                    </div>
+                </div>
+                <!-- v3.1.0 Snapshot History Section -->
+                <div id="snapshot-history-container" class="snapshot-history-container">
+                    <h3 class="snapshot-title">📸 Saved Snapshots</h3>
+                    <div id="snapshot-list" class="snapshot-list">
+                        <!-- Snapshot cards rendered by JS -->
                     </div>
                 </div>
             </div>
@@ -163,6 +170,15 @@
 
                     <hr class="mobile-only">
                     <section class="management-section mobile-only">
+                        <h3>Inventory Snapshot</h3>
+                        <input type="text" id="snapshot-note-input" placeholder="备注 (例如: 月末盘点)"
+                            style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1rem; margin-bottom: 10px; background: rgba(0,0,0,0.05); color: var(--text-main);">
+                        <button id="save-snapshot-btn" class="primary-btn w-full"
+                            style="background: #30D158; box-shadow: 0 8px 25px -5px rgba(48, 209, 88, 0.4);">📸 Save Inventory Snapshot</button>
+                        <p class="small-hint">保存当前库存的完整快照到云端，可在桌面端查看历史记录。</p>
+                    </section>
+                    <hr class="mobile-only">
+                    <section class="management-section mobile-only">
                         <h3>Data Management</h3>
                         <div class="data-actions" style="display: flex; gap: 10px; margin-top: 10px;">
                             <button id="export-json-btn" class="secondary-btn w-full">📤 Export JSON</button>
@@ -183,7 +199,7 @@
                             Zero</button>
                     </section>
 
-                    <div class="version-tag" id="app-version-display">v3.0.37 Dashboard Edition</div>
+                    <div class="version-tag" id="app-version-display">v3.1.0 Dashboard Edition</div>
                 </div>
             </div>
         </div>
@@ -215,7 +231,7 @@
         <!-- Smart Suggestions (Moved to top-level) -->
         <datalist id="master-product-list"></datalist>
 
-        <script src="src/main.js?v=3.0.37"></script>
+        <script src="src/main.js?v=3.1.0"></script>
 </body>
 
 </html>
