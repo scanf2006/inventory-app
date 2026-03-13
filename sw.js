@@ -1,9 +1,9 @@
-const CACHE_NAME = 'inv-aiden-v3.1.0';
+const CACHE_NAME = 'inv-aiden-v3.1.1';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './src/main.js?v=3.1.0',
-    './src/app-v30.css?v=3.1.0',
+    './src/main.js?v=3.1.1',
+    './src/app-v30.css?v=3.1.1',
     './manifest.json',
     './assets/icon.svg',
     'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
@@ -12,7 +12,6 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-    // 强制新 SW 立刻接管控制
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -22,7 +21,6 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-    // 立即接管客户端，使旧缓存得以在无刷新的情况下被丢弃
     event.waitUntil(
         Promise.all([
             self.clients.claim(),
@@ -43,9 +41,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request).then((response) => {
-            return response || fetch(event.request).catch(() => {
-                // 可选：离线降级页面返回
-            });
+            return response || fetch(event.request).catch(() => {});
         })
     );
 });

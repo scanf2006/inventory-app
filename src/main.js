@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.1.0",
+        VERSION: "v3.1.1",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -1501,4 +1501,226 @@ function renderSnapshots(snapshots) {
 
         container.appendChild(card);
     });
+}
+
+// --- v3.1.1 快照对比功能 ---
+
+// Tab 切换
+window.switchSnapshotTab = function (tab) {
+    // 更新按钮样式
+    var buttons = document.querySelectorAll('.snapshot-tab');
+    buttons.forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+    });
+
+    var listEl = document.getElementById('snapshot-list');
+    var compareEl = document.getElementById('snapshot-compare-view');
+    if (!listEl || !compareEl) return;
+
+    if (tab === 'list') {
+        listEl.classList.remove('hidden');
+        compareEl.classList.add('hidden');
+    } else {
+        listEl.classList.add('hidden');
+        compareEl.classList.remove('hidden');
+        loadComparison(tab);
+    }
+};
+
+// 获取对比时间边界
+// 规则：周数据在下周二取值，月数据在下月2日取值
+function getComparisonBoundaries(type) {
+    var now = new Date();
+
+    if (type === 'week') {
+        // 找到本周二 00:00（当前周或已过的最近周二）
+        var dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, 2=Tue...
+        var thisTue = new Date(now);
+        thisTue.setHours(0, 0, 0, 0);
+        // 计算距离最近的过去的周二有多少天
+        var daysSinceTue = (dayOfWeek < 2) ? (dayOfWeek + 5) : (dayOfWeek - 2);
+        thisTue.setDate(thisTue.getDate() - daysSinceTue);
+
+        var lastTue = new Date(thisTue);
+        lastTue.setDate(lastTue.getDate() - 7);
+
+        var prevTue = new Date(lastTue);
+        prevTue.setDate(prevTue.getDate() - 7);
+
+        return {
+            // "本周"数据 = 本周二之后的第一条快照
+            currentStart: thisTue.toISOString(),
+            // "上周"数据 = 上周二之后的第一条快照
+            previousStart: lastTue.toISOString(),
+            // 用于限制查询范围
+            previousEnd: thisTue.toISOString(),
+            prevPrevStart: prevTue.toISOString()
+        };
+    } else {
+        // 月对比：本月2日 00:00，上月2日 00:00
+        var thisMonth2 = new Date(now.getFullYear(), now.getMonth(), 2, 0, 0, 0, 0);
+        var lastMonth2 = new Date(now.getFullYear(), now.getMonth() - 1, 2, 0, 0, 0, 0);
+        var prevMonth2 = new Date(now.getFullYear(), now.getMonth() - 2, 2, 0, 0, 0, 0);
+
+        return {
+            currentStart: thisMonth2.toISOString(),
+            previousStart: lastMonth2.toISOString(),
+            previousEnd: thisMonth2.toISOString(),
+            prevPrevStart: prevMonth2.toISOString()
+        };
+    }
+}
+
+// 加载对比数据
+function loadComparison(type) {
+    if (!App.Services.supabase || !App.State.syncId) {
+        renderComparisonError('Please connect Cloud Sync first.');
+        return;
+    }
+
+    var bounds = getComparisonBoundaries(type);
+    var label = type === 'week' ? 'Weekly' : 'Monthly';
+
+    var compareEl = document.getElementById('snapshot-compare-view');
+    if (compareEl) compareEl.innerHTML = '<div class="snapshot-empty">Loading ' + label + ' data...</div>';
+
+    // 查询"新数据"：currentStart 之后第一条
+    var queryNew = App.Services.supabase
+        .from('inventory_snapshots')
+        .select('snapshot_data, note, created_at')
+        .eq('sync_id', App.State.syncId)
+        .gte('created_at', bounds.currentStart)
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+    // 查询"旧数据"：previousStart 到 previousEnd 之间第一条
+    var queryOld = App.Services.supabase
+        .from('inventory_snapshots')
+        .select('snapshot_data, note, created_at')
+        .eq('sync_id', App.State.syncId)
+        .gte('created_at', bounds.previousStart)
+        .lt('created_at', bounds.previousEnd)
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+    Promise.all([queryNew, queryOld])
+        .then(function (results) {
+            var newSnap = (results[0].data && results[0].data[0]) || null;
+            var oldSnap = (results[1].data && results[1].data[0]) || null;
+
+            if (!newSnap && !oldSnap) {
+                renderComparisonError('No snapshots found for this ' + label.toLowerCase() + ' comparison. Save snapshots on Tuesday (weekly) or the 2nd (monthly).');
+                return;
+            }
+            if (!oldSnap) {
+                renderComparisonError('No previous ' + label.toLowerCase() + ' snapshot found for comparison. Need at least 2 period snapshots.');
+                return;
+            }
+            if (!newSnap) {
+                renderComparisonError('No current ' + label.toLowerCase() + ' snapshot yet. Save one after ' + (type === 'week' ? 'Tuesday' : 'the 2nd') + '.');
+                return;
+            }
+
+            renderComparison(oldSnap, newSnap, label);
+        })
+        .catch(function (err) {
+            console.error('Comparison load error:', err);
+            renderComparisonError('Failed to load comparison data.');
+        });
+}
+
+function renderComparisonError(msg) {
+    var el = document.getElementById('snapshot-compare-view');
+    if (el) el.innerHTML = '<div class="snapshot-empty">' + msg + '</div>';
+}
+
+// 渲染对比结果
+function renderComparison(oldSnap, newSnap, label) {
+    var el = document.getElementById('snapshot-compare-view');
+    if (!el) return;
+
+    var oldDate = new Date(oldSnap.created_at);
+    var newDate = new Date(newSnap.created_at);
+    var fmt = function (d) {
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    var oldData = oldSnap.snapshot_data || {};
+    var newData = newSnap.snapshot_data || {};
+
+    // 收集所有分类
+    var allCats = {};
+    Object.keys(oldData).forEach(function (c) { allCats[c] = true; });
+    Object.keys(newData).forEach(function (c) { allCats[c] = true; });
+
+    var html = '<div class="compare-header">' +
+        '<span class="compare-label">📊 ' + label + ' Comparison</span>' +
+        '<span class="compare-range">' + fmt(oldDate) + ' → ' + fmt(newDate) + '</span>' +
+        '</div>';
+
+    // 汇总统计
+    var totalUp = 0, totalDown = 0, totalSame = 0;
+
+    Object.keys(allCats).forEach(function (cat) {
+        var oldItems = oldData[cat] || {};
+        var newItems = newData[cat] || {};
+
+        // 合并所有商品 key
+        var allProducts = {};
+        Object.keys(oldItems).forEach(function (p) { allProducts[p] = true; });
+        Object.keys(newItems).forEach(function (p) { allProducts[p] = true; });
+
+        var productKeys = Object.keys(allProducts);
+        if (productKeys.length === 0) return;
+
+        // 只显示有变化的或有值的商品
+        var rows = [];
+        productKeys.forEach(function (p) {
+            var oldVal = oldItems[p] || 0;
+            var newVal = newItems[p] || 0;
+            var diff = newVal - oldVal;
+
+            if (oldVal === 0 && newVal === 0) return; // 跳过双零
+
+            var cls = '', arrow = '', diffText = '';
+            if (diff > 0) {
+                cls = 'compare-up';
+                arrow = '▲';
+                diffText = '+' + diff;
+                totalUp++;
+            } else if (diff < 0) {
+                cls = 'compare-down';
+                arrow = '▼';
+                diffText = '' + diff;
+                totalDown++;
+            } else {
+                cls = 'compare-same';
+                arrow = '─';
+                diffText = '0';
+                totalSame++;
+            }
+
+            rows.push(
+                '<div class="compare-row ' + cls + '">' +
+                    '<span class="compare-product">' + App.Utils.escapeHTML(p) + '</span>' +
+                    '<span class="compare-values">' + oldVal + ' → ' + newVal + '</span>' +
+                    '<span class="compare-diff">' + arrow + ' ' + diffText + '</span>' +
+                '</div>'
+            );
+        });
+
+        if (rows.length > 0) {
+            html += '<div class="compare-cat-label">' + App.Utils.escapeHTML(cat) + '</div>';
+            html += rows.join('');
+        }
+    });
+
+    // 底部统计摘要
+    html += '<div class="compare-summary">' +
+        '<span class="compare-up">▲ ' + totalUp + '</span>' +
+        '<span class="compare-same">─ ' + totalSame + '</span>' +
+        '<span class="compare-down">▼ ' + totalDown + '</span>' +
+        '</div>';
+
+    el.innerHTML = html;
 }
