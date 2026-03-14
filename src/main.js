@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.1.5",
+        VERSION: "v3.1.6",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -1227,12 +1227,12 @@ function renderRecentUpdates() {
         var timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         var dayStr = (date.getMonth() + 1) + '/' + date.getDate();
 
-        // v3.1.5 单行格式: [分类] [商品名] [数值] [时间(日期)]
+        // v3.1.6 单行格式: 分类 [商品名] 数值 时间(日期)
         row.innerHTML =
-            '<span class="history-cat">[' + App.Utils.escapeHTML(rec.category) + ']</span>' +
+            '<span class="history-cat">' + App.Utils.escapeHTML(rec.category) + '</span>' +
             '<span class="history-product">[' + App.Utils.escapeHTML(rec.product) + ']</span>' +
-            '<span class="history-value">[' + App.Utils.escapeHTML(String(rec.value)) + ']</span>' +
-            '<span class="history-time">[' + timeStr + ' (' + dayStr + ')]</span>';
+            '<span class="history-value">' + App.Utils.escapeHTML(String(rec.value)) + '</span>' +
+            '<span class="history-time">' + timeStr + ' (' + dayStr + ')</span>';
         list.appendChild(row);
     });
 }
