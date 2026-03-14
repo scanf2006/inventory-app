@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.1.3",
+        VERSION: "v3.1.4",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -1211,7 +1211,7 @@ function renderRecentUpdates() {
     if (!list) return;
 
     if (!App.State.history || App.State.history.length === 0) {
-        list.innerHTML = '<div class="empty-state" style="padding: 15px; color: var(--text-muted);">No recent activity</div>';
+        list.innerHTML = '<div class="empty-state" style="padding: 10px; color: var(--text-muted); font-size: 0.75rem;">No recent activity</div>';
         return;
     }
 
@@ -1220,23 +1220,20 @@ function renderRecentUpdates() {
     // v3.0.31 Force slice to 6 to handle legacy 10-item history in storage
     var displayHistory = App.State.history.slice(0, 6);
     displayHistory.forEach(function (rec) {
-        var card = document.createElement('div');
-        card.className = 'history-item';
+        var row = document.createElement('div');
+        row.className = 'history-item';
 
         var date = new Date(rec.timestamp);
         var timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         var dayStr = (date.getMonth() + 1) + '/' + date.getDate();
 
-        card.innerHTML =
-            '<div class="history-left">' +
-            '<span class="history-product">' + App.Utils.escapeHTML(rec.product) + '</span>' +
-            '<span class="history-value">' + App.Utils.escapeHTML(rec.value) + '</span>' +
-            '</div>' +
-            '<div class="history-right text-right">' +
+        // v3.1.4 单行格式: 分类 商品名 数值 时间(日期)
+        row.innerHTML =
             '<span class="history-cat">' + App.Utils.escapeHTML(rec.category) + '</span>' +
-            '<span class="history-time">' + timeStr + ' (' + dayStr + ')</span>' +
-            '</div>';
-        list.appendChild(card);
+            '<span class="history-product">' + App.Utils.escapeHTML(rec.product) + '</span>' +
+            '<span class="history-value">' + App.Utils.escapeHTML(String(rec.value)) + '</span>' +
+            '<span class="history-time">' + timeStr + ' (' + dayStr + ')</span>';
+        list.appendChild(row);
     });
 }
 

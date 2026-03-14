@@ -1445,66 +1445,49 @@ hr {
         gap: 2px;
     }
 
+    /* v3.1.4 Single-line history items */
     .history-item {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 3px 8px;
+        gap: 8px;
+        padding: 2px 8px;
         background: var(--bg-color);
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-        transition: all 0.2s ease;
+        border-radius: 4px;
+        border: none;
+        font-size: 0.7rem;
+        line-height: 1.6;
+        transition: background 0.15s ease;
     }
 
     .history-item:hover {
-        transform: translateX(4px);
-        border-color: var(--accent-gold);
-    }
-
-    .history-left {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .history-time {
-        font-size: 0.7rem;
-        color: var(--accent-gold);
-        font-weight: 600;
-        font-family: 'Outfit', sans-serif;
+        background: rgba(118, 118, 128, 0.08);
     }
 
     .history-cat {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-    }
-
-    .history-right {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        align-items: flex-end;
+        color: var(--accent-gold);
+        font-weight: 700;
+        font-size: 0.65rem;
+        white-space: nowrap;
     }
 
     .history-product {
-        font-size: 0.85rem;
         font-weight: 800;
         color: var(--text-main);
+        white-space: nowrap;
     }
 
     .history-value {
-        font-size: 0.8rem;
         font-weight: 800;
-        color: var(--accent-gold);
-        background: rgba(255, 214, 10, 0.1);
-        padding: 1px 6px;
-        border-radius: 6px;
-        display: inline-block;
-        align-self: flex-start;
+        color: var(--primary-blue);
+        white-space: nowrap;
     }
 
-    .text-right {
-        text-align: right;
+    .history-time {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        font-family: 'Outfit', sans-serif;
+        margin-left: auto;
+        white-space: nowrap;
     }
 
     /* v3.1.0 Snapshot History Styling */
