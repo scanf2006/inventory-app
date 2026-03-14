@@ -772,28 +772,31 @@ body {
     }
 }
 
-/* v3.1.8 醒目的关闭按钮 */
+/* v3.1.9 超夸张的关闭按钮 */
 .close-modal {
-    width: 36px;
-    height: 36px;
-    border: none;
+    width: 52px;
+    height: 52px;
+    border: 3px solid rgba(118, 118, 128, 0.4);
     border-radius: 50%;
     background: rgba(118, 118, 128, 0.15);
     color: var(--text-main);
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: 2.2rem;
+    font-weight: 900;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .close-modal:hover {
     background: #FF453A;
+    border-color: #FF453A;
     color: #fff;
-    transform: scale(1.1);
+    transform: scale(1.15) rotate(90deg);
+    box-shadow: 0 8px 16px rgba(255, 69, 58, 0.4);
 }
 
 /* 弹窗主体滚动支持 / Modal Body Scroll Support */
