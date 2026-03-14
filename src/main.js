@@ -1447,36 +1447,18 @@ function renderSnapshots(snapshots) {
     container.innerHTML = '';
     snapshots.forEach(function (snap) {
         var d = new Date(snap.created_at);
-        var timeStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-            ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        var dateStr = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-        // 汇总各分类总量
-        var summaryParts = [];
         var data = snap.snapshot_data || {};
-        // 按桌面端分类顺序遍历
-        var orderedCats = (App.State.categoryOrder || []).concat(
-            Object.keys(data).filter(function (c) { return (App.State.categoryOrder || []).indexOf(c) === -1; })
-        );
-        orderedCats.forEach(function (cat) {
-            if (!data[cat]) return;
-            var catTotal = 0;
-            var items = data[cat] || {};
-            Object.keys(items).forEach(function (p) { catTotal += (items[p] || 0); });
-            if (catTotal > 0) {
-                summaryParts.push(cat + ': ' + catTotal);
-            }
-        });
-
         var noteHTML = snap.note ? '<span class="snapshot-note">' + App.Utils.escapeHTML(snap.note) + '</span>' : '';
 
         var card = document.createElement('div');
         card.className = 'snapshot-card';
         card.innerHTML =
             '<div class="snapshot-card-header">' +
-                '<span class="snapshot-time">' + timeStr + '</span>' +
+                '<span class="snapshot-time">' + dateStr + '</span>' +
                 noteHTML +
-            '</div>' +
-            '<div class="snapshot-summary">' + summaryParts.join(' · ') + '</div>';
+            '</div>';
 
         // 点击展开详情
         card.onclick = function () {
