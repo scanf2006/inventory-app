@@ -439,6 +439,20 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    margin-top: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+/* v3.1.11 夸张放大的商品总数 */
+.highlight-total {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--primary-blue);
+    font-family: 'Outfit', sans-serif;
+    line-height: 1;
+    letter-spacing: -0.02em;
 }
 
 .item-delete-btn {

@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.1.10",
+        VERSION: "v3.1.11",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -535,13 +535,13 @@ function renderInventory() {
             card.innerHTML =
                 '<div class="item-info">' +
                 '<div class="item-name">' + safeName + '</div>' +
-                '<div class="item-result">Total:<br>' + total + '</div>' +
+                '<div class="item-result">Total: <span class="highlight-total">' + total + '</span></div>' +
                 '</div>';
         } else {
             card.innerHTML =
                 '<div class="item-info">' +
                 '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' + App.Utils.escapeStr(name) + '\')">' + safeName + '</div>' +
-                '<div class="item-result" id="result-' + index + '">Total:<br>' + total + '</div>' +
+                '<div class="item-result" id="result-' + index + '">Total: <span class="highlight-total">' + total + '</span></div>' +
                 '</div>' +
                 '<div class="input-group">' +
                 '<input type="tel" class="item-input" value="' + App.Utils.escapeHTML(val) + '" placeholder="0" ' +
