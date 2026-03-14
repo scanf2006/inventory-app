@@ -772,6 +772,30 @@ body {
     }
 }
 
+/* v3.1.8 醒目的关闭按钮 */
+.close-modal {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(118, 118, 128, 0.15);
+    color: var(--text-main);
+    font-size: 1.4rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.close-modal:hover {
+    background: #FF453A;
+    color: #fff;
+    transform: scale(1.1);
+}
+
 /* 弹窗主体滚动支持 / Modal Body Scroll Support */
 .modal-body {
     flex: 1;
