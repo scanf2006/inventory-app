@@ -1,9 +1,9 @@
-const CACHE_NAME = 'inv-aiden-v3.1.1';
+const CACHE_NAME = 'inv-aiden-v3.1.2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
-    './src/main.js?v=3.1.1',
-    './src/app-v30.css?v=3.1.1',
+    './src/main.js?v=3.1.2',
+    './src/app-v30.css?v=3.1.2',
     './manifest.json',
     './assets/icon.svg',
     'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
@@ -28,7 +28,6 @@ self.addEventListener('activate', (event) => {
                 return Promise.all(
                     cacheNames.map((cacheName) => {
                         if (cacheName !== CACHE_NAME) {
-                            console.log('Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
                         }
                     })
