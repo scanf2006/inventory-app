@@ -36,7 +36,7 @@
         // Global Registration of Datalabels plugin
         Chart.register(ChartDataLabels);
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.1.21">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.1.22">
 </head>
 
 <body>
@@ -179,12 +179,12 @@
 
                     <hr class="mobile-only">
                     <section class="management-section mobile-only">
-                        <h3>📣 发送滚动消息 (桌面端可见)</h3>
+                        <h3>📣 Send Ticker Message (Desktop)</h3>
                         <div class="add-form" style="flex-direction: column; gap: 10px;">
-                            <input type="text" id="live-msg-input" placeholder="输入你想在桌面屏幕发送的消息..." style="width: 100%;">
-                            <button id="send-live-btn" class="primary-btn" style="background: #FF2D55; min-width: 80px; box-shadow: 0 4px 15px rgba(255,45,85,0.3); align-self: flex-end;">🚀 发送</button>
+                            <input type="text" id="live-msg-input" placeholder="Type a message for the desktop ticker..." style="width: 100%;">
+                            <button id="send-live-btn" class="primary-btn" style="background: #FF2D55; min-width: 80px; box-shadow: 0 4px 15px rgba(255,45,85,0.3); align-self: flex-end;">🚀 Send</button>
                         </div>
-                        <p class="small-hint" style="margin-top: 8px;">该消息会即时显示在桌面端的大屏幕上方滚动横幅中。</p>
+                        <p class="small-hint" style="margin-top: 8px;">This message will appear as a scrolling ticker on active desktop dashboards.</p>
                     </section>
 
                     <hr class="desktop-only">
@@ -204,11 +204,11 @@
                     <hr class="mobile-only">
                     <section class="management-section mobile-only">
                         <h3>Inventory Snapshot</h3>
-                        <input type="text" id="snapshot-note-input" placeholder="备注 (例如: 月末盘点)"
+                        <input type="text" id="snapshot-note-input" placeholder="Note (e.g. End-of-month count)"
                             style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1rem; margin-bottom: 10px; background: rgba(0,0,0,0.05); color: var(--text-main);">
                         <button id="save-snapshot-btn" class="primary-btn w-full"
                             style="background: #30D158; box-shadow: 0 8px 25px -5px rgba(48, 209, 88, 0.4);">📸 Save Inventory Snapshot</button>
-                        <p class="small-hint">保存当前库存的完整快照到云端，可在桌面端查看历史记录。</p>
+                        <p class="small-hint">Save a full snapshot of current inventory to the cloud. View history on desktop.</p>
                     </section>
                     <hr class="mobile-only">
                     <section class="management-section mobile-only">

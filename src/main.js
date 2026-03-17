@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.21",
+    VERSION: "v3.1.22",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -340,7 +340,7 @@ function initApp() {
     versionEl.innerText = App.Config.VERSION + " Dashboard Edition";
   }
 
-  // v3.1.0 Snapshot - 手机端保存按钮绑定
+  // v3.1.0 Snapshot - Mobile save button binding
   var snapshotBtn = document.getElementById("save-snapshot-btn");
   if (snapshotBtn) {
     snapshotBtn.onclick = function () {
@@ -350,7 +350,7 @@ function initApp() {
     };
   }
 
-  // v3.1.0 桌面端初始加载快照列表
+  // v3.1.0 Desktop: initial snapshot list load
   if (App.UI.isDesktop()) {
     loadSnapshots();
     renderLiveTicker(); // v3.1.14
@@ -381,13 +381,13 @@ function initSupabase() {
     );
   }
 
-  // 全端初始化实时监听 (手机端也需要初始化 syncChannel 以便发送跨端广播)
+  // Initialize real-time listeners on all devices
   if (App.Services.supabase) {
     setupRealtimeSubscriptions();
   }
 }
 
-// v3.1.2 实时数据同步监听
+// v3.1.2 Real-time data sync subscriptions
 function setupRealtimeSubscriptions() {
   if (!App.Services.supabase || !App.State.syncId) return;
 
@@ -395,7 +395,7 @@ function setupRealtimeSubscriptions() {
 
   App.Services.supabase
     .channel("custom-all-channel-" + App.State.syncId)
-    // 监听 app_sync 表变化 (库存数据、滚动消息等综合状态)
+    // Listen for app_sync table changes (inventory, live messages, etc.)
     .on(
       "postgres_changes",
       {
@@ -409,7 +409,7 @@ function setupRealtimeSubscriptions() {
         pullFromCloud(true);
       }
     )
-    // 监听 inventory_snapshots 表变化 (历史记录/备注更新/删除)
+    // Listen for inventory_snapshots table changes (history/notes/deletes)
     .on(
       "postgres_changes",
       {
@@ -1506,7 +1506,7 @@ function renderRecentUpdates() {
     });
     var dayStr = date.getMonth() + 1 + "/" + date.getDate();
 
-    // v3.1.6 单行格式: 分类 [商品名] 数值 时间(日期)
+    // v3.1.6 Single-line format: Category [Product] Value Time(Date)
     row.innerHTML =
       '<span class="history-cat">' +
       App.Utils.escapeHTML(rec.category) +
@@ -1649,9 +1649,9 @@ function purgeZeroStockItems() {
   }
 }
 
-// --- v3.1.0 库存快照功能 ---
+// --- v3.1.0 Inventory Snapshot Feature ---
 
-// 保存快照到 Supabase（手机端调用）
+// Save snapshot to Supabase (called from mobile)
 function saveSnapshot(note) {
   if (!App.Services.supabase) {
     return App.UI.showToast("Cloud sync not available", "error");
@@ -1660,7 +1660,7 @@ function saveSnapshot(note) {
     return App.UI.showToast("Please connect a Sync ID first", "error");
   }
 
-  // 构建快照数据：每个分类下每个商品的计算值
+  // Build snapshot data: computed value for each product in each category
   var snapshotData = {};
   var totalItems = 0;
   (App.State.categoryOrder || []).forEach(function (cat) {
@@ -1694,7 +1694,7 @@ function saveSnapshot(note) {
           "Snapshot saved! (" + totalItems + " items)",
           "success",
         );
-        // 清空备注输入框
+        // Clear note input
         var noteInput = document.getElementById("snapshot-note-input");
         if (noteInput) noteInput.value = "";
       }
@@ -1772,7 +1772,7 @@ window.renderLiveTicker = function () {
   }
 };
 
-// 从 Supabase 加载快照列表（桌面端调用）
+// Load snapshot list from Supabase (called on desktop)
 function loadSnapshots() {
   if (!App.Services.supabase || !App.State.syncId) return;
 
@@ -1794,7 +1794,7 @@ function loadSnapshots() {
     });
 }
 
-// 渲染快照列表（桌面端展示）
+// Render snapshot list (desktop display)
 function renderSnapshots(snapshots) {
   var container = document.getElementById("snapshot-list");
   if (!container) return;
@@ -1826,53 +1826,53 @@ function renderSnapshots(snapshots) {
     card.innerHTML =
       '<div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center;">' +
       '<div style="display: flex; align-items: center;">' +
-      '<button class="edit-snapshot-btn" title="修改备注" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">✏️</button>' +
+      '<button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">✏️</button>' +
       '<span class="snapshot-time">' +
       dateStr +
       "</span>" +
       noteHTML +
       '</div>' +
       '<div>' +
-      '<button class="delete-snapshot-btn" title="删除历史记录" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>' +
+      '<button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>' +
       '</div>' +
       "</div>";
 
-    // 绑定删除按钮事件
+    // Bind delete button event
     var deleteBtn = card.querySelector(".delete-snapshot-btn");
     if (deleteBtn) {
       deleteBtn.onclick = function (e) {
-        e.stopPropagation(); // 阻止展开详情
-        if (confirm("确定要删除这条历史记录吗？该操作不可恢复。")) {
+        e.stopPropagation(); // Prevent expanding details
+        if (confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
           window.deleteSnapshot(snap.id);
         }
       };
     }
 
-    // 绑定编辑按钮事件
+    // Bind edit button event
     var editBtn = card.querySelector(".edit-snapshot-btn");
     if (editBtn) {
       editBtn.onclick = function (e) {
-        e.stopPropagation(); // 阻止展开详情
+        e.stopPropagation(); // Prevent expanding details
         var currentNote = snap.note || "";
-        var newNote = prompt("请输入新的备注：", currentNote);
+        var newNote = prompt("Enter a new note:", currentNote);
         if (newNote !== null && newNote !== currentNote) {
           window.editSnapshotNote(snap.id, newNote.trim());
         }
       };
     }
 
-    // 点击展开详情
+    // Click to expand details
     card.onclick = function () {
       var detail = card.querySelector(".snapshot-detail");
       if (detail) {
         detail.classList.toggle("hidden");
         return;
       }
-      // 首次点击时生成详细列表
+      // First click: generate detailed list
       var detailDiv = document.createElement("div");
       detailDiv.className = "snapshot-detail";
       var detailHTML = "";
-      // 按桌面端分类顺序遍历
+      // Iterate categories in desktop order
       var orderedCats = (App.State.categoryOrder || []).concat(
         Object.keys(data).filter(function (c) {
           return (App.State.categoryOrder || []).indexOf(c) === -1;
@@ -1908,7 +1908,7 @@ function renderSnapshots(snapshots) {
   });
 }
 
-// 删除快照记录
+// Delete snapshot record
 window.deleteSnapshot = async function (id) {
   if (!App.Services.supabase || !App.State.syncId) return;
   try {
@@ -1917,15 +1917,15 @@ window.deleteSnapshot = async function (id) {
       .delete()
       .eq("id", id);
     if (error) throw error;
-    App.Utils.showToast("历史记录删除成功", "success");
-    loadSnapshots(); // 重新加载列表
+    App.Utils.showToast("Record deleted successfully", "success");
+    loadSnapshots(); // Reload list
   } catch (err) {
     console.error("Error deleting snapshot:", err);
-    App.Utils.showToast("删除历史记录失败", "error");
+    App.Utils.showToast("Failed to delete record", "error");
   }
 };
 
-// 修改快照备注
+// Edit snapshot note
 window.editSnapshotNote = async function (id, newNote) {
   if (!App.Services.supabase || !App.State.syncId) return;
   try {
@@ -1934,19 +1934,19 @@ window.editSnapshotNote = async function (id, newNote) {
       .update({ note: newNote })
       .eq("id", id);
     if (error) throw error;
-    App.Utils.showToast("备注修改成功", "success");
-    loadSnapshots(); // 重新加载列表
+    App.Utils.showToast("Note updated successfully", "success");
+    loadSnapshots(); // Reload list
   } catch (err) {
     console.error("Error editing snapshot note:", err);
-    App.Utils.showToast("修改备注失败", "error");
+    App.Utils.showToast("Failed to update note", "error");
   }
 };
 
-// --- v3.1.1 快照对比功能 ---
+// --- v3.1.1 Snapshot Comparison Feature ---
 
-// Tab 切换
+// Tab switching
 window.switchSnapshotTab = function (tab) {
-  // 更新按钮样式
+  // Update button styles
   var buttons = document.querySelectorAll(".snapshot-tab");
   buttons.forEach(function (btn) {
     btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
@@ -1966,17 +1966,17 @@ window.switchSnapshotTab = function (tab) {
   }
 };
 
-// 获取对比时间边界
-// 规则：周数据在下周二取值，月数据在下月2日取值
+// Get comparison time boundaries
+// Rule: Weekly data taken on next Tuesday, monthly data on the 2nd of next month
 function getComparisonBoundaries(type) {
   var now = new Date();
 
   if (type === "week") {
-    // 找到本周二 00:00（当前周或已过的最近周二）
+    // Find this Tuesday 00:00 (current or most recent past Tuesday)
     var dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, 2=Tue...
     var thisTue = new Date(now);
     thisTue.setHours(0, 0, 0, 0);
-    // 计算距离最近的过去的周二有多少天
+    // Calculate days since the most recent past Tuesday
     var daysSinceTue = dayOfWeek < 2 ? dayOfWeek + 5 : dayOfWeek - 2;
     thisTue.setDate(thisTue.getDate() - daysSinceTue);
 
@@ -1987,16 +1987,16 @@ function getComparisonBoundaries(type) {
     prevTue.setDate(prevTue.getDate() - 7);
 
     return {
-      // "本周"数据 = 本周二之后的第一条快照
+      // "This week" data = first snapshot after this Tuesday
       currentStart: thisTue.toISOString(),
-      // "上周"数据 = 上周二之后的第一条快照
+      // "Last week" data = first snapshot after last Tuesday
       previousStart: lastTue.toISOString(),
-      // 用于限制查询范围
+      // Used to limit query scope
       previousEnd: thisTue.toISOString(),
       prevPrevStart: prevTue.toISOString(),
     };
   } else {
-    // 月对比：本月2日 00:00，上月2日 00:00
+    // Monthly comparison: 2nd of this month 00:00, 2nd of last month 00:00
     var thisMonth2 = new Date(now.getFullYear(), now.getMonth(), 2, 0, 0, 0, 0);
     var lastMonth2 = new Date(
       now.getFullYear(),
@@ -2026,7 +2026,7 @@ function getComparisonBoundaries(type) {
   }
 }
 
-// 加载对比数据
+// Load comparison data
 function loadComparison(type) {
   if (!App.Services.supabase || !App.State.syncId) {
     renderComparisonError("Please connect Cloud Sync first.");
@@ -2041,7 +2041,7 @@ function loadComparison(type) {
     compareEl.innerHTML =
       '<div class="snapshot-empty">Loading ' + label + " data...</div>";
 
-  // 查询"新数据"：currentStart 之后第一条
+  // Query "new data": first record after currentStart
   var queryNew = App.Services.supabase
     .from("inventory_snapshots")
     .select("snapshot_data, note, created_at")
@@ -2050,7 +2050,7 @@ function loadComparison(type) {
     .order("created_at", { ascending: true })
     .limit(1);
 
-  // 查询"旧数据"：previousStart 到 previousEnd 之间第一条
+  // Query "old data": first record between previousStart and previousEnd
   var queryOld = App.Services.supabase
     .from("inventory_snapshots")
     .select("snapshot_data, note, created_at")
@@ -2105,7 +2105,7 @@ function renderComparisonError(msg) {
   if (el) el.innerHTML = '<div class="snapshot-empty">' + msg + "</div>";
 }
 
-// 渲染对比结果
+// Render comparison results
 function renderComparison(oldSnap, newSnap, label) {
   var el = document.getElementById("snapshot-compare-view");
   if (!el) return;
@@ -2119,7 +2119,7 @@ function renderComparison(oldSnap, newSnap, label) {
   var oldData = oldSnap.snapshot_data || {};
   var newData = newSnap.snapshot_data || {};
 
-  // 按桌面端分类顺序收集并遍历分类
+  // Iterate categories in desktop order and collect data
   var allCatKeys = {};
   Object.keys(oldData).forEach(function (c) {
     allCatKeys[c] = true;
@@ -2149,7 +2149,7 @@ function renderComparison(oldSnap, newSnap, label) {
     "</span>" +
     "</div>";
 
-  // 汇总统计
+  // Summary statistics
   var totalUp = 0,
     totalDown = 0,
     totalSame = 0;
@@ -2158,7 +2158,7 @@ function renderComparison(oldSnap, newSnap, label) {
     var oldItems = oldData[cat] || {};
     var newItems = newData[cat] || {};
 
-    // 合并所有商品 key
+    // Merge all product keys
     var allProducts = {};
     Object.keys(oldItems).forEach(function (p) {
       allProducts[p] = true;
@@ -2170,14 +2170,14 @@ function renderComparison(oldSnap, newSnap, label) {
     var productKeys = Object.keys(allProducts);
     if (productKeys.length === 0) return;
 
-    // 只显示有变化的或有值的商品
+    // Only show products with changes or non-zero values
     var rows = [];
     productKeys.forEach(function (p) {
       var oldVal = oldItems[p] || 0;
       var newVal = newItems[p] || 0;
       var diff = newVal - oldVal;
 
-      if (oldVal === 0 && newVal === 0) return; // 跳过双零
+      if (oldVal === 0 && newVal === 0) return; // Skip double zeros
 
       var cls = "",
         arrow = "",
@@ -2229,7 +2229,7 @@ function renderComparison(oldSnap, newSnap, label) {
     }
   });
 
-  // 底部统计摘要
+  // Bottom summary statistics
   html +=
     '<div class="compare-summary">' +
     '<span class="compare-up">▲ ' +
