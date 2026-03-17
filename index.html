@@ -33,10 +33,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
-        // Global Registration of Datalabels plugin
-        Chart.register(ChartDataLabels);
+        // Global Registration of Datalabels plugin with fallback defense
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        } else {
+            console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
+        }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.1.23">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.1.24">
 </head>
 
 <body>
