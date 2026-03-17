@@ -1785,7 +1785,10 @@ function renderSnapshots(snapshots) {
       "</span>" +
       noteHTML +
       '</div>' +
+      '<div>' +
+      '<button class="edit-snapshot-btn" title="修改备注" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-left: 10px;">✏️</button>' +
       '<button class="delete-snapshot-btn" title="删除历史记录" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>' +
+      '</div>' +
       "</div>";
 
     // 绑定删除按钮事件
@@ -1795,6 +1798,19 @@ function renderSnapshots(snapshots) {
         e.stopPropagation(); // 阻止展开详情
         if (confirm("确定要删除这条历史记录吗？该操作不可恢复。")) {
           window.deleteSnapshot(snap.id);
+        }
+      };
+    }
+
+    // 绑定编辑按钮事件
+    var editBtn = card.querySelector(".edit-snapshot-btn");
+    if (editBtn) {
+      editBtn.onclick = function (e) {
+        e.stopPropagation(); // 阻止展开详情
+        var currentNote = snap.note || "";
+        var newNote = prompt("请输入新的备注：", currentNote);
+        if (newNote !== null && newNote !== currentNote) {
+          window.editSnapshotNote(snap.id, newNote.trim());
         }
       };
     }
@@ -1860,6 +1876,23 @@ window.deleteSnapshot = async function (id) {
   } catch (err) {
     console.error("Error deleting snapshot:", err);
     App.Utils.showToast("删除历史记录失败", "error");
+  }
+};
+
+// 修改快照备注
+window.editSnapshotNote = async function (id, newNote) {
+  if (!App.Services.supabase || !App.State.syncId) return;
+  try {
+    const { error } = await App.Services.supabase
+      .from("inventory_snapshots")
+      .update({ note: newNote })
+      .eq("id", id);
+    if (error) throw error;
+    App.Utils.showToast("备注修改成功", "success");
+    loadSnapshots(); // 重新加载列表
+  } catch (err) {
+    console.error("Error editing snapshot note:", err);
+    App.Utils.showToast("修改备注失败", "error");
   }
 };
 
