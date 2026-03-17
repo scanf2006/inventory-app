@@ -1780,11 +1780,11 @@ function renderSnapshots(snapshots) {
     card.innerHTML =
       '<div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center;">' +
       '<div style="display: flex; align-items: center;">' +
+      '<button class="edit-snapshot-btn" title="修改备注" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">✏️</button>' +
       '<span class="snapshot-time">' +
       dateStr +
       "</span>" +
       noteHTML +
-      '<button class="edit-snapshot-btn" title="修改备注" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-left: 8px;">✏️</button>' +
       '</div>' +
       '<div>' +
       '<button class="delete-snapshot-btn" title="删除历史记录" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>' +
