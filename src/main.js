@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.24",
+    VERSION: "v3.1.25",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -125,10 +125,15 @@ const App = {
       return App.State.products[App.State.currentCategory] || [];
     },
 
-    // Helper: Escape single quotes safely for HTML injections
+    // Helper: Escape illegal characters for inline HTML/JS injections
     escapeStr: function (str) {
       if (!str) return "";
-      return String(str).replace(/'/g, "\\'");
+      return String(str)
+        .replace(/\\/g, "\\\\") // Escape backslashes first
+        .replace(/'/g, "\\'") // Escape single quotes
+        .replace(/"/g, "&quot;") // Escape double quotes to prevent breaking attributes
+        .replace(/\n/g, "\\n") // Handle newlines
+        .replace(/\r/g, "\\r");
     },
 
     // New Security Feature: Escape HTML to prevent XSS
@@ -1915,7 +1920,8 @@ window.deleteSnapshot = async function (id) {
     const { error } = await App.Services.supabase
       .from("inventory_snapshots")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("sync_id", App.State.syncId); // Access Control: only allow deletion of own snapshots
     if (error) throw error;
     App.UI.showToast("Record deleted successfully", "success");
     loadSnapshots(); // Reload list
@@ -1932,7 +1938,8 @@ window.editSnapshotNote = async function (id, newNote) {
     const { error } = await App.Services.supabase
       .from("inventory_snapshots")
       .update({ note: newNote })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("sync_id", App.State.syncId); // Access Control: only allow editing of own snapshots
     if (error) throw error;
     App.UI.showToast("Note updated successfully", "success");
     loadSnapshots(); // Reload list
