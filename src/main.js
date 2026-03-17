@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.19",
+    VERSION: "v3.1.20",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -387,15 +387,14 @@ function initSupabase() {
   }
 }
 
-// v3.1.2 实时数据同步监听 (增强版：加入 Broadcast 以防 Postgres Realtime 未开启)
+// v3.1.2 实时数据同步监听
 function setupRealtimeSubscriptions() {
   if (!App.Services.supabase || !App.State.syncId) return;
 
   console.log("Setting up Supabase real-time subscriptions...");
 
-  App.Services.syncChannel = App.Services.supabase.channel("custom-all-channel-" + App.State.syncId);
-
-  App.Services.syncChannel
+  App.Services.supabase
+    .channel("custom-all-channel-" + App.State.syncId)
     // 监听 app_sync 表变化 (库存数据、滚动消息等综合状态)
     .on(
       "postgres_changes",
@@ -422,19 +421,6 @@ function setupRealtimeSubscriptions() {
       function (payload) {
         console.log("Real-time update received for inventory_snapshots!");
         loadSnapshots();
-      }
-    )
-    // 监听手动 Broadcast 事件 (作为实时同步的瞬间兜底)
-    .on(
-      "broadcast",
-      { event: "trigger-sync" },
-      function (payload) {
-        console.log("Broadcast sync trigger received!");
-        pullFromCloud(true);
-        loadSnapshots();
-        if (App.UI.isDesktop()) {
-          renderLiveTicker();
-        }
       }
     )
     .subscribe(function (status) {
@@ -489,13 +475,6 @@ function pushToCloud() {
         App.UI.updateSyncStatus("Sync Offline", false);
       } else {
         App.UI.updateSyncStatus("Cloud Synced", true);
-        if (App.Services.syncChannel) {
-          App.Services.syncChannel.send({
-            type: "broadcast",
-            event: "trigger-sync",
-            payload: { syncId: App.State.syncId },
-          });
-        }
       }
     });
 }
@@ -1718,14 +1697,6 @@ function saveSnapshot(note) {
         // 清空备注输入框
         var noteInput = document.getElementById("snapshot-note-input");
         if (noteInput) noteInput.value = "";
-        
-        if (App.Services.syncChannel) {
-          App.Services.syncChannel.send({
-            type: "broadcast",
-            event: "trigger-sync",
-            payload: { syncId: App.State.syncId },
-          });
-        }
       }
     })
     .catch(function (err) {
@@ -1948,14 +1919,6 @@ window.deleteSnapshot = async function (id) {
     if (error) throw error;
     App.Utils.showToast("历史记录删除成功", "success");
     loadSnapshots(); // 重新加载列表
-    
-    if (App.Services.syncChannel) {
-      App.Services.syncChannel.send({
-        type: "broadcast",
-        event: "trigger-sync",
-        payload: { syncId: App.State.syncId },
-      });
-    }
   } catch (err) {
     console.error("Error deleting snapshot:", err);
     App.Utils.showToast("删除历史记录失败", "error");
@@ -1973,14 +1936,6 @@ window.editSnapshotNote = async function (id, newNote) {
     if (error) throw error;
     App.Utils.showToast("备注修改成功", "success");
     loadSnapshots(); // 重新加载列表
-    
-    if (App.Services.syncChannel) {
-      App.Services.syncChannel.send({
-        type: "broadcast",
-        event: "trigger-sync",
-        payload: { syncId: App.State.syncId },
-      });
-    }
   } catch (err) {
     console.error("Error editing snapshot note:", err);
     App.Utils.showToast("修改备注失败", "error");
