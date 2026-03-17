@@ -393,7 +393,7 @@ function setupRealtimeSubscriptions() {
 
   console.log("Setting up Supabase real-time subscriptions...");
 
-  // 监听 inventory_data 表变化 (库存更新)
+  // 监听 app_sync 表变化 (库存数据、滚动消息等综合状态)
   App.Services.supabase
     .channel("custom-all-channel")
     .on(
@@ -401,13 +401,13 @@ function setupRealtimeSubscriptions() {
       {
         event: "*",
         schema: "public",
-        table: "inventory_data",
-        filter: "id=eq." + App.State.syncId,
+        table: "app_sync",
+        filter: "sync_id=eq." + App.State.syncId,
       },
       function (payload) {
-        console.log("Real-time update received for inventory_data!");
-        // 从云端重新拉取最新数据并渲染
-        downloadFromCloud(App.State.syncId);
+        console.log("Real-time update received for app_sync!");
+        // 从云端重新拉取最新数据并渲染 (静默更新)
+        pullFromCloud(true);
       }
     )
     // 监听 inventory_snapshots 表变化 (历史记录/备注更新/删除)
@@ -422,19 +422,6 @@ function setupRealtimeSubscriptions() {
       function (payload) {
         console.log("Real-time update received for inventory_snapshots!");
         loadSnapshots();
-      }
-    )
-    // 监听 live_messages 表变化 (滚动消息)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "live_messages",
-      },
-      function (payload) {
-        console.log("Real-time insert received for live_messages!");
-        renderLiveTicker();
       }
     )
     .subscribe(function (status) {
