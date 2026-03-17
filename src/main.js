@@ -1,6 +1,6 @@
 const App = {
     Config: {
-        VERSION: "v3.1.13",
+        VERSION: "v3.1.14",
         SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
         SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
         STORAGE_KEYS: {
@@ -11,7 +11,8 @@ const App = {
             COMMON_OILS: 'lubricant_common_oils',
             LAST_UPDATED: 'lubricant_last_updated',
             LAST_INVENTORY_UPDATE: 'lubricant_last_inventory_update',
-            RECENT_HISTORY: 'lubricant_recent_history'
+            RECENT_HISTORY: 'lubricant_recent_history',
+            LIVE_MESSAGES: 'lubricant_live_messages'
         },
         INITIAL_PRODUCTS: {
             "Bulk Oil": ["0W20S", "5W30S", "5W30B", "AW68", "AW16S", "0W20E", "0W30E", "50W", "75W90GL5", "30W", "ATF", "T0-4 10W", "5W40 DIESEL"],
@@ -33,6 +34,7 @@ const App = {
         lastUpdated: 0,
         lastInventoryUpdate: 0, // Specifically for inventory data changes
         history: [], // v3.0.26 Recent update records
+        liveMessages: [], // v3.1.14 Live ticker messages
         chartInstance: null // v3.0 Chart.js instance tracking
     },
 
@@ -218,6 +220,7 @@ function initApp() {
     App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED) || '0');
     App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE) || '0');
     App.State.history = App.Utils.safeGetJSON(SK.RECENT_HISTORY, []);
+    App.State.liveMessages = App.Utils.safeGetJSON(SK.LIVE_MESSAGES, []);
 
     var savedId = localStorage.getItem(SK.SYNC_ID);
     App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
@@ -277,6 +280,13 @@ function initApp() {
     // v3.1.0 桌面端初始加载快照列表
     if (App.UI.isDesktop()) {
         loadSnapshots();
+        renderLiveTicker(); // v3.1.14
+    }
+
+    // v3.1.14 Live Message Send
+    var sendLiveBtn = document.getElementById('send-live-btn');
+    if (sendLiveBtn) {
+        sendLiveBtn.onclick = window.sendLiveMessage;
     }
 }
 
@@ -316,7 +326,8 @@ function pushToCloud() {
                 category_order: App.State.categoryOrder,
                 last_updated_ts: App.State.lastUpdated,
                 last_inventory_update_ts: App.State.lastInventoryUpdate,
-                recent_history: App.State.history
+                recent_history: App.State.history,
+                live_messages: App.State.liveMessages
             },
             updated_at: new Date().toISOString()
         }, { onConflict: 'sync_id' })
@@ -353,12 +364,14 @@ function pullFromCloud(isSilent) {
                     App.State.lastUpdated = cloudTS;
                     App.State.lastInventoryUpdate = cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
                     App.State.history = cloudData.recent_history || App.State.history;
+                    App.State.liveMessages = cloudData.live_messages || App.State.liveMessages;
 
                     saveToStorageImmediate(true); // Skip generic timestamp update for pull
                     initializeCategory();
                     renderTabs();
                     renderInventory();
                     renderManageUI();
+                    renderLiveTicker(); // Play Ticker
                     if (!isSilent) App.UI.showToast("Sync: Cloud state loaded", 'success');
                     App.UI.updateSyncStatus('Synced', true);
                 } else if (cloudTS < localTS) {
@@ -391,6 +404,7 @@ function saveToStorageImmediate(skipTimestamp) {
     localStorage.setItem(SK.LAST_UPDATED, App.State.lastUpdated);
     localStorage.setItem(SK.LAST_INVENTORY_UPDATE, App.State.lastInventoryUpdate);
     localStorage.setItem(SK.RECENT_HISTORY, JSON.stringify(App.State.history));
+    localStorage.setItem(SK.LIVE_MESSAGES, JSON.stringify(App.State.liveMessages));
 }
 
 var debouncedSave = App.Utils.debounce(function () {
@@ -502,14 +516,18 @@ function renderInventory() {
             '<button onclick="toggleViewMode(\'preview\')" class="btn-edit ' + (App.State.viewMode === 'preview' ? 'active' : '') + '">Preview</button>' +
             '</div>';
         controls.appendChild(bar);
-
-        // Product Variety Count
-        var countDiv = document.createElement('div');
-        countDiv.className = 'product-count-badge';
-        countDiv.style = 'margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;';
-        countDiv.innerText = 'Products: ' + sortedProducts.length;
-        controls.appendChild(countDiv);
     }
+
+    // Product Variety Count - Moved ABOVE inventory-list (v3.1.14)
+    var countBadge = document.getElementById('inventory-count-badge');
+    if (!countBadge) {
+        countBadge = document.createElement('div');
+        countBadge.id = 'inventory-count-badge';
+        countBadge.className = 'product-count-badge';
+        countBadge.style = 'text-align: center; margin: 15px 0 10px 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; width: 100%;';
+        list.parentNode.insertBefore(countBadge, list);
+    }
+    countBadge.innerText = 'Products: ' + sortedProducts.length;
 
     // [v3.0.25 Move] Reset Category Button (Only in Edit Mode at the TOP)
     if (App.State.viewMode === 'edit' && !App.UI.isDesktop()) {
@@ -1408,6 +1426,68 @@ function saveSnapshot(note) {
             App.UI.showToast('Snapshot save failed', 'error');
         });
 }
+
+// --- v3.1.14 Live Ticker ---
+window.sendLiveMessage = function() {
+    var input = document.getElementById('live-msg-input');
+    if (!input || !input.value.trim()) return;
+    var msg = input.value.trim();
+    
+    var newObj = {
+        text: msg,
+        ts: Date.now()
+    };
+    
+    if (!App.State.liveMessages) App.State.liveMessages = [];
+    App.State.liveMessages.push(newObj);
+    
+    // Keep only the latest 5 messages
+    if (App.State.liveMessages.length > 5) {
+        App.State.liveMessages.shift();
+    }
+    
+    input.value = '';
+    saveToStorageImmediate();
+    pushToCloud();
+    
+    App.UI.showToast("Message Broadcasted to Desktop!", "success");
+    renderLiveTicker(); // Refresh immediately if on desktop (although phone usually isn't)
+};
+
+window.renderLiveTicker = function() {
+    if (!App.UI.isDesktop()) return;
+    
+    var container = document.getElementById('live-ticker-container');
+    var textEl = document.getElementById('live-ticker-text');
+    if (!container || !textEl) return;
+    
+    if (!App.State.liveMessages || App.State.liveMessages.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    // Sort array so newest is at the end
+    var sorted = App.State.liveMessages.slice().sort(function(a, b) { return a.ts - b.ts; });
+    var latest = sorted[sorted.length - 1];
+    
+    // Hide ticker if the latest message is older than 8 hours
+    if (Date.now() - latest.ts > 8 * 60 * 60 * 1000) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    var timeStr = new Date(latest.ts).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+    var displayStr = "[" + timeStr + "] " + latest.text;
+    
+    // Only restyle/re-animate if text actually changed
+    if (textEl.innerText !== displayStr) {
+        textEl.innerText = displayStr;
+        textEl.style.animation = 'none';
+        void textEl.offsetWidth; // Trigger reflow to restart animation
+        textEl.style.animation = 'tickerScroll 18s linear infinite';
+    }
+};
 
 // 从 Supabase 加载快照列表（桌面端调用）
 function loadSnapshots() {

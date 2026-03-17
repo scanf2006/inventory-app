@@ -99,6 +99,15 @@
         background: #1C1C1E;
     }
 
+    /* v3.1.14 Ticker Dark Mode */
+    .live-ticker-container {
+        background: rgba(10, 83, 190, 0.2);
+        border-color: rgba(10, 83, 190, 0.4);
+    }
+    .ticker-label {
+        color: #5E94FF;
+        text-shadow: 0 0 10px rgba(94, 148, 255, 0.6);
+    }
 }
 
 .hidden {
@@ -1431,6 +1440,53 @@ hr {
         height: 35vh;
         min-height: 250px;
         width: 100%;
+    }
+
+    /* v3.1.14 Desktop Ticker */
+    .live-ticker-container {
+        display: flex;
+        align-items: center;
+        background: rgba(10, 83, 190, 0.08);
+        border: 1px solid rgba(10, 83, 190, 0.15);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        padding: 8px 16px;
+        overflow: hidden;
+        position: relative;
+    }
+    .ticker-label {
+        font-weight: 800;
+        color: var(--primary-blue);
+        margin-right: 15px;
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-family: 'Outfit', sans-serif;
+        text-transform: uppercase;
+        animation: pulseHeartbeat 2s infinite;
+    }
+    .ticker-scroll {
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+    #live-ticker-text {
+        display: inline-block;
+        padding-left: 100%;
+        color: var(--text-main);
+        font-weight: 600;
+        animation: tickerScroll 18s linear infinite;
+    }
+    @keyframes tickerScroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-100%); }
+    }
+    @keyframes pulseHeartbeat {
+        0% { transform: scale(1); opacity: 1; text-shadow: 0 0 5px rgba(10,83,190,0); }
+        50% { transform: scale(1.05); opacity: 0.8; text-shadow: 0 0 8px rgba(10,83,190,0.5); }
+        100% { transform: scale(1); opacity: 1; text-shadow: 0 0 5px rgba(10,83,190,0); }
     }
 
     /* v3.1.3 Ultra-Compact Recent History */
