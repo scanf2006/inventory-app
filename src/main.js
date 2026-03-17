@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.22",
+    VERSION: "v3.1.23",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -1917,11 +1917,11 @@ window.deleteSnapshot = async function (id) {
       .delete()
       .eq("id", id);
     if (error) throw error;
-    App.Utils.showToast("Record deleted successfully", "success");
+    App.UI.showToast("Record deleted successfully", "success");
     loadSnapshots(); // Reload list
   } catch (err) {
     console.error("Error deleting snapshot:", err);
-    App.Utils.showToast("Failed to delete record", "error");
+    App.UI.showToast("Failed to delete record", "error");
   }
 };
 
@@ -1934,11 +1934,11 @@ window.editSnapshotNote = async function (id, newNote) {
       .update({ note: newNote })
       .eq("id", id);
     if (error) throw error;
-    App.Utils.showToast("Note updated successfully", "success");
+    App.UI.showToast("Note updated successfully", "success");
     loadSnapshots(); // Reload list
   } catch (err) {
     console.error("Error editing snapshot note:", err);
-    App.Utils.showToast("Failed to update note", "error");
+    App.UI.showToast("Failed to update note", "error");
   }
 };
 
