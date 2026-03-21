@@ -40,7 +40,7 @@
             console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
         }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.1.25">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.1.26">
 </head>
 
 <body>
@@ -147,7 +147,7 @@
                         <div class="sync-status" id="sync-status">Status: <span>Offline (Local only)</span></div>
                         <div class="add-form">
                             <input type="text" id="sync-id-input" placeholder="Enter your Sync ID (e.g. user_2026)"
-                                oninput="state.syncId = this.value.trim(); saveToStorage(false);">
+                                oninput="App.State.syncId = this.value.trim(); saveToStorage(false);">
                             <button id="connect-sync-btn">Connect</button>
                         </div>
                         <p class="small-hint">Devices with the same ID will sync data automatically. Clicking "Connect"
@@ -268,7 +268,7 @@
         <!-- Smart Suggestions (Moved to top-level) -->
         <datalist id="master-product-list"></datalist>
 
-        <script src="src/main.js?v=3.1.1"></script>
+        <script src="src/main.js?v=3.1.26"></script>
 </body>
 
 </html>

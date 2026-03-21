@@ -1,16 +1,19 @@
-// Improved Service Worker Implementation
-// Version: 2026-03-21 17:07:07 UTC
-
-const CACHE_NAME = 'app-cache-v1';
-const OPTIONAL_CACHE_NAME = 'optional-cache-v1';
+// Service Worker - inventory-app
+// Version driven by cache name; update on each release
+const CACHE_NAME = 'inv-aiden-v3.1.26';
+const OPTIONAL_CACHE_NAME = 'inv-aiden-opt-v1';
 const CRITICAL_ASSETS = [
-    'index.html',
-    'styles.css',
-    'main.js'
+    '/',
+    '/index.html',
+    '/src/main.js',
+    '/src/app-v30.css',
+    '/manifest.json',
+    '/assets/icon.svg'
 ];
 const OPTIONAL_ASSETS = [
-    'image1.png',
-    'image2.png'
+    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+    'https://cdn.jsdelivr.net/npm/chart.js',
+    'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2'
 ];
 
 self.addEventListener('install', event => {
@@ -20,7 +23,7 @@ self.addEventListener('install', event => {
             return cache.addAll(CRITICAL_ASSETS);
         })
     );
-    // Skip waiting to activate the service worker immediately
+    // Activate immediately without waiting
     self.skipWaiting();
 });
 
@@ -37,27 +40,32 @@ self.addEventListener('activate', event => {
             );
         })
     );
+    // Take control of all clients immediately
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-    // Handle critical asset requests
-    if (CRITICAL_ASSETS.includes(new URL(event.request.url).pathname)) {
+    const url = new URL(event.request.url);
+    const path = url.pathname;
+    const fullUrl = event.request.url;
+
+    // Critical assets: Network-first with cache fallback (stale-while-revalidate)
+    if (CRITICAL_ASSETS.includes(path)) {
         event.respondWith(
-            caches.match(event.request).then(cachedResponse => {
-                if (cachedResponse) {
-                    console.log('[Service Worker] Found in cache:', event.request.url);
-                    return cachedResponse;
-                }
-                return fetch(event.request).then(response => {
-                    return caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, response.clone());
-                        return response;
-                    });
+            fetch(event.request).then(response => {
+                // Successfully fetched from network, update cache
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseClone);
                 });
+                return response;
+            }).catch(() => {
+                // Network failed, fall back to cache
+                return caches.match(event.request);
             })
         );
-    } else if (OPTIONAL_ASSETS.includes(new URL(event.request.url).pathname)) {
-        // Handle the optional assets
+    } else if (OPTIONAL_ASSETS.includes(fullUrl) || OPTIONAL_ASSETS.includes(path)) {
+        // Optional/CDN assets: Cache-first with network fallback (less critical)
         event.respondWith(
             caches.open(OPTIONAL_CACHE_NAME).then(cache => {
                 return cache.match(event.request).then(cachedResponse => {

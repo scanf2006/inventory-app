@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.25",
+    VERSION: "v3.1.26",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -106,9 +106,41 @@ const App = {
       var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, "");
       if (!cleanExpr) return 0;
       try {
-        var result = new Function("return (" + cleanExpr + ")")();
-        var num = parseFloat(result);
-        return isNaN(num) ? 0 : Math.round(num * 100) / 100;
+        // Pure arithmetic parser: tokenize and compute without eval/Function
+        var tokens = cleanExpr.match(/(?:\d+\.?\d*|[+\-*/()])/g);
+        if (!tokens) return 0;
+        var pos = 0;
+        function parseExpr() {
+          var result = parseTerm();
+          while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+            var op = tokens[pos++];
+            var right = parseTerm();
+            result = op === '+' ? result + right : result - right;
+          }
+          return result;
+        }
+        function parseTerm() {
+          var result = parseFactor();
+          while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
+            var op = tokens[pos++];
+            var right = parseFactor();
+            if (op === '/' && right === 0) return 0;
+            result = op === '*' ? result * right : result / right;
+          }
+          return result;
+        }
+        function parseFactor() {
+          if (tokens[pos] === '(') {
+            pos++;
+            var result = parseExpr();
+            if (tokens[pos] === ')') pos++;
+            return result;
+          }
+          var num = parseFloat(tokens[pos++]);
+          return isNaN(num) ? 0 : num;
+        }
+        var result = parseExpr();
+        return isNaN(result) ? 0 : Math.round(result * 100) / 100;
       } catch (e) {
         return 0;
       }
@@ -1136,8 +1168,8 @@ if (document.getElementById("export-pdf-btn")) {
         if (catLower.includes("bulk oil")) unitSuffix = " (L)";
         else if (catLower.includes("case oil")) unitSuffix = " (Cases)";
 
-        block.innerHTML =
-          '<div class="pdf-category-title">' + cat + unitSuffix + "</div>";
+         block.innerHTML =
+          '<div class="pdf-category-title">' + App.Utils.escapeHTML(cat) + unitSuffix + "</div>";
 
         var grid = document.createElement("div");
         grid.className = "pdf-grid";
@@ -1610,7 +1642,7 @@ if (installBtn) {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js")
+      .register("./sw.js?v=" + App.Config.VERSION)
       .then((reg) => console.log("SW Registered", reg))
       .catch((err) => console.error("SW Registration Failed", err));
   });
@@ -1618,7 +1650,6 @@ if ("serviceWorker" in navigator) {
 
 // Start App
 window.addEventListener("load", function () {
-  initSupabase();
   initApp();
 });
 // --- Utility: Purge Zero Stock Items ---
