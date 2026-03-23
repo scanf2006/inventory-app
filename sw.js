@@ -49,19 +49,25 @@ self.addEventListener('fetch', event => {
     const path = url.pathname;
     const fullUrl = event.request.url;
 
-    // Critical assets: Network-first with cache fallback (stale-while-revalidate)
+    // Critical assets: Network-first with cache fallback
+    // Use pathname (no query string) as canonical cache key to avoid
+    // mismatch between pre-cached "/src/main.js" and runtime "src/main.js?v=3.1.27"
     if (CRITICAL_ASSETS.includes(path)) {
+        // Build a canonical request without query parameters for cache operations
+        const canonicalUrl = url.origin + path;
+        const canonicalRequest = new Request(canonicalUrl);
+
         event.respondWith(
             fetch(event.request).then(response => {
-                // Successfully fetched from network, update cache
+                // Successfully fetched from network, store under canonical key
                 const responseClone = response.clone();
                 caches.open(CACHE_NAME).then(cache => {
-                    cache.put(event.request, responseClone);
+                    cache.put(canonicalRequest, responseClone);
                 });
                 return response;
             }).catch(() => {
-                // Network failed, fall back to cache
-                return caches.match(event.request);
+                // Network failed, look up by canonical key (ignores ?v= params)
+                return caches.match(canonicalRequest);
             })
         );
     } else if (OPTIONAL_ASSETS.includes(fullUrl) || OPTIONAL_ASSETS.includes(path)) {
