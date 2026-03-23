@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.26",
+    VERSION: "v3.1.27",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -398,6 +398,17 @@ function initApp() {
   if (sendLiveBtn) {
     sendLiveBtn.onclick = window.sendLiveMessage;
   }
+
+  // v3.1.27 Snapshot Tab Event Delegation (replaces inline onclick)
+  var tabGroup = document.getElementById("snapshot-tab-group");
+  if (tabGroup) {
+    tabGroup.addEventListener("click", function (e) {
+      var btn = e.target.closest(".snapshot-tab");
+      if (btn && btn.dataset.tab) {
+        window.switchSnapshotTab(btn.dataset.tab);
+      }
+    });
+  }
 }
 
 function initSupabase() {
@@ -739,11 +750,12 @@ function renderInventory() {
   if (App.State.viewMode === "edit" && !App.UI.isDesktop()) {
     var resetWrapper = document.createElement("div");
     resetWrapper.style = "margin: 5px 0 15px 0;";
-    resetWrapper.innerHTML =
-      '<button onclick="resetCategoryInventory()" class="btn-delete danger-zone-reset w-full" style="opacity: 0.8; font-size: 0.85rem; padding: 12px; border-radius: 12px;">' +
-      "Reset " +
-      App.Utils.escapeHTML(App.State.currentCategory) +
-      " to Zero</button>";
+    var resetBtn = document.createElement("button");
+    resetBtn.className = "btn-delete danger-zone-reset w-full";
+    resetBtn.style = "opacity: 0.8; font-size: 0.85rem; padding: 12px; border-radius: 12px;";
+    resetBtn.textContent = "Reset " + App.State.currentCategory + " to Zero";
+    resetBtn.addEventListener("click", function () { resetCategoryInventory(); });
+    resetWrapper.appendChild(resetBtn);
     list.appendChild(resetWrapper);
   }
 
@@ -751,49 +763,56 @@ function renderInventory() {
     var key = App.Utils.getProductKey(App.State.currentCategory, name);
     var val = App.State.inventory[key] || "";
     var total = App.Utils.safeEvaluate(val);
-    var safeName = App.Utils.escapeHTML(name);
     var isPreview = App.State.viewMode === "preview" || App.UI.isDesktop();
 
     var card = document.createElement("div");
     card.className = "item-card" + (isPreview ? " preview-mode" : "");
 
-    if (isPreview) {
-      card.innerHTML =
-        '<div class="item-info">' +
-        '<div class="item-name">' +
-        safeName +
-        "</div>" +
-        '<div class="item-result">Total: <span class="highlight-total">' +
-        total +
-        "</span></div>" +
-        "</div>";
-    } else {
-      card.innerHTML =
-        '<div class="item-info">' +
-        '<div class="item-name" style="cursor: pointer;" onclick="renameProductInline(\'' +
-        App.Utils.escapeStr(name) +
-        "')\">" +
-        safeName +
-        "</div>" +
-        '<div class="item-result" id="result-' +
-        index +
-        '">Total: <span class="highlight-total">' +
-        total +
-        "</span></div>" +
-        "</div>" +
-        '<div class="input-group">' +
-        '<input type="tel" class="item-input" value="' +
-        App.Utils.escapeHTML(val) +
-        '" placeholder="0" ' +
-        "oninput=\"window.updateValue('" +
-        App.Utils.escapeStr(name) +
-        "', this.value, " +
-        index +
-        ')">' +
-        '<button class="item-delete-btn" onclick="removeProductInline(\'' +
-        App.Utils.escapeStr(name) +
-        "')\">🗑️</button>" +
-        "</div>";
+    // Safe DOM construction: user data via textContent, events via addEventListener
+    var infoDiv = document.createElement("div");
+    infoDiv.className = "item-info";
+
+    var nameDiv = document.createElement("div");
+    nameDiv.className = "item-name";
+    nameDiv.textContent = name;
+
+    var resultDiv = document.createElement("div");
+    resultDiv.className = "item-result";
+    resultDiv.id = "result-" + index;
+    resultDiv.innerHTML = 'Total: <span class="highlight-total">' + total + "</span>";
+
+    infoDiv.appendChild(nameDiv);
+    infoDiv.appendChild(resultDiv);
+    card.appendChild(infoDiv);
+
+    if (!isPreview) {
+      nameDiv.style.cursor = "pointer";
+      nameDiv.addEventListener("click", (function (prodName) {
+        return function () { renameProductInline(prodName); };
+      })(name));
+
+      var inputGroup = document.createElement("div");
+      inputGroup.className = "input-group";
+
+      var input = document.createElement("input");
+      input.type = "tel";
+      input.className = "item-input";
+      input.value = val;
+      input.placeholder = "0";
+      input.addEventListener("input", (function (prodName, idx) {
+        return function () { window.updateValue(prodName, this.value, idx); };
+      })(name, index));
+
+      var deleteBtn = document.createElement("button");
+      deleteBtn.className = "item-delete-btn";
+      deleteBtn.textContent = "🗑️";
+      deleteBtn.addEventListener("click", (function (prodName) {
+        return function () { removeProductInline(prodName); };
+      })(name));
+
+      inputGroup.appendChild(input);
+      inputGroup.appendChild(deleteBtn);
+      card.appendChild(inputGroup);
     }
 
     list.appendChild(card);
@@ -1032,28 +1051,48 @@ function renderManageUI() {
   App.State.categoryOrder.forEach(function (cat, idx) {
     var li = document.createElement("li");
     li.className = "manage-item";
-    var safeCat = App.Utils.escapeHTML(cat);
-    li.innerHTML =
-      '<span class="category-name" style="cursor: pointer;" onclick="editCategory(\'' +
-      App.Utils.escapeStr(cat) +
-      "')\">" +
-      safeCat +
-      "</span>" +
-      '<div class="category-actions">' +
-      '<button class="btn-sort" onclick="moveCategory(' +
-      idx +
-      ', -1)" ' +
-      (idx === 0 ? "disabled" : "") +
-      ">▲</button>" +
-      '<button class="btn-sort" onclick="moveCategory(' +
-      idx +
-      ', 1)" ' +
-      (idx === App.State.categoryOrder.length - 1 ? "disabled" : "") +
-      ">▼</button>" +
-      '<button class="btn-delete" onclick="removeCategory(\'' +
-      App.Utils.escapeStr(cat) +
-      "')\">🗑️</button>" +
-      "</div>";
+
+    // Safe DOM construction: category name via textContent, events via closures
+    var catSpan = document.createElement("span");
+    catSpan.className = "category-name";
+    catSpan.style.cursor = "pointer";
+    catSpan.textContent = cat;
+    catSpan.addEventListener("click", (function (catName) {
+      return function () { editCategory(catName); };
+    })(cat));
+
+    var actionsDiv = document.createElement("div");
+    actionsDiv.className = "category-actions";
+
+    var upBtn = document.createElement("button");
+    upBtn.className = "btn-sort";
+    upBtn.textContent = "▲";
+    if (idx === 0) upBtn.disabled = true;
+    upBtn.addEventListener("click", (function (i) {
+      return function () { moveCategory(i, -1); };
+    })(idx));
+
+    var downBtn = document.createElement("button");
+    downBtn.className = "btn-sort";
+    downBtn.textContent = "▼";
+    if (idx === App.State.categoryOrder.length - 1) downBtn.disabled = true;
+    downBtn.addEventListener("click", (function (i) {
+      return function () { moveCategory(i, 1); };
+    })(idx));
+
+    var delBtn = document.createElement("button");
+    delBtn.className = "btn-delete";
+    delBtn.textContent = "🗑️";
+    delBtn.addEventListener("click", (function (catName) {
+      return function () { removeCategory(catName); };
+    })(cat));
+
+    actionsDiv.appendChild(upBtn);
+    actionsDiv.appendChild(downBtn);
+    actionsDiv.appendChild(delBtn);
+
+    li.appendChild(catSpan);
+    li.appendChild(actionsDiv);
     cList.appendChild(li);
   });
 }

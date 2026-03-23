@@ -40,7 +40,7 @@
             console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
         }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.1.26">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.1.27">
 </head>
 
 <body>
@@ -112,10 +112,10 @@
                 <div id="snapshot-history-container" class="snapshot-history-container" style="margin-top: 20px;">
                     <div class="snapshot-header-bar">
                         <h3 class="snapshot-title">📊 Historical Data</h3>
-                        <div class="snapshot-tab-group">
-                            <button class="snapshot-tab active" data-tab="list" onclick="switchSnapshotTab('list')">List</button>
-                            <button class="snapshot-tab" data-tab="week" onclick="switchSnapshotTab('week')">Week</button>
-                            <button class="snapshot-tab" data-tab="month" onclick="switchSnapshotTab('month')">Month</button>
+                        <div class="snapshot-tab-group" id="snapshot-tab-group">
+                            <button class="snapshot-tab active" data-tab="list">List</button>
+                            <button class="snapshot-tab" data-tab="week">Week</button>
+                            <button class="snapshot-tab" data-tab="month">Month</button>
                         </div>
                     </div>
                     <div id="snapshot-list" class="snapshot-list">
@@ -268,7 +268,7 @@
         <!-- Smart Suggestions (Moved to top-level) -->
         <datalist id="master-product-list"></datalist>
 
-        <script src="src/main.js?v=3.1.26"></script>
+        <script src="src/main.js?v=3.1.27"></script>
 </body>
 
 </html>
