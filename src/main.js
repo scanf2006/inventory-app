@@ -354,6 +354,23 @@ function initApp() {
     };
   }
 
+  // v3.1.27 Sync ID input binding (replaces inline oninput)
+  var syncInput = document.getElementById("sync-id-input");
+  if (syncInput) {
+    syncInput.addEventListener("input", function () {
+      App.State.syncId = this.value.trim();
+      saveToStorage(false);
+    });
+  }
+
+  // v3.1.27 Reset All Inventory binding (replaces inline onclick)
+  var resetAllBtn = document.getElementById("reset-all-btn");
+  if (resetAllBtn) {
+    resetAllBtn.addEventListener("click", function () {
+      resetInventory();
+    });
+  }
+
   if (App.Services.supabase && App.State.syncId) {
     pullFromCloud();
 
@@ -717,20 +734,30 @@ function renderInventory() {
     controls.innerHTML = "";
     var bar = document.createElement("div");
     bar.className = "view-toggle-bar";
-    bar.innerHTML =
-      '<div class="segmented-control">' +
-      '<button onclick="sortProductsToggle()" class="btn-sort">Sort: ' +
-      App.State.sortDirection.toUpperCase() +
-      "</button>" +
-      "</div>" +
-      '<div class="segmented-control">' +
-      '<button onclick="toggleViewMode(\'edit\')" class="btn-edit ' +
-      (App.State.viewMode === "edit" ? "active" : "") +
-      '">Edit</button>' +
-      '<button onclick="toggleViewMode(\'preview\')" class="btn-edit ' +
-      (App.State.viewMode === "preview" ? "active" : "") +
-      '">Preview</button>' +
-      "</div>";
+
+    var sortControl = document.createElement("div");
+    sortControl.className = "segmented-control";
+    var sortBtn = document.createElement("button");
+    sortBtn.className = "btn-sort";
+    sortBtn.textContent = "Sort: " + App.State.sortDirection.toUpperCase();
+    sortBtn.addEventListener("click", function () { sortProductsToggle(); });
+    sortControl.appendChild(sortBtn);
+
+    var viewControl = document.createElement("div");
+    viewControl.className = "segmented-control";
+    var editBtn = document.createElement("button");
+    editBtn.className = "btn-edit" + (App.State.viewMode === "edit" ? " active" : "");
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", function () { toggleViewMode("edit"); });
+    var previewBtn = document.createElement("button");
+    previewBtn.className = "btn-edit" + (App.State.viewMode === "preview" ? " active" : "");
+    previewBtn.textContent = "Preview";
+    previewBtn.addEventListener("click", function () { toggleViewMode("preview"); });
+    viewControl.appendChild(editBtn);
+    viewControl.appendChild(previewBtn);
+
+    bar.appendChild(sortControl);
+    bar.appendChild(viewControl);
     controls.appendChild(bar);
   }
 
@@ -820,14 +847,22 @@ function renderInventory() {
 
   // Quick Add Card (Only in Edit Mode and NOT on Desktop Dashboard)
   if (App.State.viewMode === "edit" && !App.UI.isDesktop()) {
-    // Quick Add Card
     var quickAddWrapper = document.createElement("div");
     quickAddWrapper.className = "quick-add-wrapper";
-    quickAddWrapper.innerHTML =
-      '<div class="quick-add-card" onclick="showQuickAddForm()">' +
-      "<span>+ Add Product</span>" +
-      "</div>" +
-      '<div id="quick-add-form-container" class="hidden"></div>';
+
+    var quickAddCard = document.createElement("div");
+    quickAddCard.className = "quick-add-card";
+    quickAddCard.addEventListener("click", function () { showQuickAddForm(); });
+    var quickAddLabel = document.createElement("span");
+    quickAddLabel.textContent = "+ Add Product";
+    quickAddCard.appendChild(quickAddLabel);
+
+    var formContainer = document.createElement("div");
+    formContainer.id = "quick-add-form-container";
+    formContainer.className = "hidden";
+
+    quickAddWrapper.appendChild(quickAddCard);
+    quickAddWrapper.appendChild(formContainer);
     list.appendChild(quickAddWrapper);
   }
 
@@ -840,17 +875,38 @@ function renderInventory() {
 window.showQuickAddForm = function () {
   var container = document.getElementById("quick-add-form-container");
   if (!container) return;
-  container.innerHTML =
-    '<div class="quick-add-form">' +
-    '<input type="text" id="quick-add-name" placeholder="New product name" list="master-product-list">' +
-    '<div class="quick-add-actions">' +
-    '<button onclick="submitQuickAdd()">Add</button>' +
-    '<button class="cancel" onclick="hideQuickAddForm()">Cancel</button>' +
-    "</div>" +
-    "</div>";
+  container.innerHTML = "";
+
+  var formDiv = document.createElement("div");
+  formDiv.className = "quick-add-form";
+
+  var nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.id = "quick-add-name";
+  nameInput.placeholder = "New product name";
+  nameInput.setAttribute("list", "master-product-list");
+
+  var actionsDiv = document.createElement("div");
+  actionsDiv.className = "quick-add-actions";
+
+  var addBtn = document.createElement("button");
+  addBtn.textContent = "Add";
+  addBtn.addEventListener("click", function () { submitQuickAdd(); });
+
+  var cancelBtn = document.createElement("button");
+  cancelBtn.className = "cancel";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", function () { hideQuickAddForm(); });
+
+  actionsDiv.appendChild(addBtn);
+  actionsDiv.appendChild(cancelBtn);
+  formDiv.appendChild(nameInput);
+  formDiv.appendChild(actionsDiv);
+  container.appendChild(formDiv);
+
   container.classList.remove("hidden");
   document.querySelector(".quick-add-card").classList.add("hidden");
-  document.getElementById("quick-add-name").focus();
+  nameInput.focus();
 };
 
 window.hideQuickAddForm = function () {
