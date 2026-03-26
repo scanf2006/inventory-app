@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.28",
+    VERSION: "v3.1.29",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -222,14 +222,18 @@ const App = {
       }, 3000);
     },
 
-    confirm: function (msg, onConfirm) {
+    confirm: function (msg, onConfirm, onCancel) {
       var overlay = document.getElementById("confirm-modal");
       var msgEl = document.getElementById("confirm-msg");
       var yesBtn = document.getElementById("confirm-yes-btn");
       var noBtn = document.getElementById("confirm-no-btn");
 
       if (!overlay || !msgEl || !yesBtn || !noBtn) {
-        if (window.confirm(msg)) onConfirm();
+        if (window.confirm(msg)) {
+          onConfirm();
+        } else if (onCancel) {
+          onCancel();
+        }
         return;
       }
 
@@ -250,6 +254,7 @@ const App = {
       newNo.onclick = function (e) {
         e.stopImmediatePropagation();
         overlay.classList.add("hidden");
+        if (onCancel) onCancel();
       };
     },
 
@@ -588,6 +593,11 @@ function pullFromCloud(isSilent) {
                 "Cloud data has significantly fewer items (" + cloudInventoryCount + " vs local " + localInventoryCount + "). Overwrite local data with cloud?",
                 function () {
                   applyCloudData(cloudData, cloudTS, isSilent);
+                },
+                function () {
+                  console.log("[Sync Guard] User rejected destructive overwrite. Counter-pushing local data to override empty cloud state.");
+                  pushToCloud();
+                  App.UI.showToast("Local data pushed to cloud", "info");
                 }
               );
               return;
