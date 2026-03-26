@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.27",
+    VERSION: "v3.1.28",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -563,26 +563,46 @@ function pullFromCloud(isSilent) {
 
         // Conflict Resolution: Only pull if cloud is newer than local
         if (cloudTS > localTS) {
-          App.State.products = cloudData.products || App.State.products;
-          App.State.inventory = cloudData.inventory || App.State.inventory;
-          App.State.categoryOrder =
-            cloudData.category_order || App.State.categoryOrder;
-          App.State.lastUpdated = cloudTS;
-          App.State.lastInventoryUpdate =
-            cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
-          App.State.history = cloudData.recent_history || App.State.history;
-          App.State.liveMessages =
-            cloudData.live_messages || App.State.liveMessages;
+          // v3.1.28 Data Integrity Guard: prevent empty cloud from overwriting real data
+          var cloudProductCount = cloudData.products ? Object.keys(cloudData.products).length : 0;
+          var cloudInventoryCount = cloudData.inventory ? Object.keys(cloudData.inventory).length : 0;
+          var localProductCount = App.State.products ? Object.keys(App.State.products).length : 0;
+          var localInventoryCount = App.State.inventory ? Object.keys(App.State.inventory).length : 0;
 
-          saveToStorageImmediate(true); // Skip generic timestamp update for pull
-          initializeCategory();
-          renderTabs();
-          renderInventory();
-          renderManageUI();
-          renderLiveTicker(); // Play Ticker
-          if (!isSilent)
-            App.UI.showToast("Sync: Cloud state loaded", "success");
-          App.UI.updateSyncStatus("Synced", true);
+          // If cloud data is substantially empty but local has real data, warn user
+          if (localProductCount > 0 && cloudProductCount === 0 && cloudInventoryCount === 0) {
+            console.warn("[Sync Guard] Cloud data is empty but local has " + localProductCount + " categories. Refusing to overwrite.");
+            if (!isSilent) {
+              App.UI.showToast("Cloud data appears empty. Local data preserved.", "error");
+            }
+            // Push local data to cloud to fix the empty cloud state
+            pushToCloud();
+            return;
+          }
+
+          // If cloud inventory is dramatically smaller (>80% loss), ask for confirmation
+          if (localInventoryCount > 5 && cloudInventoryCount < localInventoryCount * 0.2) {
+            console.warn("[Sync Guard] Cloud inventory (" + cloudInventoryCount + ") is much smaller than local (" + localInventoryCount + ").");
+            if (!isSilent) {
+              App.UI.confirm(
+                "Cloud data has significantly fewer items (" + cloudInventoryCount + " vs local " + localInventoryCount + "). Overwrite local data with cloud?",
+                function () {
+                  applyCloudData(cloudData, cloudTS, isSilent);
+                }
+              );
+              return;
+            }
+            // If silent sync, refuse destructive overwrite
+            return;
+          }
+
+          // v3.1.30 Input Focus Guard: DO NOT wipe DOM if user is actively typing
+          if (document.activeElement && document.activeElement.tagName === "INPUT" && document.activeElement.classList.contains("item-input")) {
+            console.log("[Sync Guard] Pausing cloud apply because user is actively typing.");
+            return;
+          }
+
+          applyCloudData(cloudData, cloudTS, isSilent);
         } else if (cloudTS < localTS) {
           // Local is newer, push to cloud
           pushToCloud();
@@ -599,6 +619,30 @@ function pullFromCloud(isSilent) {
     .catch(function (err) {
       App.UI.updateSyncStatus("Sync Offline", false);
     });
+}
+
+// v3.1.28 Extracted: safely apply cloud data to local state
+function applyCloudData(cloudData, cloudTS, isSilent) {
+  App.State.products = cloudData.products || App.State.products;
+  App.State.inventory = cloudData.inventory || App.State.inventory;
+  App.State.categoryOrder =
+    cloudData.category_order || App.State.categoryOrder;
+  App.State.lastUpdated = cloudTS;
+  App.State.lastInventoryUpdate =
+    cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
+  App.State.history = cloudData.recent_history || App.State.history;
+  App.State.liveMessages =
+    cloudData.live_messages || App.State.liveMessages;
+
+  saveToStorageImmediate(true);
+  initializeCategory();
+  renderTabs();
+  renderInventory();
+  renderManageUI();
+  renderLiveTicker();
+  if (!isSilent)
+    App.UI.showToast("Sync: Cloud state loaded", "success");
+  App.UI.updateSyncStatus("Synced", true);
 }
 
 // --- Storage & Data ---
@@ -1738,7 +1782,11 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("./sw.js?v=" + App.Config.VERSION)
-      .then((reg) => console.log("SW Registered", reg))
+      .then((reg) => {
+        console.log("SW Registered", reg);
+        // v3.1.28 Force update: check for new SW immediately
+        reg.update();
+      })
       .catch((err) => console.error("SW Registration Failed", err));
   });
 }
