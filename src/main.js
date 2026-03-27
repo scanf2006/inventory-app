@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.35",
+    VERSION: "v3.1.36",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -360,12 +360,14 @@ function initApp() {
     };
   }
 
-  // v3.1.27 Sync ID input binding (replaces inline oninput)
+  // v3.1.36 CRITICAL DATA LOSS FIX: Sync ID input binding
   var syncInput = document.getElementById("sync-id-input");
   if (syncInput) {
     syncInput.addEventListener("input", function () {
-      App.State.syncId = this.value.trim();
-      saveToStorage(false);
+      App.State.syncId = this.value.trim().toUpperCase();
+      // DO NOT call saveToStorage()! It arms App.State.syncId and schedules debounced pushToCloud(),
+      // which silently destroys the cloud database with empty local factory state before pull wins.
+      localStorage.setItem(App.Config.STORAGE_KEYS.SYNC_ID, App.State.syncId);
     });
   }
 
