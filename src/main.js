@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.36",
+    VERSION: "v3.1.37",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -390,10 +390,17 @@ function initApp() {
       if (document.visibilityState === "visible") pullFromCloud(true);
     });
 
-    // Background Polling (30s)
+    // v3.1.37 Accelerated Background Polling (10s)
     setInterval(function () {
       if (document.visibilityState === "visible") pullFromCloud(true);
-    }, 30000);
+    }, 10000);
+
+    // v3.1.37 Immediate Sync on Tab Focus
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "visible") {
+        pullFromCloud(true);
+      }
+    });
   }
 
   // Dynamic Version Display
