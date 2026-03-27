@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.30",
+    VERSION: "v3.1.31",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -1384,11 +1384,27 @@ if (document.getElementById("export-pdf-btn")) {
 // Data Export (JSON)
 if (document.getElementById("export-json-btn")) {
   document.getElementById("export-json-btn").onclick = function () {
+    var now = new Date();
+    var localDateStr =
+      now.getFullYear() +
+      "-" +
+      String(now.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(now.getDate()).padStart(2, "0");
+    var localTimeStr =
+      localDateStr +
+      " " +
+      String(now.getHours()).padStart(2, "0") +
+      ":" +
+      String(now.getMinutes()).padStart(2, "0") +
+      ":" +
+      String(now.getSeconds()).padStart(2, "0");
+
     var data = {
       products: App.State.products,
       inventory: App.State.inventory,
       categoryOrder: App.State.categoryOrder,
-      exportDate: new Date().toISOString(),
+      exportDate: localTimeStr,
       version: App.Config.VERSION,
     };
     var blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -1396,9 +1412,8 @@ if (document.getElementById("export-json-btn")) {
     });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
-    var dateStr = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = "inventory_backup_" + dateStr + ".json";
+    a.download = "inventory_backup_" + localDateStr + ".json";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
