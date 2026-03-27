@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.29",
+    VERSION: "v3.1.30",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -1008,7 +1008,7 @@ window.renameProductInline = function (oldName) {
       trimmedName,
     );
 
-    if (App.State.inventory[oldKey]) {
+    if (App.State.inventory[oldKey] !== undefined) {
       App.State.inventory[newKey] = App.State.inventory[oldKey];
       delete App.State.inventory[oldKey];
     }
@@ -1442,32 +1442,21 @@ if (document.getElementById("import-json-btn")) {
             throw new Error("Invalid inventory file format");
           }
 
-          // Merge Strategy: Overwrite existing keys, keep new ones
-          // Actually, for "Restore", a deep merge or replacement is often better.
-          // Here we will do a safe merge:
-          // 1. Merge Products
+          // Strategy: Exact Replacement for Products, Categories, and Inventory
+          // This ensures renamed or deleted default products don't resurrect from INITIAL_PRODUCTS
+          
+          // 1. Exact overwrite of products
+          App.State.products = {};
           Object.keys(data.products).forEach(function (cat) {
-            if (!App.State.products[cat]) {
-              App.State.products[cat] = [];
-            }
-            // Add products that don't exist
-            data.products[cat].forEach(function (p) {
-              if (!App.State.products[cat].includes(p)) {
-                App.State.products[cat].push(p);
-              }
-            });
+            App.State.products[cat] = [].concat(data.products[cat]);
           });
 
-          // 2. Update Inventory Values (Overwrite if exists in import)
-          Object.assign(App.State.inventory, data.inventory);
+          // 2. Exact overwrite of Inventory Values
+          App.State.inventory = Object.assign({}, data.inventory);
 
-          // 3. Update Category Order (Append new categories)
+          // 3. Update Category Order (Exact Replacement)
           if (data.categoryOrder) {
-            data.categoryOrder.forEach(function (cat) {
-              if (!App.State.categoryOrder.includes(cat)) {
-                App.State.categoryOrder.push(cat);
-              }
-            });
+            App.State.categoryOrder = [].concat(data.categoryOrder);
           }
 
           App.State.lastInventoryUpdate = Date.now();
