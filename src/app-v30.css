@@ -1887,3 +1887,5 @@ body.admin-edit-mode .inventory-list {
 body.admin-edit-mode .item-input { display: inline-block !important; }
 body.admin-edit-mode .input-group { display: flex !important; }
 
+body.admin-edit-mode .mobile-only { display: block !important; }
+
