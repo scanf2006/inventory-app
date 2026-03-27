@@ -1884,3 +1884,6 @@ body.admin-edit-mode .inventory-list {
   padding: 0 !important;
 }
 
+body.admin-edit-mode .item-input { display: inline-block !important; }
+body.admin-edit-mode .input-group { display: flex !important; }
+
