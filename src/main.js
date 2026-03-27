@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.31",
+    VERSION: "v3.1.32",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -179,6 +179,7 @@ const App = {
 
   UI: {
     isDesktop: function () {
+      if (App.State.isAdmin) return false;
       return window.innerWidth >= 768;
     },
 
@@ -2440,3 +2441,37 @@ function renderComparison(oldSnap, newSnap, label) {
 
   el.innerHTML = html;
 }
+
+// --- v3.1 Admin Mode Desktop-to-Mobile Override ---
+(function initAdminTrigger() {
+  var clickCount = 0;
+  var clickTimer = null;
+  var trigger = document.getElementById('hidden-admin-trigger');
+  if (trigger) {
+    trigger.addEventListener('click', function() {
+      clickCount++;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(function() { clickCount = 0; }, 1500);
+
+      if (clickCount >= 7) {
+        clickCount = 0;
+        if (!App.State.isAdmin) {
+          if (prompt('Enter Admin PIN (v3):') === '9900') {
+            App.State.isAdmin = true;
+            App.UI.showToast('Admin Edit Mode Enabled', 'success');
+            initializeCategory();
+            renderTabs();
+            renderInventory();
+          }
+        } else {
+          App.State.isAdmin = false;
+          App.UI.showToast('Admin Mode Disabled', 'info');
+          initializeCategory();
+          renderTabs();
+          renderInventory();
+        }
+      }
+    });
+  }
+})();
+
