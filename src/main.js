@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.32",
+    VERSION: "v3.1.33",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -2458,6 +2458,7 @@ function renderComparison(oldSnap, newSnap, label) {
         if (!App.State.isAdmin) {
           if (prompt('Enter Admin PIN (v3):') === '9900') {
             App.State.isAdmin = true;
+            document.body.classList.add('admin-edit-mode');
             App.UI.showToast('Admin Edit Mode Enabled', 'success');
             initializeCategory();
             renderTabs();
@@ -2465,6 +2466,7 @@ function renderComparison(oldSnap, newSnap, label) {
           }
         } else {
           App.State.isAdmin = false;
+          document.body.classList.remove('admin-edit-mode');
           App.UI.showToast('Admin Mode Disabled', 'info');
           initializeCategory();
           renderTabs();

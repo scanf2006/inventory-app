@@ -1872,3 +1872,15 @@ hr {
     color: #ff453a;
   }
 }
+
+/* --- v3.1 Admin Edit Mode Override --- */
+body.admin-edit-mode .item-delete-btn { display: inline-flex !important; }
+body.admin-edit-mode .quick-add-wrapper { display: block !important; }
+body.admin-edit-mode .view-toggle-bar { display: flex !important; }
+body.admin-edit-mode .segmented-control .btn-edit { display: inline-flex !important; }
+body.admin-edit-mode .inventory-list {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+}
+
