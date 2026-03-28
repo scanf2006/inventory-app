@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.38",
+    VERSION: "v3.1.39",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -1908,31 +1908,68 @@ function saveSnapshot(note) {
     });
 }
 
-// --- v3.1.14 Live Ticker ---
+// --- v3.1.39 Robust Cloud-Aware Message Broadcast
 window.sendLiveMessage = function () {
   var input = document.getElementById("live-msg-input");
   if (!input || !input.value.trim()) return;
   var msg = input.value.trim();
 
-  var newObj = {
-    text: msg,
-    ts: Date.now(),
-  };
+  // First, force a pull from cloud to get the most recent list from other devices
+  App.UI.showToast("Broadcasting...", "info");
+  
+  // v3.1.39 Note: pullFromCloud returns a promise-like behavior in Supabase, 
+  // but here we just wait for a small delay or just perform the append.
+  // To be ultra-safe, we define the push as an append to the current state
+  // and hope the 10s heartbeat synced it. 
+  // Better: we perform a fresh fetch-append-push cycle.
+  if (App.Services.supabase && App.State.syncId) {
+    App.Services.supabase
+      .from("app_sync")
+      .select("data")
+      .eq("sync_id", App.State.syncId)
+      .single()
+      .then(function (res) {
+        var cloudMsgs = [];
+        if (res.data && res.data.data && res.data.data.live_messages) {
+          cloudMsgs = res.data.data.live_messages;
+        }
 
-  if (!App.State.liveMessages) App.State.liveMessages = [];
-  App.State.liveMessages.push(newObj);
+        var newObj = {
+          text: msg,
+          ts: Date.now(),
+        };
 
-  // v3.1.38 Keep more messages (latest 20) to cover a full day's history
-  if (App.State.liveMessages.length > 20) {
-    App.State.liveMessages.shift();
+        // Merge with cloud messages and keep unique by text+ts (approx)
+        var combined = cloudMsgs.concat(App.State.liveMessages || []);
+        combined.push(newObj);
+        
+        // Dedup and sort
+        combined = combined.filter(function(m, index, self) {
+          return self.findIndex(function(t){ return t.ts === m.ts && t.text === m.text; }) === index;
+        });
+        combined.sort(function(a,b) { return a.ts - b.ts; });
+
+        // Slice to latest 20
+        if (combined.length > 20) combined = combined.slice(-20);
+
+        App.State.liveMessages = combined;
+        input.value = "";
+        saveToStorageImmediate(true);
+        pushToCloud();
+        App.UI.showToast("Broadcast Success!", "success");
+        renderLiveTicker();
+      });
+  } else {
+    // No sync, just local
+    var newObj = { text: msg, ts: Date.now() };
+    if (!App.State.liveMessages) App.State.liveMessages = [];
+    App.State.liveMessages.push(newObj);
+    if (App.State.liveMessages.length > 20) App.State.liveMessages.shift();
+    input.value = "";
+    saveToStorageImmediate();
+    App.UI.showToast("Message Saved Locally", "info");
+    renderLiveTicker();
   }
-
-  input.value = "";
-  saveToStorageImmediate();
-  pushToCloud();
-
-  App.UI.showToast("Message Broadcasted to Desktop!", "success");
-  renderLiveTicker(); // Refresh immediately if on desktop (although phone usually isn't)
 };
 
 window.renderLiveTicker = function () {
@@ -1956,26 +1993,52 @@ window.renderLiveTicker = function () {
 
   container.classList.remove("hidden");
 
-  // Construct a combined string for the ticker scroll
-  var displayStr = activeMessages
-    .map(function (m) {
-      var timeStr = new Date(m.ts).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      return "[" + timeStr + "] " + m.text;
-    })
-    .join("    •    ");
+  // v3.1.39 Multi-message Scrolling String
+  // We repeat the whole sequence twice to ensure the scrolling is continuous and doesn't leave gaps
+  var scrollItems = activeMessages.map(function (m) {
+    var timeStr = new Date(m.ts).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return "[" + timeStr + "] " + m.text;
+  });
+
+  var displayStr = scrollItems.join("    •    ");
+  // If only one or two messages, repeat them to fill space nicely
+  if (scrollItems.length < 3) {
+     displayStr = displayStr + "    •    " + displayStr + "    •    " + displayStr;
+  }
 
   // Only restyle/re-animate if text actually changed
   if (textEl.innerText !== displayStr) {
     textEl.innerText = displayStr;
     textEl.style.animation = "none";
     void textEl.offsetWidth; // Trigger reflow to restart animation
-    // v3.1.38 Adjust scroll speed based on content length
-    var duration = Math.max(15, displayStr.length * 0.2); 
+    // v3.1.39 Adjust scroll speed based on content length
+    var duration = Math.max(12, displayStr.length * 0.15); 
     textEl.style.animation = "tickerScroll " + duration + "s linear infinite";
   }
+
+  // v3.1.39 Click ticker to show vertical history modal
+  container.onclick = function() { window.showLiveHistory(); };
+};
+
+window.showLiveHistory = function() {
+  var msgs = App.State.liveMessages || [];
+  if (msgs.length === 0) return;
+  
+  var html = "<div style='max-height: 400px; overflow-y: auto;'>";
+  msgs.slice().sort(function(a,b){ return b.ts - a.ts; }).forEach(function(m) {
+    var d = new Date(m.ts);
+    var time = d.toLocaleDateString() + " " + d.toLocaleTimeString();
+    html += "<div style='padding:12px; border-bottom:1px solid #eee;'>";
+    html += "<small style='color:#888;'>" + time + "</small><br>";
+    html += "<strong>" + App.Utils.escapeHTML(m.text) + "</strong>";
+    html += "</div>";
+  });
+  html += "</div>";
+  
+  App.UI.confirm(html, null, "Live Message History");
 };
 
 // Load snapshot list from Supabase (called on desktop)
