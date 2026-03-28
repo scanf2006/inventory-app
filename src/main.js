@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.40",
+    VERSION: "v3.1.41",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -223,7 +223,8 @@ const App = {
       }, 3000);
     },
 
-    confirm: function (msg, onConfirm, onCancel) {
+    confirm: function (msg, onConfirm, onCancel, options) {
+      options = options || {};
       var overlay = document.getElementById("confirm-modal");
       var msgEl = document.getElementById("confirm-msg");
       var yesBtn = document.getElementById("confirm-yes-btn");
@@ -231,32 +232,31 @@ const App = {
 
       if (!overlay || !msgEl || !yesBtn || !noBtn) {
         if (window.confirm(msg)) {
-          onConfirm();
+          if (onConfirm) onConfirm();
         } else if (onCancel) {
           onCancel();
         }
         return;
       }
 
-      msgEl.innerText = msg;
-      overlay.classList.remove("hidden");
+      msgEl.innerHTML = msg; 
+      
+      // Customizable button text (defaults to Yes/No)
+      yesBtn.textContent = options.confirmText || "Yes";
+      noBtn.textContent = options.cancelText || "No";
 
-      var newYes = yesBtn.cloneNode(true);
-      var newNo = noBtn.cloneNode(true);
-      yesBtn.parentNode.replaceChild(newYes, yesBtn);
-      noBtn.parentNode.replaceChild(newNo, noBtn);
+      // Toggle No button visibility for simple alerts
+      noBtn.style.display = options.hideCancel ? "none" : "inline-block";
 
-      newYes.onclick = function (e) {
-        e.stopPropagation();
+      yesBtn.onclick = function () {
         overlay.classList.add("hidden");
-        onConfirm();
+        if (onConfirm) onConfirm();
       };
-
-      newNo.onclick = function (e) {
-        e.stopImmediatePropagation();
+      noBtn.onclick = function () {
         overlay.classList.add("hidden");
         if (onCancel) onCancel();
       };
+      overlay.classList.remove("hidden");
     },
 
     closeConfirm: function () {
@@ -2027,18 +2027,28 @@ window.showLiveHistory = function() {
   var msgs = App.State.liveMessages || [];
   if (msgs.length === 0) return;
   
-  var html = "<div style='max-height: 400px; overflow-y: auto;'>";
+  // v3.1.41 Improved vertical listing
+  var html = "<div style='text-align: left; max-height: 400px; overflow-y: auto; background:#f9f9f9; padding: 10px; border-radius: 8px;'>";
+  html += "<h2 style='margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 5px;'>Live History (24h)</h2>";
+  
   msgs.slice().sort(function(a,b){ return b.ts - a.ts; }).forEach(function(m) {
+    if (Date.now() - m.ts > 24 * 60 * 60 * 1000) return; 
+    
     var d = new Date(m.ts);
-    var time = d.toLocaleDateString() + " " + d.toLocaleTimeString();
-    html += "<div style='padding:12px; border-bottom:1px solid #eee;'>";
-    html += "<small style='color:#888;'>" + time + "</small><br>";
-    html += "<strong>" + App.Utils.escapeHTML(m.text) + "</strong>";
+    var time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    html += "<div style='padding: 12px 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #eee; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05);'>";
+    html += "<div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;'>";
+    html += "<span style='font-size: 0.85rem; color: #666; font-weight: 500; font-family: monospace;'>" + time + "</span>";
+    html += "</div>";
+    html += "<div style='color: #222; font-size: 1.1rem;'>" + App.Utils.escapeHTML(m.text) + "</div>";
     html += "</div>";
   });
   html += "</div>";
   
-  App.UI.confirm(html, null, "Live Message History");
+  App.UI.confirm(html, null, null, {
+    confirmText: "Close history",
+    hideCancel: true
+  });
 };
 
 // Load snapshot list from Supabase (called on desktop)
