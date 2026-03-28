@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.42",
+    VERSION: "v3.1.43",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -1993,20 +1993,20 @@ window.renderLiveTicker = function () {
 
   container.classList.remove("hidden");
 
-  // v3.1.39 Multi-message Scrolling String
+  // v3.1.40 Multi-message Scrolling String
   // We repeat the whole sequence twice to ensure the scrolling is continuous and doesn't leave gaps
   var scrollItems = activeMessages.map(function (m) {
     var timeStr = new Date(m.ts).toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
     });
-    return "[" + timeStr + "] " + m.text;
+    return "[" + timeStr + "] " + m.text + " •";
   });
 
-  var displayStr = scrollItems    .join("                         •                         ");
+  var displayStr = scrollItems.join("                                                  ");
   // If only one or two messages, repeat them to fill space nicely
   if (scrollItems.length < 3) {
-     displayStr = displayStr + "                         •                         " + displayStr + "                         •                         " + displayStr;
+     displayStr = displayStr + "                                                  " + displayStr + "                                                  " + displayStr;
   }
 
   // Only restyle/re-animate if text actually changed
