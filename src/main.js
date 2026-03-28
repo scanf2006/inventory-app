@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.37",
+    VERSION: "v3.1.38",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -1922,8 +1922,8 @@ window.sendLiveMessage = function () {
   if (!App.State.liveMessages) App.State.liveMessages = [];
   App.State.liveMessages.push(newObj);
 
-  // Keep only the latest 5 messages
-  if (App.State.liveMessages.length > 5) {
+  // v3.1.38 Keep more messages (latest 20) to cover a full day's history
+  if (App.State.liveMessages.length > 20) {
     App.State.liveMessages.shift();
   }
 
@@ -1942,36 +1942,39 @@ window.renderLiveTicker = function () {
   var textEl = document.getElementById("live-ticker-text");
   if (!container || !textEl) return;
 
-  if (!App.State.liveMessages || App.State.liveMessages.length === 0) {
-    container.classList.add("hidden");
-    return;
-  }
-
-  // Sort array so newest is at the end
-  var sorted = App.State.liveMessages.slice().sort(function (a, b) {
-    return a.ts - b.ts;
+  var totalMessages = App.State.liveMessages || [];
+  
+  // v3.1.38 Filter and show ALL messages from the last 24 hours
+  var activeMessages = totalMessages.filter(function (m) {
+    return Date.now() - m.ts <= 24 * 60 * 60 * 1000;
   });
-  var latest = sorted[sorted.length - 1];
 
-  // Hide ticker if the latest message is older than 8 hours
-  if (Date.now() - latest.ts > 8 * 60 * 60 * 1000) {
+  if (activeMessages.length === 0) {
     container.classList.add("hidden");
     return;
   }
 
   container.classList.remove("hidden");
-  var timeStr = new Date(latest.ts).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  var displayStr = "[" + timeStr + "] " + latest.text;
+
+  // Construct a combined string for the ticker scroll
+  var displayStr = activeMessages
+    .map(function (m) {
+      var timeStr = new Date(m.ts).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return "[" + timeStr + "] " + m.text;
+    })
+    .join("    •    ");
 
   // Only restyle/re-animate if text actually changed
   if (textEl.innerText !== displayStr) {
     textEl.innerText = displayStr;
     textEl.style.animation = "none";
     void textEl.offsetWidth; // Trigger reflow to restart animation
-    textEl.style.animation = "tickerScroll 18s linear infinite";
+    // v3.1.38 Adjust scroll speed based on content length
+    var duration = Math.max(15, displayStr.length * 0.2); 
+    textEl.style.animation = "tickerScroll " + duration + "s linear infinite";
   }
 };
 
