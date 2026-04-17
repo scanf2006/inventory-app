@@ -1,6 +1,6 @@
-const App = {
+﻿const App = {
   Config: {
-    VERSION: "v3.1.45",
+    VERSION: "v3.1.46",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -444,6 +444,16 @@ function initApp() {
   }
 }
 
+
+
+// v3.1.46 娴姩閿洏宸ュ叿鏉?- 娉ㄥ叆绗﹀彿鍒版縺娲昏緭鍏ユ
+window.kbInsert = function (symbol) {
+  var inp = window._activeInput;
+  if (!inp) return;
+  inp.value += symbol;
+  inp.focus();
+  window.updateValue(window._activeInputName, inp.value, window._activeInputIdx);
+};
 function initSupabase() {
   var lib = window.supabasejs || window.supabase;
   if (lib && typeof lib.createClient === "function") {
@@ -887,7 +897,7 @@ function renderInventory() {
       inputGroup.className = "input-group";
 
       var input = document.createElement("input");
-      // v3.1.45 改用 text+inputmode=decimal, 允许注入乘除符号同时保留数字键盘
+      // v3.1.45 改用 text+inputmode=decimal 保留数字键盘同时接受符号注入
       input.type = "text";
       input.setAttribute("inputmode", "decimal");
       input.className = "item-input";
@@ -897,47 +907,35 @@ function renderInventory() {
         return function () { window.updateValue(prodName, this.value, idx); };
       })(name, index));
 
-      // v3.1.45 操作按钮竖排柱（乘 / 除 / 删除）
-      var btnCol = document.createElement("div");
-      btnCol.className = "item-btn-col";
-
-      var multiplyBtn = document.createElement("button");
-      multiplyBtn.className = "math-op-btn";
-      multiplyBtn.textContent = "×";
-      multiplyBtn.title = "乘";
-      multiplyBtn.addEventListener("click", (function (inp, prodName, idx) {
-        return function () {
-          inp.value += "*";
-          inp.focus();
-          window.updateValue(prodName, inp.value, idx);
-        };
-      })(input, name, index));
-
-      var divideBtn = document.createElement("button");
-      divideBtn.className = "math-op-btn";
-      divideBtn.textContent = "÷";
-      divideBtn.title = "除";
-      divideBtn.addEventListener("click", (function (inp, prodName, idx) {
-        return function () {
-          inp.value += "/";
-          inp.focus();
-          window.updateValue(prodName, inp.value, idx);
-        };
-      })(input, name, index));
+      // v3.1.46 悬浮工具条 - 聚焦时显示，失焦时隐藏
+      input.addEventListener("focus", function () {
+        window._activeInput = this;
+        window._activeInputName = name;
+        window._activeInputIdx = index;
+        var bar = document.getElementById("kb-accessory-bar");
+        if (bar) bar.classList.add("visible");
+      });
+      input.addEventListener("blur", function () {
+        // 延迟关闭以允许工具条按钮的点击事件先触发
+        setTimeout(function () {
+          if (!window._accessoryBtnPressed) {
+            var bar = document.getElementById("kb-accessory-bar");
+            if (bar) bar.classList.remove("visible");
+            window._activeInput = null;
+          }
+          window._accessoryBtnPressed = false;
+        }, 200);
+      });
 
       var deleteBtn = document.createElement("button");
       deleteBtn.className = "item-delete-btn";
-      deleteBtn.textContent = "🗑";
+      deleteBtn.textContent = "🗑️";
       deleteBtn.addEventListener("click", (function (prodName) {
         return function () { removeProductInline(prodName); };
       })(name));
 
-      btnCol.appendChild(multiplyBtn);
-      btnCol.appendChild(divideBtn);
-      btnCol.appendChild(deleteBtn);
-
       inputGroup.appendChild(input);
-      inputGroup.appendChild(btnCol);
+      inputGroup.appendChild(deleteBtn);
       card.appendChild(inputGroup);
     }
 

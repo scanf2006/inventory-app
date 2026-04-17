@@ -40,7 +40,7 @@
             console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
         }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.1.45">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.1.46">
 </head>
 
 <body>
@@ -273,7 +273,24 @@
         <!-- Smart Suggestions (Moved to top-level) -->
         <datalist id="master-product-list"></datalist>
 
-        <script src="src/main.js?v=3.1.45"></script>
+        <!-- v3.1.46 悬浮键盘工具条（聚焦数字输入框时弹出乘除按钮） -->
+        <div id="kb-accessory-bar">
+            <div class="kb-accessory-inner">
+                <span class="kb-accessory-label">快捷运算</span>
+                <div class="kb-accessory-btns">
+                    <button class="kb-math-btn" id="kb-multiply-btn" onmousedown="window._accessoryBtnPressed=true" onclick="window.kbInsert('*')">
+                        <span class="kb-math-symbol">×</span>
+                        <span class="kb-math-name">乘</span>
+                    </button>
+                    <button class="kb-math-btn" id="kb-divide-btn" onmousedown="window._accessoryBtnPressed=true" onclick="window.kbInsert('/')">
+                        <span class="kb-math-symbol">÷</span>
+                        <span class="kb-math-name">除</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="src/main.js?v=3.1.46"></script>
 </body>
 
 </html>
