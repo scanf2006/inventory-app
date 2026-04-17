@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.49",
+    VERSION: "v3.1.50",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -887,12 +887,7 @@ function renderInventory() {
       inputGroup.className = "input-group";
 
       var input = document.createElement("input");
-      // v3.1.49 改用 text+inputmode=decimal：手机弹出输入法的数字键盘，保留长按弹出 * / 符号的能力
-      input.type = "text";
-      input.setAttribute("inputmode", "decimal");
-      input.setAttribute("autocomplete", "off");
-      input.setAttribute("autocorrect", "off");
-      input.setAttribute("spellcheck", "false");
+      input.type = "tel"; // 使用电话拨号键盘，提供 * # 符号键
       input.className = "item-input";
       input.value = val;
       input.placeholder = "0";
