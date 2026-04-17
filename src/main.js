@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.50",
+    VERSION: "v3.1.51",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -892,7 +892,13 @@ function renderInventory() {
       input.value = val;
       input.placeholder = "0";
       input.addEventListener("input", (function (prodName, idx) {
-        return function () { window.updateValue(prodName, this.value, idx); };
+        return function () { 
+          // v3.1.51：将拨号盘上的 # 强制转换为 *（乘号），并且允许 * 正常工作
+          if (this.value.includes('#')) {
+            this.value = this.value.replace(/#/g, '*');
+          }
+          window.updateValue(prodName, this.value, idx); 
+        };
       })(name, index));
 
       var deleteBtn = document.createElement("button");
