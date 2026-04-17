@@ -530,6 +530,35 @@ body {
   flex-shrink: 0;
 }
 
+/* v3.1.45 竖排按钮列（×÷🗑） */
+.item-btn-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.math-op-btn {
+  background: rgba(10, 83, 190, 0.10);
+  border: 1.5px solid rgba(10, 83, 190, 0.20);
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+  font-weight: 800;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.math-op-btn:active {
+  background: rgba(10, 83, 190, 0.25);
+  transform: scale(0.92);
+}
+
 .item-input {
   width: 140px;
   padding: 14px;
