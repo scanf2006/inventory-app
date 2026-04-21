@@ -1,6 +1,7 @@
-const App = {
+﻿const App = {
   Config: {
-    VERSION: "v3.1.52",
+    VERSION: "v3.1.53",
+    ADMIN_PASSWORD: "9898",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
@@ -70,7 +71,8 @@ const App = {
     lastInventoryUpdate: 0, // Specifically for inventory data changes
     history: [], // v3.0.26 Recent update records
     liveMessages: [], // v3.1.14 Live ticker messages
-    chartInstance: null, // v3.0 Chart.js instance tracking
+    chartInstance: null,
+    mobileAdminUnlocked: false, // v3.0 Chart.js instance tracking
   },
 
   Services: {
@@ -267,6 +269,62 @@ const App = {
 };
 
 // --- Initialization ---
+
+// Admin Access Code
+window.updateAdminLoginUI = function() {
+  var loginForm = document.getElementById("admin-login-form");
+  var logoutForm = document.getElementById("admin-logout-form");
+  var protectedContent = document.getElementById("admin-protected-content");
+  
+  if (App.UI.isDesktop() || App.State.mobileAdminUnlocked) {
+    if (loginForm) loginForm.classList.add("hidden");
+    if (logoutForm) logoutForm.classList.remove("hidden");
+    if (protectedContent) protectedContent.classList.remove("hidden");
+  } else {
+    if (loginForm) loginForm.classList.remove("hidden");
+    if (logoutForm) logoutForm.classList.add("hidden");
+    if (protectedContent) protectedContent.classList.add("hidden");
+  }
+};
+
+window.addEventListener('DOMContentLoaded', function() {
+  var adminUnlockBtn = document.getElementById("admin-unlock-btn");
+  if (adminUnlockBtn) {
+    adminUnlockBtn.addEventListener("click", function() {
+      var pwd = document.getElementById("admin-password-input").value;
+      if (pwd === App.Config.ADMIN_PASSWORD) {
+        App.State.mobileAdminUnlocked = true;
+        sessionStorage.setItem("admin_unlocked", "true");
+        App.State.viewMode = "edit"; 
+        document.getElementById("admin-password-input").value = "";
+        window.updateAdminLoginUI();
+        renderInventory();
+        App.UI.showToast("Edit mode unlocked", "success");
+      } else {
+        App.UI.showToast("Incorrect password", "error");
+      }
+    });
+  }
+
+  var adminLockBtn = document.getElementById("admin-lock-btn");
+  if (adminLockBtn) {
+    adminLockBtn.addEventListener("click", function() {
+      App.State.mobileAdminUnlocked = false;
+      sessionStorage.removeItem("admin_unlocked");
+      App.State.viewMode = "preview";
+      window.updateAdminLoginUI();
+      renderInventory();
+      App.UI.showToast("Edit mode locked", "info");
+    });
+  }
+  
+  var manageBtn = document.getElementById("manage-btn");
+  if (manageBtn) {
+    manageBtn.addEventListener("click", function() {
+       window.updateAdminLoginUI();
+    });
+  }
+});
 
 function initApp() {
   var SK = App.Config.STORAGE_KEYS;
