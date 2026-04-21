@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.56",
+    VERSION: "v3.1.57",
     ADMIN_PASSWORD: "9898",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
@@ -1443,7 +1443,7 @@ if (document.getElementById("export-pdf-btn")) {
       String(now.getMonth() + 1).padStart(2, "0") +
       "-" +
       String(now.getDate()).padStart(2, "0");
-    var fileName = "INV_aiden_Report_" + dateStr + ".pdf";
+    var fileName = "Waycred_Inventory_Report_" + dateStr + ".pdf";
 
     html2pdf()
       .set({
