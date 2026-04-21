@@ -342,16 +342,18 @@ App.UI = {
             backgroundColor: "rgba(52, 152, 219, 0.6)",
             borderColor: "rgba(52, 152, 219, 1)",
             borderWidth: 1,
-            borderRadius: 8,
+            borderRadius: 4,
           },
         ],
       },
       options: {
-        indexAxis: "y",
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true } },
+        scales: { 
+          y: { beginAtZero: true },
+          x: { grid: { display: false } }
+        },
       },
     });
   },
