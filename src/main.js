@@ -1,7 +1,7 @@
-﻿/** Waycred Inventory v3.2.0 */
+/** Waycred Inventory v3.3.0 */
 window.App = window.App || {};
 
-console.log('Modular core active v3.2.0');
+console.log('Modular core active v3.3.0');
 // --- Initialization ---
 
 // Admin Access Code
@@ -131,7 +131,7 @@ function initApp() {
       ? ""
       : savedId;
 
-  initSupabase();
+  App.Sync.init();
   initializeCategory();
 
   // UI Init
@@ -163,8 +163,6 @@ function initApp() {
   if (syncInput) {
     syncInput.addEventListener("input", function () {
       App.State.syncId = this.value.trim().toUpperCase();
-      // DO NOT call saveToStorage()! It arms App.State.syncId and schedules debounced pushToCloud(),
-      // which silently destroys the cloud database with empty local factory state before pull wins.
       localStorage.setItem(App.Config.STORAGE_KEYS.SYNC_ID, App.State.syncId);
     });
   }
@@ -178,25 +176,25 @@ function initApp() {
   }
 
   if (App.Services.supabase && App.State.syncId) {
-    pullFromCloud();
+    App.Sync.pull();
 
     // Auto-Sync Triggers
     window.addEventListener("focus", function () {
-      pullFromCloud(true);
+      App.Sync.pull(true);
     });
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible") pullFromCloud(true);
+      if (document.visibilityState === "visible") App.Sync.pull(true);
     });
 
     // v3.1.37 Accelerated Background Polling (10s)
     setInterval(function () {
-      if (document.visibilityState === "visible") pullFromCloud(true);
+      if (document.visibilityState === "visible") App.Sync.pull(true);
     }, 10000);
 
     // v3.1.37 Immediate Sync on Tab Focus
     document.addEventListener("visibilitychange", function() {
       if (document.visibilityState === "visible") {
-        pullFromCloud(true);
+        App.Sync.pull(true);
       }
     });
   }
@@ -213,13 +211,13 @@ function initApp() {
     snapshotBtn.onclick = function () {
       var noteInput = document.getElementById("snapshot-note-input");
       var note = noteInput ? noteInput.value.trim() : "";
-      saveSnapshot(note);
+      App.Sync.saveSnapshot(note);
     };
   }
 
   // v3.1.0 Desktop: initial snapshot list load
   if (App.UI.isDesktop()) {
-    loadSnapshots();
+    App.Sync.loadSnapshots();
     renderLiveTicker(); // v3.1.14
   }
 
@@ -284,7 +282,7 @@ function setupRealtimeSubscriptions() {
       },
       function (payload) {
         console.log("Real-time update received for app_sync!");
-        pullFromCloud(true);
+        App.Sync.pull(true);
       }
     )
     // Listen for inventory_snapshots table changes (history/notes/deletes)
@@ -298,7 +296,7 @@ function setupRealtimeSubscriptions() {
       },
       function (payload) {
         console.log("Real-time update received for inventory_snapshots!");
-        loadSnapshots();
+        App.Sync.loadSnapshots();
       }
     )
     .subscribe(function (status) {
@@ -327,141 +325,7 @@ function initializeCategory() {
 
 // --- Cloud Sync ---
 
-function pushToCloud() {
-  if (!App.Services.supabase || !App.State.syncId) return;
 
-  App.Services.supabase
-    .from("app_sync")
-    .upsert(
-      {
-        sync_id: App.State.syncId,
-        data: {
-          products: App.State.products,
-          inventory: App.State.inventory,
-          category_order: App.State.categoryOrder,
-          last_updated_ts: App.State.lastUpdated,
-          last_inventory_update_ts: App.State.lastInventoryUpdate,
-          recent_history: App.State.history,
-          live_messages: App.State.liveMessages,
-        },
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "sync_id" },
-    )
-    .then(function (res) {
-      if (res.error) {
-        App.UI.updateSyncStatus("Sync Offline", false);
-      } else {
-        App.UI.updateSyncStatus("Cloud Synced", true);
-      }
-    });
-}
-
-function pullFromCloud(isSilent) {
-  if (!App.Services.supabase || !App.State.syncId) return;
-
-  if (!isSilent) App.UI.updateSyncStatus("Checking...", false);
-
-  App.Services.supabase
-    .from("app_sync")
-    .select("data, updated_at")
-    .eq("sync_id", App.State.syncId)
-    .single()
-    .then(function (res) {
-      if (res.data && res.data.data) {
-        var cloudData = res.data.data;
-        var cloudTS =
-          cloudData.last_updated_ts || new Date(res.data.updated_at).getTime();
-        var localTS = App.State.lastUpdated;
-
-        // Conflict Resolution: Only pull if cloud is newer than local
-        if (cloudTS > localTS) {
-          // v3.1.28 Data Integrity Guard: prevent empty cloud from overwriting real data
-          var cloudProductCount = cloudData.products ? Object.keys(cloudData.products).length : 0;
-          var cloudInventoryCount = cloudData.inventory ? Object.keys(cloudData.inventory).length : 0;
-          var localProductCount = App.State.products ? Object.keys(App.State.products).length : 0;
-          var localInventoryCount = App.State.inventory ? Object.keys(App.State.inventory).length : 0;
-
-          // If cloud data is substantially empty but local has real data, warn user
-          if (localProductCount > 0 && cloudProductCount === 0 && cloudInventoryCount === 0) {
-            console.warn("[Sync Guard] Cloud data is empty but local has " + localProductCount + " categories. Refusing to overwrite.");
-            if (!isSilent) {
-              App.UI.showToast("Cloud data appears empty. Local data preserved.", "error");
-            }
-            // Push local data to cloud to fix the empty cloud state
-            pushToCloud();
-            return;
-          }
-
-          // If cloud inventory is dramatically smaller (>80% loss), ask for confirmation
-          if (localInventoryCount > 5 && cloudInventoryCount < localInventoryCount * 0.2) {
-            console.warn("[Sync Guard] Cloud inventory (" + cloudInventoryCount + ") is much smaller than local (" + localInventoryCount + ").");
-            if (!isSilent) {
-              App.UI.confirm(
-                "Cloud data has significantly fewer items (" + cloudInventoryCount + " vs local " + localInventoryCount + "). Overwrite local data with cloud?",
-                function () {
-                  applyCloudData(cloudData, cloudTS, isSilent);
-                },
-                function () {
-                  console.log("[Sync Guard] User rejected destructive overwrite. Counter-pushing local data to override empty cloud state.");
-                  pushToCloud();
-                  App.UI.showToast("Local data pushed to cloud", "info");
-                }
-              );
-              return;
-            }
-            // If silent sync, refuse destructive overwrite
-            return;
-          }
-
-          // v3.1.30 Input Focus Guard: DO NOT wipe DOM if user is actively typing
-          if (document.activeElement && document.activeElement.tagName === "INPUT" && document.activeElement.classList.contains("item-input")) {
-            console.log("[Sync Guard] Pausing cloud apply because user is actively typing.");
-            return;
-          }
-
-          applyCloudData(cloudData, cloudTS, isSilent);
-        } else if (cloudTS < localTS) {
-          // Local is newer, push to cloud
-          pushToCloud();
-        } else {
-          App.UI.updateSyncStatus("Synced", true);
-        }
-      } else if (res.error && res.error.code !== "PGRST116") {
-        // PGRST116 is "not found"
-        App.UI.updateSyncStatus("Sync Offline", false);
-      } else if (!res.data) {
-        pushToCloud();
-      }
-    })
-    .catch(function (err) {
-      App.UI.updateSyncStatus("Sync Offline", false);
-    });
-}
-
-// v3.1.28 Extracted: safely apply cloud data to local state
-function applyCloudData(cloudData, cloudTS, isSilent) {
-  App.State.products = cloudData.products || App.State.products;
-  App.State.inventory = cloudData.inventory || App.State.inventory;
-  App.State.categoryOrder =
-    cloudData.category_order || App.State.categoryOrder;
-  App.State.lastUpdated = cloudTS;
-  App.State.lastInventoryUpdate =
-    cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
-  App.State.history = cloudData.recent_history || App.State.history;
-  App.State.liveMessages =
-    cloudData.live_messages || App.State.liveMessages;
-
-  saveToStorageImmediate(true);
-  initializeCategory();
-  renderTabs();
-  renderInventory();
-  renderManageUI();
-  renderLiveTicker();
-  if (!isSilent)
-    App.UI.showToast("Sync: Cloud state loaded", "success");
-  App.UI.updateSyncStatus("Synced", true);
-}
 
 // --- Storage & Data ---
 
@@ -494,7 +358,7 @@ function saveToStorage(isImmediate) {
   saveToStorageImmediate();
   App.UI.updateSyncStatus("Saving...", false);
   if (isImmediate) {
-    pushToCloud();
+    App.Sync.push();
     App.UI.updateSyncStatus("Saved", true);
   } else {
     debouncedSave();
@@ -914,7 +778,7 @@ if (document.getElementById("connect-sync-btn")) {
       // Critical Fix: Do NOT save immediately as it creates a fresh timestamp and would trigger an empty push.
       // Reset local TS to 0 to ensure Cloud data (if any) wins during pullFromCloud.
       App.State.lastUpdated = 0;
-      pullFromCloud();
+      App.Sync.pull();
     } else {
       App.UI.showToast("Please enter a Sync ID.", "info");
     }
@@ -1650,7 +1514,7 @@ function purgeZeroStockItems() {
 
   if (count > 0) {
     saveToStorageImmediate();
-    pushToCloud();
+    App.Sync.push();
     renderInventory();
     App.UI.showToast("Purged " + count + " item(s)", "success");
   } else {
@@ -1661,58 +1525,7 @@ function purgeZeroStockItems() {
 // --- v3.1.0 Inventory Snapshot Feature ---
 
 // Save snapshot to Supabase (called from mobile)
-function saveSnapshot(note) {
-  if (!App.Services.supabase) {
-    return App.UI.showToast("Cloud sync not available", "error");
-  }
-  if (!App.State.syncId) {
-    return App.UI.showToast("Please connect a Sync ID first", "error");
-  }
 
-  // Build snapshot data: computed value for each product in each category
-  var snapshotData = {};
-  var totalItems = 0;
-  (App.State.categoryOrder || []).forEach(function (cat) {
-    var prods = App.State.products[cat] || [];
-    var catData = {};
-    prods.forEach(function (name) {
-      var key = App.Utils.getProductKey(cat, name);
-      var expr = App.State.inventory[key] || "";
-      var val = App.Utils.safeEvaluate(expr);
-      catData[name] = val;
-      totalItems++;
-    });
-    snapshotData[cat] = catData;
-  });
-
-  App.UI.showToast("Saving snapshot...", "info");
-
-  App.Services.supabase
-    .from("inventory_snapshots")
-    .insert({
-      sync_id: App.State.syncId,
-      snapshot_data: snapshotData,
-      note: note || "",
-    })
-    .then(function (res) {
-      if (res.error) {
-        console.error("Snapshot save error:", res.error);
-        App.UI.showToast("Failed to save snapshot", "error");
-      } else {
-        App.UI.showToast(
-          "Snapshot saved! (" + totalItems + " items)",
-          "success",
-        );
-        // Clear note input
-        var noteInput = document.getElementById("snapshot-note-input");
-        if (noteInput) noteInput.value = "";
-      }
-    })
-    .catch(function (err) {
-      console.error("Snapshot save exception:", err);
-      App.UI.showToast("Snapshot save failed", "error");
-    });
-}
 
 // --- v3.1.39 Robust Cloud-Aware Message Broadcast
 window.sendLiveMessage = function () {
@@ -1761,7 +1574,7 @@ window.sendLiveMessage = function () {
         App.State.liveMessages = combined;
         input.value = "";
         saveToStorageImmediate(true);
-        pushToCloud();
+        App.Sync.push();
         App.UI.showToast("Broadcast Success!", "success");
         renderLiveTicker();
       });
@@ -1858,26 +1671,7 @@ window.showLiveHistory = function() {
 };
 
 // Load snapshot list from Supabase (called on desktop)
-function loadSnapshots() {
-  if (!App.Services.supabase || !App.State.syncId) return;
 
-  App.Services.supabase
-    .from("inventory_snapshots")
-    .select("id, snapshot_data, note, created_at")
-    .eq("sync_id", App.State.syncId)
-    .order("created_at", { ascending: false })
-    .limit(10)
-    .then(function (res) {
-      if (res.data && res.data.length > 0) {
-        renderSnapshots(res.data);
-      } else {
-        renderSnapshots([]);
-      }
-    })
-    .catch(function (err) {
-      console.error("Load snapshots error:", err);
-    });
-}
 
 // Render snapshot list (desktop display)
 function renderSnapshots(snapshots) {
@@ -2004,7 +1798,7 @@ window.deleteSnapshot = async function (id) {
       .eq("sync_id", App.State.syncId); // Access Control: only allow deletion of own snapshots
     if (error) throw error;
     App.UI.showToast("Record deleted successfully", "success");
-    loadSnapshots(); // Reload list
+    App.Sync.loadSnapshots(); // Reload list
   } catch (err) {
     console.error("Error deleting snapshot:", err);
     App.UI.showToast("Failed to delete record", "error");
@@ -2022,7 +1816,7 @@ window.editSnapshotNote = async function (id, newNote) {
       .eq("sync_id", App.State.syncId); // Access Control: only allow editing of own snapshots
     if (error) throw error;
     App.UI.showToast("Note updated successfully", "success");
-    loadSnapshots(); // Reload list
+    App.Sync.loadSnapshots(); // Reload list
   } catch (err) {
     console.error("Error editing snapshot note:", err);
     App.UI.showToast("Failed to update note", "error");
