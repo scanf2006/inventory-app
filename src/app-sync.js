@@ -217,10 +217,10 @@ App.Sync = {
       window.saveToStorageImmediate(true);
     if (typeof window.initializeCategory === "function")
       window.initializeCategory();
-    if (typeof window.renderTabs === "function") window.renderTabs();
-    if (typeof window.renderInventory === "function") window.renderInventory();
-    if (typeof window.renderManageUI === "function") window.renderManageUI();
-    if (typeof window.renderLiveTicker === "function") window.renderLiveTicker();
+    App.UI.renderTabs();
+    App.UI.renderInventory();
+    App.UI.renderManageUI();
+    App.UI.renderLiveTicker();
 
     if (!isSilent) App.UI.showToast("Sync: Cloud state loaded", "success");
     App.UI.updateSyncStatus("Synced", true);

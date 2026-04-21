@@ -1,59 +1,41 @@
 /**
- * App UI Management and Rendering helper
+ * App UI Management and Rendering engine
  * Waycred Inventory v3.3 ES6+ Modularization
  */
 window.App = window.App || {};
 
 App.UI = {
-  // Check if device layout is Desktop
-  isDesktop: () => {
-    if (App.State.isAdmin) return false;
-    return window.innerWidth >= 768;
-  },
+  // --- Core UI Helpers ---
+  isDesktop: () => !App.State.isAdmin && window.innerWidth >= 768,
 
-  // Update cloud sync status badge in Settings
   updateSyncStatus: (status, isOnline) => {
     const el = document.getElementById("sync-status");
-    if (el) {
-      const span = el.querySelector("span");
-      if (span) {
-        span.innerText = status;
-        if (isOnline) el.classList.add("online");
-        else el.classList.remove("online");
-      }
+    const span = el?.querySelector("span");
+    if (span) {
+      span.innerText = status;
+      el.classList.toggle("online", isOnline);
     }
   },
 
-  // Display a floating toast message
   showToast: (message, type = "info") => {
     const container = document.getElementById("toast-container");
     if (!container) return;
 
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
+    const icons = { success: "✅", error: "⚠️", info: "ℹ️" };
 
-    const icons = {
-      success: "✅",
-      error: "⚠️",
-      info: "ℹ️",
-    };
-    const icon = icons[type] || icons.info;
-
-    toast.innerHTML = `
-      <span>${icon}</span>
-      <span>${App.Utils.escapeHTML(message)}</span>
-    `;
+    toast.innerHTML = `<span>${
+      icons[type] || icons.info
+    }</span><span>${App.Utils.escapeHTML(message)}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
       toast.classList.add("hiding");
-      toast.addEventListener("animationend", () => {
-        if (toast.parentNode) toast.parentNode.removeChild(toast);
-      });
+      toast.addEventListener("animationend", () => toast.remove());
     }, 3000);
   },
 
-  // Custom modal-based confirmation dialog
   confirm: (msg, onConfirm, onCancel, options = {}) => {
     const overlay = document.getElementById("confirm-modal");
     const msgEl = document.getElementById("confirm-msg");
@@ -61,36 +43,523 @@ App.UI = {
     const noBtn = document.getElementById("confirm-no-btn");
 
     if (!overlay || !msgEl || !yesBtn || !noBtn) {
-      if (window.confirm(msg)) {
-        onConfirm?.();
-      } else {
-        onCancel?.();
-      }
+      if (window.confirm(msg)) onConfirm?.();
+      else onCancel?.();
       return;
     }
 
     msgEl.innerHTML = msg;
-
-    // Customizable button text
     yesBtn.textContent = options.confirmText || "Yes";
     noBtn.textContent = options.cancelText || "No";
-
-    // Show modal
+    noBtn.style.display = options.hideCancel ? "none" : "inline-block";
     overlay.classList.remove("hidden");
 
-    // Clean old listeners using cloneNode
-    const newYes = yesBtn.cloneNode(true);
-    const newNo = noBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newYes, yesBtn);
-    noBtn.parentNode.replaceChild(newNo, noBtn);
-
-    newYes.onclick = () => {
+    yesBtn.onclick = () => {
       overlay.classList.add("hidden");
       onConfirm?.();
     };
-    newNo.onclick = () => {
+    noBtn.onclick = () => {
       overlay.classList.add("hidden");
       onCancel?.();
     };
+  },
+
+  // --- Global Rendering Engine ---
+
+  renderTabs: () => {
+    const tabNav = document.getElementById("category-tabs");
+    if (!tabNav) return;
+    tabNav.innerHTML = "";
+
+    const { categoryOrder, currentCategory, products } = App.State;
+    (categoryOrder || []).forEach((cat) => {
+      if (!products[cat]) return;
+      const btn = document.createElement("button");
+      btn.className = `tab ${cat === currentCategory ? "active" : ""}`;
+      btn.innerText = cat;
+      btn.onclick = () => {
+        App.State.currentCategory = cat;
+        App.UI.renderTabs();
+        App.UI.renderInventory();
+      };
+      tabNav.appendChild(btn);
+    });
+  },
+
+  renderInventory: () => {
+    const list = document.getElementById("inventory-list");
+    if (!list) return;
+    list.innerHTML = "";
+
+    const {
+      viewMode,
+      currentCategory,
+      products,
+      inventory,
+      sortDirection,
+      mobileAdminUnlocked,
+    } = App.State;
+    const isPreview = viewMode === "preview" || App.UI.isDesktop();
+    list.className = `inventory-list ${isPreview ? "preview-layout" : ""}`;
+
+    const rawProducts = App.Utils.getCurrentProducts();
+    if (!currentCategory || !rawProducts.length) {
+      if (!currentCategory || !products[currentCategory]) {
+        list.innerHTML = `<div class="empty-state">${App.Utils.escapeHTML(
+          "Select or Add a Category",
+        )}</div>`;
+        return;
+      }
+    }
+
+    const sortedProducts = [...rawProducts];
+    if (sortDirection === "asc") sortedProducts.sort();
+    else if (sortDirection === "desc") sortedProducts.sort().reverse();
+
+    let displayProducts = sortedProducts;
+    if (isPreview) {
+      displayProducts = sortedProducts.filter((name) => {
+        const key = App.Utils.getProductKey(currentCategory, name);
+        return App.Utils.safeEvaluate(inventory[key] || "") > 0;
+      });
+    }
+
+    App.UI.renderInventoryControls();
+    App.UI.renderInventoryCount(displayProducts.length);
+
+    // Reset button for Mobile Edit mode
+    if (viewMode === "edit" && !App.UI.isDesktop()) {
+      const resetWrapper = document.createElement("div");
+      resetWrapper.style = "margin: 5px 0 15px 0;";
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "btn-delete danger-zone-reset w-full";
+      resetBtn.style =
+        "opacity: 0.8; font-size: 0.85rem; padding: 12px; border-radius: 12px;";
+      resetBtn.textContent = `Reset ${currentCategory} to Zero`;
+      resetBtn.onclick = () => window.resetCategoryInventory();
+      resetWrapper.appendChild(resetBtn);
+      list.appendChild(resetWrapper);
+    }
+
+    displayProducts.forEach((name, index) => {
+      const key = App.Utils.getProductKey(currentCategory, name);
+      const val = inventory[key] || "";
+      const total = App.Utils.safeEvaluate(val);
+
+      const card = document.createElement("div");
+      card.className = `item-card ${isPreview ? "preview-mode" : ""}`;
+
+      const infoDiv = document.createElement("div");
+      infoDiv.className = "item-info";
+
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "item-name";
+      nameDiv.textContent = name;
+      if (!isPreview) {
+        nameDiv.style.cursor = "pointer";
+        nameDiv.onclick = () => window.renameProductInline(name);
+      }
+
+      const resultDiv = document.createElement("div");
+      resultDiv.className = "item-result";
+      resultDiv.id = `result-${index}`;
+      resultDiv.innerHTML = `Total: <span class="highlight-total">${total}</span>`;
+
+      infoDiv.append(nameDiv, resultDiv);
+      card.append(infoDiv);
+
+      if (!isPreview) {
+        const inputGroup = document.createElement("div");
+        inputGroup.className = "input-group";
+
+        const input = document.createElement("input");
+        input.type = "tel";
+        input.className = "item-input";
+        input.value = val;
+        input.placeholder = "0";
+        input.oninput = (e) => {
+          let v = e.target.value;
+          if (v.includes("#") || v.includes("-")) v = v.replace(/[-#]/g, "*");
+          e.target.value = v;
+          window.updateValue(name, v, index);
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "item-delete-btn";
+        delBtn.textContent = "🗑️";
+        delBtn.onclick = () => window.removeProductInline(name);
+
+        inputGroup.append(input, delBtn);
+        card.append(inputGroup);
+      }
+      list.appendChild(card);
+    });
+
+    if (viewMode === "edit" && !App.UI.isDesktop()) {
+      App.UI.renderQuickAdd(list);
+    }
+
+    if (App.UI.isDesktop()) App.UI.renderDesktopChart();
+  },
+
+  renderInventoryControls: () => {
+    const controls = document.getElementById("inventory-controls");
+    if (!controls) return;
+    controls.innerHTML = "";
+    const { viewMode, sortDirection, mobileAdminUnlocked } = App.State;
+
+    const bar = document.createElement("div");
+    bar.className = "view-toggle-bar";
+
+    const sortBtn = document.createElement("button");
+    sortBtn.className = "btn-sort";
+    sortBtn.textContent = `Sort: ${sortDirection.toUpperCase()}`;
+    sortBtn.onclick = () => window.sortProductsToggle();
+
+    const sortControl = document.createElement("div");
+    sortControl.className = "segmented-control";
+    sortControl.appendChild(sortBtn);
+
+    bar.appendChild(sortControl);
+
+    if (App.UI.isDesktop() || mobileAdminUnlocked) {
+      const viewControl = document.createElement("div");
+      viewControl.className = "segmented-control";
+
+      ["edit", "preview"].forEach((mode) => {
+        const btn = document.createElement("button");
+        btn.className = `btn-edit ${viewMode === mode ? "active" : ""}`;
+        btn.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        btn.onclick = () => window.toggleViewMode(mode);
+        viewControl.appendChild(btn);
+      });
+      bar.appendChild(viewControl);
+    }
+    controls.appendChild(bar);
+  },
+
+  renderInventoryCount: (count) => {
+    const list = document.getElementById("inventory-list");
+    let badge = document.getElementById("inventory-count-badge");
+    if (!badge) {
+      badge = document.createElement("div");
+      badge.id = "inventory-count-badge";
+      badge.className = "product-count-badge";
+      badge.style =
+        "text-align: center; margin: 15px 0 10px 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; width: 100%;";
+      list.parentNode.insertBefore(badge, list);
+    }
+    badge.innerText = `Products: ${count}`;
+  },
+
+  renderQuickAdd: (list) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "quick-add-wrapper";
+
+    const card = document.createElement("div");
+    card.className = "quick-add-card";
+    card.innerHTML = "<span>+ Add Product</span>";
+    card.onclick = () => window.showQuickAddForm();
+
+    const formOuter = document.createElement("div");
+    formOuter.id = "quick-add-form-container";
+    formOuter.className = "hidden";
+
+    wrapper.append(card, formOuter);
+    list.appendChild(wrapper);
+  },
+
+  renderManageUI: () => {
+    const cList = document.getElementById("category-manage-list");
+    if (!cList) return;
+    cList.innerHTML = "";
+
+    (App.State.categoryOrder || []).forEach((cat, idx) => {
+      const li = document.createElement("li");
+      li.className = "manage-item";
+
+      const catSpan = document.createElement("span");
+      catSpan.className = "category-name";
+      catSpan.style.cursor = "pointer";
+      catSpan.textContent = cat;
+      catSpan.onclick = () => window.editCategory(cat);
+
+      const actions = document.createElement("div");
+      actions.className = "category-actions";
+
+      const upBtn = document.createElement("button");
+      upBtn.className = "btn-sort";
+      upBtn.textContent = "▲";
+      upBtn.disabled = idx === 0;
+      upBtn.onclick = () => window.moveCategory(idx, -1);
+
+      const downBtn = document.createElement("button");
+      downBtn.className = "btn-sort";
+      downBtn.textContent = "▼";
+      downBtn.disabled = idx === App.State.categoryOrder.length - 1;
+      downBtn.onclick = () => window.moveCategory(idx, 1);
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-delete";
+      delBtn.textContent = "🗑️";
+      delBtn.onclick = () => window.removeCategory(cat);
+
+      actions.append(upBtn, downBtn, delBtn);
+      li.append(catSpan, actions);
+      cList.appendChild(li);
+    });
+  },
+
+  renderDesktopChart: () => {
+    if (!App.UI.isDesktop()) return;
+    const ctx = document.getElementById("inventoryChart")?.getContext("2d");
+    if (!ctx || !window.Chart) return;
+
+    const data = [];
+    const labels = [];
+
+    App.State.commonOils.forEach((oil) => {
+      let total = 0;
+      Object.keys(App.State.inventory).forEach((key) => {
+        if (key.endsWith("-" + oil)) {
+          total += App.Utils.safeEvaluate(App.State.inventory[key]);
+        }
+      });
+      labels.push(oil);
+      data.push(total);
+    });
+
+    if (App.State.chartInstance) App.State.chartInstance.destroy();
+
+    App.State.chartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Inventory Level",
+            data,
+            backgroundColor: "rgba(52, 152, 219, 0.6)",
+            borderColor: "rgba(52, 152, 219, 1)",
+            borderWidth: 1,
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } },
+      },
+    });
+  },
+
+  renderRecentUpdates: () => {
+    const container = document.getElementById("recent-updates-list");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const history = App.State.history || [];
+    if (history.length === 0) {
+      container.innerHTML = '<div class="empty-state">No recent activity</div>';
+      return;
+    }
+
+    history.forEach((rec) => {
+      const item = document.createElement("div");
+      item.className = "history-item";
+      const time = new Date(rec.timestamp).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      item.innerHTML = `
+        <div class="history-info">
+          <div class="history-product">${App.Utils.escapeHTML(rec.product)}</div>
+          <div class="history-meta">${App.Utils.escapeHTML(
+            rec.category,
+          )} • ${time}</div>
+        </div>
+        <div class="history-value">${rec.value}</div>
+      `;
+      container.appendChild(item);
+    });
+  },
+
+  renderSnapshots: (snapshots) => {
+    const container = document.getElementById("snapshot-list");
+    if (!container) return;
+    if (!snapshots || snapshots.length === 0) {
+      container.innerHTML =
+        '<div class="snapshot-empty">No snapshots yet</div>';
+      return;
+    }
+
+    container.innerHTML = "";
+    snapshots.forEach((snap) => {
+      const d = new Date(snap.created_at);
+      const dateStr = d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      const timeStr = d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const card = document.createElement("div");
+      card.className = "snapshot-card";
+      card.innerHTML = `
+        <div class="snap-header">
+          <div class="snap-title">Report ${dateStr}</div>
+          <div class="snap-time">${timeStr}</div>
+        </div>
+        ${
+          snap.note
+            ? `<div class="snap-note">"${App.Utils.escapeHTML(
+                snap.note,
+              )}"</div>`
+            : ""
+        }
+        <div class="snap-actions">
+           <button class="btn-sort" onclick="window.compareWithCurrent('${
+             snap.id
+           }', '${dateStr}')">Compare</button>
+           <button class="btn-delete" onclick="window.deleteSnapshot('${
+             snap.id
+           }')">🗑️</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  },
+
+  renderLiveTicker: () => {
+    const ticker = document.getElementById("live-ticker-track");
+    if (!ticker) return;
+
+    const messages = App.State.liveMessages || [];
+    if (messages.length === 0) {
+      ticker.innerHTML = "<span>No live messages...</span>";
+      return;
+    }
+
+    ticker.innerHTML = "";
+    const content = messages
+      .map((m) => `<span>${App.Utils.escapeHTML(m)}</span>`)
+      .join(" • ");
+    ticker.innerHTML = `${content} • ${content}`;
+  },
+
+  renderComparisonError: (msg) => {
+    const el = document.getElementById("snapshot-compare-view");
+    if (el) el.innerHTML = `<div class="snapshot-empty">${msg}</div>`;
+  },
+
+  renderComparison: (oldSnap, newSnap, label) => {
+    const el = document.getElementById("snapshot-compare-view");
+    if (!el) return;
+
+    const fmt = (d) =>
+      new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const oldData = oldSnap.snapshot_data || {};
+    const newData = newSnap.snapshot_data || {};
+
+    const allCats = new Set([
+      ...Object.keys(oldData),
+      ...Object.keys(newData),
+    ]);
+    const orderedCats = (App.State.categoryOrder || [])
+      .concat([...allCats].filter((c) => !App.State.categoryOrder?.includes(c)))
+      .filter((c) => allCats.has(c));
+
+    let html = `
+      <div class="compare-header">
+        <span class="compare-label">${label} Comparison</span>
+        <span class="compare-range">${fmt(oldSnap.created_at)} ➡️ ${fmt(
+          newSnap.created_at,
+        )}</span>
+      </div>
+    `;
+
+    orderedCats.forEach((cat) => {
+      const oldItems = oldData[cat] || {};
+      const newItems = newData[cat] || {};
+      const allProds = new Set([
+        ...Object.keys(oldItems),
+        ...Object.keys(newItems),
+      ]);
+
+      const changes = [...allProds]
+        .map((name) => {
+          const o = oldItems[name] || 0;
+          const n = newItems[name] || 0;
+          return { name, old: o, new: n, diff: n - o };
+        })
+        .filter((c) => c.diff !== 0);
+
+      if (changes.length > 0) {
+        html += `
+          <div class="compare-cat-section">
+            <div class="compare-cat-title">${cat}</div>
+            <div class="compare-grid">
+              <div class="compare-row header">
+                <span>Product</span><span>Was</span><span>Is</span><span>Diff</span>
+              </div>
+              ${changes
+                .map(
+                  (c) => `
+                <div class="compare-row">
+                  <span>${c.name}</span>
+                  <span>${c.old}</span>
+                  <span>${c.new}</span>
+                  <span class="${c.diff > 0 ? "diff-plus" : "diff-minus"}">
+                    ${c.diff > 0 ? "+" : ""}${c.diff}
+                  </span>
+                </div>
+              `,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    el.innerHTML = html;
+  },
+
+  renderCommonOilsCheckboxes: () => {
+    const container = document.getElementById("common-oils-config");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const allProducts = new Set();
+    Object.values(App.State.products).forEach((cat) =>
+      cat.forEach((p) => allProducts.add(p)),
+    );
+    const sorted = [...allProducts].sort();
+
+    sorted.forEach((oil) => {
+      const label = document.createElement("label");
+      label.style = "display: block; margin: 5px 0; font-size: 0.9rem;";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = App.State.commonOils.includes(oil);
+      cb.onchange = (e) => {
+        if (e.target.checked) {
+          if (!App.State.commonOils.includes(oil))
+            App.State.commonOils.push(oil);
+        } else {
+          App.State.commonOils = App.State.commonOils.filter((o) => o !== oil);
+        }
+        window.saveToStorage(true);
+        App.UI.renderDesktopChart();
+      };
+      label.append(cb, ` ${oil}`);
+      container.appendChild(label);
+    });
   },
 };

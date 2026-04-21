@@ -6,6 +6,11 @@ const CRITICAL_ASSETS = [
     '/',
     '/index.html',
     '/src/main.js',
+    '/src/app-config.js',
+    '/src/app-utils.js',
+    '/src/app-ui.js',
+    '/src/app-sync.js',
+    '/src/app-data.js',
     '/src/app-v30.css',
     '/manifest.json',
     '/assets/icon.svg'
