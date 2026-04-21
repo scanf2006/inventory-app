@@ -1,6 +1,6 @@
-﻿const App = {
+const App = {
   Config: {
-    VERSION: "v3.1.53",
+    VERSION: "v3.1.54",
     ADMIN_PASSWORD: "9898",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
@@ -327,6 +327,11 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 function initApp() {
+  // v3.1.53 Session-based admin unlock
+  App.State.mobileAdminUnlocked = sessionStorage.getItem("admin_unlocked") === "true";
+  if (!App.UI.isDesktop() && !App.State.mobileAdminUnlocked) {
+    App.State.viewMode = "preview";
+  }
   var SK = App.Config.STORAGE_KEYS;
   // Data Migration (Recovering data from v1.7.x)
   if (
