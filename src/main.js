@@ -1,273 +1,7 @@
-const App = {
-  Config: {
-    VERSION: "v3.1.61",
-    ADMIN_PASSWORD: "9898",
-    SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
-    SUPABASE_KEY:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dHdodGN2aHRiaGJoaHlxaW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDE4OTUsImV4cCI6MjA4NjMxNzg5NX0.XhQ4m5SXV0GfmryV9iRQE9FEsND3HAep6c56VwPFcm4",
-    STORAGE_KEYS: {
-      PRODUCTS: "lubricant_products",
-      INVENTORY: "lubricant_inventory",
-      CATEGORY_ORDER: "lubricant_category_order",
-      SYNC_ID: "lubricant_sync_id",
-      COMMON_OILS: "lubricant_common_oils",
-      LAST_UPDATED: "lubricant_last_updated",
-      LAST_INVENTORY_UPDATE: "lubricant_last_inventory_update",
-      RECENT_HISTORY: "lubricant_recent_history",
-      LIVE_MESSAGES: "lubricant_live_messages",
-    },
-    INITIAL_PRODUCTS: {
-      "Bulk Oil": [
-        "0W20S",
-        "5W30S",
-        "5W30B",
-        "AW68",
-        "AW16S",
-        "0W20E",
-        "0W30E",
-        "50W",
-        "75W90GL5",
-        "30W",
-        "ATF",
-        "T0-4 10W",
-        "5W40 DIESEL",
-      ],
-      "Case Oil": [
-        "0W20B",
-        "5W20B",
-        "AW32",
-        "AW46",
-        "5W40E",
-        "5W30E",
-        "UTH",
-        "80W90GL5",
-        "10W",
-        "15W40 CK4",
-        "10W30 CK4",
-        "70-4 30W",
-      ],
-      Coolant: ["RED 50/50", "GREEN 50/50"],
-      Others: [
-        "DEF",
-        "Brake Blast",
-        "MOLY 3% EP2",
-        "CVT",
-        "SAE 10W-30 Motor Oil",
-        "OW16S(Quart)",
-      ],
-    },
-  },
+﻿/** Waycred Inventory v3.2.0 */
+window.App = window.App || {};
 
-  State: {
-    currentCategory: "",
-    products: null,
-    inventory: null,
-    categoryOrder: null,
-    commonOils: ["5W20S", "5W20B", "5W30S", "5W30B"], // v3.0 Desktop dashboard config
-    syncId: "",
-    viewMode: "edit",
-    sortDirection: "asc",
-    lastUpdated: 0,
-    lastInventoryUpdate: 0, // Specifically for inventory data changes
-    history: [], // v3.0.26 Recent update records
-    liveMessages: [], // v3.1.14 Live ticker messages
-    chartInstance: null,
-    mobileAdminUnlocked: false, // v3.0 Chart.js instance tracking
-  },
-
-  Services: {
-    supabase: null,
-  },
-
-  Utils: {
-    safeGetJSON: function (key, defaultValue) {
-      try {
-        var item = localStorage.getItem(key);
-        if (!item || item === "undefined" || item === "null")
-          return defaultValue;
-        return JSON.parse(item) || defaultValue;
-      } catch (e) {
-        return defaultValue;
-      }
-    },
-
-    debounce: function (func, wait) {
-      var timeout;
-      return function () {
-        var context = this,
-          args = arguments;
-        clearTimeout(timeout);
-        timeout = setTimeout(function () {
-          func.apply(context, args);
-        }, wait);
-      };
-    },
-
-    safeEvaluate: function (expr) {
-      if (!expr || typeof expr !== "string" || expr.trim() === "") return 0;
-      var cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, "");
-      if (!cleanExpr) return 0;
-      try {
-        // Pure arithmetic parser: tokenize and compute without eval/Function
-        var tokens = cleanExpr.match(/(?:\d+\.?\d*|[+\-*/()])/g);
-        if (!tokens) return 0;
-        var pos = 0;
-        function parseExpr() {
-          var result = parseTerm();
-          while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
-            var op = tokens[pos++];
-            var right = parseTerm();
-            result = op === '+' ? result + right : result - right;
-          }
-          return result;
-        }
-        function parseTerm() {
-          var result = parseFactor();
-          while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
-            var op = tokens[pos++];
-            var right = parseFactor();
-            if (op === '/' && right === 0) return 0;
-            result = op === '*' ? result * right : result / right;
-          }
-          return result;
-        }
-        function parseFactor() {
-          if (tokens[pos] === '(') {
-            pos++;
-            var result = parseExpr();
-            if (tokens[pos] === ')') pos++;
-            return result;
-          }
-          var num = parseFloat(tokens[pos++]);
-          return isNaN(num) ? 0 : num;
-        }
-        var result = parseExpr();
-        return isNaN(result) ? 0 : Math.round(result * 100) / 100;
-      } catch (e) {
-        return 0;
-      }
-    },
-
-    // Helper: Generate unique inventory key
-    getProductKey: function (category, product) {
-      return category + "-" + product;
-    },
-
-    // Helper: Get product list for current category safely
-    getCurrentProducts: function () {
-      if (!App.State.currentCategory || !App.State.products) return [];
-      return App.State.products[App.State.currentCategory] || [];
-    },
-
-    // Helper: Escape illegal characters for inline HTML/JS injections
-    escapeStr: function (str) {
-      if (!str) return "";
-      return String(str)
-        .replace(/\\/g, "\\\\") // Escape backslashes first
-        .replace(/'/g, "\\'") // Escape single quotes
-        .replace(/"/g, "&quot;") // Escape double quotes to prevent breaking attributes
-        .replace(/\n/g, "\\n") // Handle newlines
-        .replace(/\r/g, "\\r");
-    },
-
-    // New Security Feature: Escape HTML to prevent XSS
-    escapeHTML: function (str) {
-      if (!str) return "";
-      var div = document.createElement("div");
-      div.textContent = str;
-      return div.innerHTML;
-    },
-  },
-
-  UI: {
-    isDesktop: function () {
-      if (App.State.isAdmin) return false;
-      return window.innerWidth >= 768;
-    },
-
-    updateSyncStatus: function (status, isOnline) {
-      var el = document.getElementById("sync-status");
-      if (el) {
-        var span = el.querySelector("span");
-        if (span) {
-          span.innerText = status;
-          if (isOnline) el.classList.add("online");
-          else el.classList.remove("online");
-        }
-      }
-    },
-
-    showToast: function (message, type) {
-      type = type || "info";
-      var container = document.getElementById("toast-container");
-      if (!container) return;
-
-      var toast = document.createElement("div");
-      toast.className = "toast " + type;
-
-      var icon = "ℹ️";
-      if (type === "success") icon = "✅";
-      if (type === "error") icon = "⚠️";
-
-      toast.innerHTML =
-        "<span>" +
-        icon +
-        "</span><span>" +
-        App.Utils.escapeHTML(message) +
-        "</span>";
-      container.appendChild(toast);
-
-      setTimeout(function () {
-        toast.classList.add("hiding");
-        toast.addEventListener("animationend", function () {
-          if (toast.parentNode) toast.parentNode.removeChild(toast);
-        });
-      }, 3000);
-    },
-
-    confirm: function (msg, onConfirm, onCancel, options) {
-      options = options || {};
-      var overlay = document.getElementById("confirm-modal");
-      var msgEl = document.getElementById("confirm-msg");
-      var yesBtn = document.getElementById("confirm-yes-btn");
-      var noBtn = document.getElementById("confirm-no-btn");
-
-      if (!overlay || !msgEl || !yesBtn || !noBtn) {
-        if (window.confirm(msg)) {
-          if (onConfirm) onConfirm();
-        } else if (onCancel) {
-          onCancel();
-        }
-        return;
-      }
-
-      msgEl.innerHTML = msg; 
-      
-      // Customizable button text (defaults to Yes/No)
-      yesBtn.textContent = options.confirmText || "Yes";
-      noBtn.textContent = options.cancelText || "No";
-
-      // Toggle No button visibility for simple alerts
-      noBtn.style.display = options.hideCancel ? "none" : "inline-block";
-
-      yesBtn.onclick = function () {
-        overlay.classList.add("hidden");
-        if (onConfirm) onConfirm();
-      };
-      noBtn.onclick = function () {
-        overlay.classList.add("hidden");
-        if (onCancel) onCancel();
-      };
-      overlay.classList.remove("hidden");
-    },
-
-    closeConfirm: function () {
-      var el = document.getElementById("confirm-modal");
-      if (el) el.classList.add("hidden");
-    },
-  },
-};
-
+console.log('Modular core active v3.2.0');
 // --- Initialization ---
 
 // Admin Access Code
@@ -952,13 +686,13 @@ function renderInventory() {
       inputGroup.className = "input-group";
 
       var input = document.createElement("input");
-      input.type = "tel"; // 使用电话拨号键盘，提供 * # 符号键
+      input.type = "tel"; // 浣跨敤鐢佃瘽鎷ㄥ彿閿洏锛屾彁渚?* # 绗﹀彿閿?
       input.className = "item-input";
       input.value = val;
       input.placeholder = "0";
       input.addEventListener("input", (function (prodName, idx) {
         return function () { 
-          // v3.1.52：由于部分手机拨号盘按 * # 没反应，将减号 (-) 也强制转换为 *（乘号）
+          // v3.1.52锛氱敱浜庨儴鍒嗘墜鏈烘嫧鍙风洏鎸?* # 娌″弽搴旓紝灏嗗噺鍙?(-) 涔熷己鍒惰浆鎹负 *锛堜箻鍙凤級
           if (this.value.includes('#') || this.value.includes('-')) {
             this.value = this.value.replace(/[-#]/g, '*');
           }
@@ -968,7 +702,7 @@ function renderInventory() {
 
       var deleteBtn = document.createElement("button");
       deleteBtn.className = "item-delete-btn";
-      deleteBtn.textContent = "🗑️";
+      deleteBtn.textContent = "馃棏锔?;
       deleteBtn.addEventListener("click", (function (prodName) {
         return function () { removeProductInline(prodName); };
       })(name));
@@ -1258,7 +992,7 @@ function renderManageUI() {
 
     var upBtn = document.createElement("button");
     upBtn.className = "btn-sort";
-    upBtn.textContent = "▲";
+    upBtn.textContent = "鈻?;
     if (idx === 0) upBtn.disabled = true;
     upBtn.addEventListener("click", (function (i) {
       return function () { moveCategory(i, -1); };
@@ -1266,7 +1000,7 @@ function renderManageUI() {
 
     var downBtn = document.createElement("button");
     downBtn.className = "btn-sort";
-    downBtn.textContent = "▼";
+    downBtn.textContent = "鈻?;
     if (idx === App.State.categoryOrder.length - 1) downBtn.disabled = true;
     downBtn.addEventListener("click", (function (i) {
       return function () { moveCategory(i, 1); };
@@ -1274,7 +1008,7 @@ function renderManageUI() {
 
     var delBtn = document.createElement("button");
     delBtn.className = "btn-delete";
-    delBtn.textContent = "🗑️";
+    delBtn.textContent = "馃棏锔?;
     delBtn.addEventListener("click", (function (catName) {
       return function () { removeCategory(catName); };
     })(cat));
@@ -2072,7 +1806,7 @@ window.renderLiveTicker = function () {
       hour: "2-digit",
       minute: "2-digit",
     });
-    return "[" + timeStr + "] " + m.text + " •";
+    return "[" + timeStr + "] " + m.text + " 鈥?;
   });
 
   var displayStr = scrollItems.join("                                                  ");
@@ -2177,14 +1911,14 @@ function renderSnapshots(snapshots) {
     card.innerHTML =
       '<div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center;">' +
       '<div style="display: flex; align-items: center;">' +
-      '<button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">✏️</button>' +
+      '<button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">鉁忥笍</button>' +
       '<span class="snapshot-time">' +
       dateStr +
       "</span>" +
       noteHTML +
       '</div>' +
       '<div>' +
-      '<button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>' +
+      '<button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">馃棏锔?/button>' +
       '</div>' +
       "</div>";
 
@@ -2492,12 +2226,12 @@ function renderComparison(oldSnap, newSnap, label) {
 
   var html =
     '<div class="compare-header">' +
-    '<span class="compare-label">📊 ' +
+    '<span class="compare-label">馃搳 ' +
     label +
     " Comparison</span>" +
     '<span class="compare-range">' +
     fmt(oldDate) +
-    " → " +
+    " 鈫?" +
     fmt(newDate) +
     "</span>" +
     "</div>";
@@ -2537,17 +2271,17 @@ function renderComparison(oldSnap, newSnap, label) {
         diffText = "";
       if (diff > 0) {
         cls = "compare-up";
-        arrow = "▲";
+        arrow = "鈻?;
         diffText = "+" + diff;
         totalUp++;
       } else if (diff < 0) {
         cls = "compare-down";
-        arrow = "▼";
+        arrow = "鈻?;
         diffText = "" + diff;
         totalDown++;
       } else {
         cls = "compare-same";
-        arrow = "─";
+        arrow = "鈹€";
         diffText = "0";
         totalSame++;
       }
@@ -2561,7 +2295,7 @@ function renderComparison(oldSnap, newSnap, label) {
           "</span>" +
           '<span class="compare-values">' +
           oldVal +
-          " → " +
+          " 鈫?" +
           newVal +
           "</span>" +
           '<span class="compare-diff">' +
@@ -2585,13 +2319,13 @@ function renderComparison(oldSnap, newSnap, label) {
   // Bottom summary statistics
   html +=
     '<div class="compare-summary">' +
-    '<span class="compare-up">▲ ' +
+    '<span class="compare-up">鈻?' +
     totalUp +
     "</span>" +
-    '<span class="compare-same">─ ' +
+    '<span class="compare-same">鈹€ ' +
     totalSame +
     "</span>" +
-    '<span class="compare-down">▼ ' +
+    '<span class="compare-down">鈻?' +
     totalDown +
     "</span>" +
     "</div>";
