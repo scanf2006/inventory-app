@@ -1,21 +1,21 @@
 /**
  * App UI Management and Rendering helper
- * Waycred Inventory v3.2 Modularization
+ * Waycred Inventory v3.3 ES6+ Modularization
  */
 window.App = window.App || {};
 
 App.UI = {
   // Check if device layout is Desktop
-  isDesktop: function () {
+  isDesktop: () => {
     if (App.State.isAdmin) return false;
     return window.innerWidth >= 768;
   },
 
   // Update cloud sync status badge in Settings
-  updateSyncStatus: function (status, isOnline) {
-    var el = document.getElementById("sync-status");
+  updateSyncStatus: (status, isOnline) => {
+    const el = document.getElementById("sync-status");
     if (el) {
-      var span = el.querySelector("span");
+      const span = el.querySelector("span");
       if (span) {
         span.innerText = status;
         if (isOnline) el.classList.add("online");
@@ -25,47 +25,46 @@ App.UI = {
   },
 
   // Display a floating toast message
-  showToast: function (message, type) {
-    type = type || "info";
-    var container = document.getElementById("toast-container");
+  showToast: (message, type = "info") => {
+    const container = document.getElementById("toast-container");
     if (!container) return;
 
-    var toast = document.createElement("div");
-    toast.className = "toast " + type;
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
 
-    var icon = "ℹ️";
-    if (type === "success") icon = "✅";
-    if (type === "error") icon = "⚠️";
+    const icons = {
+      success: "✅",
+      error: "⚠️",
+      info: "ℹ️",
+    };
+    const icon = icons[type] || icons.info;
 
-    toast.innerHTML =
-      "<span>" +
-      icon +
-      "</span><span>" +
-      App.Utils.escapeHTML(message) +
-      "</span>";
+    toast.innerHTML = `
+      <span>${icon}</span>
+      <span>${App.Utils.escapeHTML(message)}</span>
+    `;
     container.appendChild(toast);
 
-    setTimeout(function () {
+    setTimeout(() => {
       toast.classList.add("hiding");
-      toast.addEventListener("animationend", function () {
+      toast.addEventListener("animationend", () => {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
       });
     }, 3000);
   },
 
   // Custom modal-based confirmation dialog
-  confirm: function (msg, onConfirm, onCancel, options) {
-    options = options || {};
-    var overlay = document.getElementById("confirm-modal");
-    var msgEl = document.getElementById("confirm-msg");
-    var yesBtn = document.getElementById("confirm-yes-btn");
-    var noBtn = document.getElementById("confirm-no-btn");
+  confirm: (msg, onConfirm, onCancel, options = {}) => {
+    const overlay = document.getElementById("confirm-modal");
+    const msgEl = document.getElementById("confirm-msg");
+    const yesBtn = document.getElementById("confirm-yes-btn");
+    const noBtn = document.getElementById("confirm-no-btn");
 
     if (!overlay || !msgEl || !yesBtn || !noBtn) {
       if (window.confirm(msg)) {
-        if (onConfirm) onConfirm();
-      } else if (onCancel) {
-        onCancel();
+        onConfirm?.();
+      } else {
+        onCancel?.();
       }
       return;
     }
@@ -79,19 +78,19 @@ App.UI = {
     // Show modal
     overlay.classList.remove("hidden");
 
-    // Clean old listeners
-    var newYes = yesBtn.cloneNode(true);
-    var newNo = noBtn.cloneNode(true);
+    // Clean old listeners using cloneNode
+    const newYes = yesBtn.cloneNode(true);
+    const newNo = noBtn.cloneNode(true);
     yesBtn.parentNode.replaceChild(newYes, yesBtn);
     noBtn.parentNode.replaceChild(newNo, noBtn);
 
-    newYes.onclick = function () {
+    newYes.onclick = () => {
       overlay.classList.add("hidden");
-      if (onConfirm) onConfirm();
+      onConfirm?.();
     };
-    newNo.onclick = function () {
+    newNo.onclick = () => {
       overlay.classList.add("hidden");
-      if (onCancel) onCancel();
+      onCancel?.();
     };
   },
 };
