@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.54",
+    VERSION: "v3.1.55",
     ADMIN_PASSWORD: "9898",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
@@ -885,7 +885,9 @@ function renderInventory() {
     viewControl.appendChild(previewBtn);
 
     bar.appendChild(sortControl);
-    bar.appendChild(viewControl);
+    if (App.UI.isDesktop() || App.State.mobileAdminUnlocked) {
+      bar.appendChild(viewControl);
+    }
     controls.appendChild(bar);
   }
 
