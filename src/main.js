@@ -1,6 +1,6 @@
 const App = {
   Config: {
-    VERSION: "v3.1.57",
+    VERSION: "v3.1.58",
     ADMIN_PASSWORD: "9898",
     SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
     SUPABASE_KEY:
