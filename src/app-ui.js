@@ -532,9 +532,6 @@ App.UI = {
             <span class="snapshot-time">${dateStr}</span>
             ${noteHTML}
           </div>
-          <div>
-            <button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 0.9rem; cursor: pointer; color: #ff3b30; padding: 2px; margin-left: 8px;">🗑️</button>
-          </div>
         </div>
       `;
 
@@ -545,14 +542,6 @@ App.UI = {
           e.stopPropagation();
           const n = prompt("Enter new note:", snap.note || "");
           if (n !== null && n !== snap.note) window.editSnapshotNote(snap.id, n.trim());
-        };
-      }
-
-      const deleteBtn = card.querySelector(".delete-snapshot-btn");
-      if (deleteBtn) {
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          window.deleteSnapshot(snap.id);
         };
       }
 
