@@ -554,8 +554,9 @@ App.UI = {
 
     container.classList.remove("hidden");
 
-    // v3.1.40 Multi-message Scrolling String
+    // Compatibility: Handle both object {ts, text} and legacy strings
     const scrollItems = messages.map((m) => {
+      if (typeof m === 'string') return m;
       const time = new Date(m.ts).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -563,29 +564,54 @@ App.UI = {
       return `[${time}] ${m.text}`;
     });
 
-    let displayStr = scrollItems.join(" ".repeat(50));
+    let displayStr = scrollItems.join(" ".repeat(40));
     if (scrollItems.length < 3) {
-      displayStr = `${displayStr}${" ".repeat(50)}${displayStr}${" ".repeat(50)}${displayStr}`;
+      displayStr = `${displayStr}${" ".repeat(40)}${displayStr}${" ".repeat(40)}${displayStr}`;
     }
 
     if (textEl.innerText !== displayStr) {
       textEl.innerText = displayStr;
       textEl.style.animation = "none";
       void textEl.offsetWidth; // Trigger reflow
-      const duration = Math.max(12, displayStr.length * 0.15);
+      const duration = Math.max(10, displayStr.length * 0.2);
       textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
     }
 
-    // Click to show history modal
     container.onclick = () => window.showLiveHistory();
   },
+};
 
-  renderComparisonError: (msg) => {
+window.showLiveHistory = () => {
+  const msgs = App.State.liveMessages || [];
+  if (msgs.length === 0) return;
+
+  let html = "<div class='live-history-content'>";
+  [...msgs].sort((a,b) => (b.ts || 0) - (a.ts || 0)).forEach(m => {
+    const text = typeof m === 'string' ? m : m.text;
+    const ts = typeof m === 'string' ? Date.now() : m.ts;
+    const time = new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    html += `
+      <div class="history-card">
+        <div class="history-card-time">${time}</div>
+        <div class="history-card-text">${App.Utils.escapeHTML(text)}</div>
+      </div>
+    `;
+  });
+  html += "</div>";
+
+  App.UI.confirm(html, null, null, {
+    confirmText: "Close",
+    hideCancel: true
+  });
+};
+
+App.UI.renderComparisonError = (msg) => {
     const el = document.getElementById("snapshot-compare-view");
     if (el) el.innerHTML = `<div class="snapshot-empty">${msg}</div>`;
-  },
+  };
 
-  renderComparison: (oldSnap, newSnap, label) => {
+  App.UI.renderComparison = (oldSnap, newSnap, label) => {
     const el = document.getElementById("snapshot-compare-view");
     if (!el) return;
 
