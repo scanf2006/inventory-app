@@ -407,6 +407,16 @@ App.UI = {
         },
         plugins: { 
           legend: { display: false },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: fontColor,
+            font: {
+              weight: 'bold',
+              family: 'Outfit'
+            },
+            offset: 4
+          },
           tooltip: {
             backgroundColor: isDark ? "#333" : "#FFF",
             titleColor: fontColor,
@@ -418,6 +428,7 @@ App.UI = {
         scales: {
           y: {
             beginAtZero: true,
+            grace: '15%', // Give space at top for labels
             ticks: { color: fontColor },
             grid: { color: gridColor }
           },
