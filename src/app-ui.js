@@ -445,6 +445,7 @@ App.UI = {
 
       const card = document.createElement("div");
       card.className = "snapshot-card";
+      card.onclick = () => window.compareWithCurrent(snap.id, dateStr);
       card.innerHTML = `
         <div class="snapshot-card-header">
           <div class="snapshot-card-info">
