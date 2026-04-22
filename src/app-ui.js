@@ -577,8 +577,8 @@ App.UI = {
     
     void textEl.offsetWidth;
     
-    // Smooth speed: 10s base + length scaling
-    const duration = Math.max(15, displayStr.length * 0.15);
+    // Slightly faster speed: 10s base + shorter length scaling
+    const duration = Math.max(10, displayStr.length * 0.1);
     textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
 
     container.onclick = () => window.showLiveHistory();
