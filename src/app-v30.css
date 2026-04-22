@@ -379,7 +379,31 @@ body {
 
 @media (min-width: 768px) {
   .inventory-list.preview-layout {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    padding: 24px;
+  }
+
+  /* v3.6.9 Desktop Enhancement: Larger Cards & Text */
+  .item-card.preview-mode {
+    padding: 24px 28px;
+    min-height: 160px;
+    justify-content: space-between;
+  }
+
+  .item-card.preview-mode .item-name {
+    font-size: 1.25rem !important;
+    margin-bottom: 8px;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .item-card.preview-mode .item-result {
+    font-size: 1.05rem !important;
+  }
+
+  .item-card.preview-mode .highlight-total {
+    font-size: 2.4rem !important;
   }
 }
 
