@@ -222,6 +222,16 @@ App.UI = {
 
     bar.appendChild(sortControl);
 
+    // v3.6.7: Display last inventory update time next to sort
+    if (App.State.lastInventoryUpdate) {
+      const timeLabel = document.createElement("div");
+      timeLabel.className = "last-update-hint";
+      const date = new Date(App.State.lastInventoryUpdate);
+      const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      timeLabel.textContent = `Updated: ${timeStr}`;
+      bar.appendChild(timeLabel);
+    }
+
     if (App.UI.isDesktop() || mobileAdminUnlocked) {
       const viewControl = document.createElement("div");
       viewControl.className = "segmented-control";

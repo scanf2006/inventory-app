@@ -301,6 +301,24 @@ body {
   box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3) !important;
 }
 
+.last-update-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-left: 10px;
+  margin-right: auto;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .last-update-hint {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
 /* Summary Grid Mode */
 .inventory-list.summary-mode {
   display: grid;
