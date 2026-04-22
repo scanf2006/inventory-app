@@ -142,19 +142,32 @@ App.Sync = {
         const cloudMessages = cloudData.live_messages || [];
 
         // v3.5.6: Always apply live messages regardless of conflict detection
+        // v3.5.6: Only apply live messages if they have actually changed to avoid ticker flicker
         if (Array.isArray(cloudMessages)) {
-          App.State.liveMessages = cloudMessages;
-          App.UI.renderLiveTicker();
-          localStorage.setItem(App.Config.STORAGE_KEYS.LIVE_MESSAGES, JSON.stringify(App.State.liveMessages));
+          const currentMsgs = JSON.stringify(App.State.liveMessages);
+          const newMsgs = JSON.stringify(cloudMessages);
+          
+          if (currentMsgs !== newMsgs) {
+            console.log("Live messages updated from cloud.");
+            App.State.liveMessages = cloudMessages;
+            App.UI.renderLiveTicker();
+            localStorage.setItem(App.Config.STORAGE_KEYS.LIVE_MESSAGES, newMsgs);
+          }
         }
 
         const cloudTS = cloudData.last_updated_ts || new Date(data.updated_at).getTime();
 
-        if (cloudTS >= lastUpdated) {
+        // 1. Sync Inventory only if cloud is strictly newer
+        if (cloudTS > lastUpdated) {
           App.Sync.handleConflict(cloudData, cloudTS, isSilent);
-        } else if (cloudTS < lastUpdated) {
+        } 
+        // 2. If timestamps match, we might still need to push local changes 
+        // (but we don't re-render everything to avoid "flicker")
+        else if (cloudTS < lastUpdated) {
           App.Sync.push();
-        } else {
+        } 
+        else {
+          // Exactly synced - do nothing, no re-render needed
           App.UI.updateSyncStatus("Synced", true);
         }
       } else {
