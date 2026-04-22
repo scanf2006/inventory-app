@@ -1415,7 +1415,7 @@ hr {
 
   .chart-wrapper {
     position: relative;
-    height: 280px;
+    height: 220px;
     width: 100%;
   }
 
@@ -1543,11 +1543,9 @@ hr {
     display: none !important;
   }
 
-  /* v3.0.32 Chart Wrapper to prevent hover flickering */
   .chart-wrapper {
     position: relative;
-    height: 35vh;
-    min-height: 250px;
+    height: 220px;
     width: 100%;
   }
 
