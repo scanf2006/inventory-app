@@ -412,13 +412,10 @@ App.UI = {
         minute: "2-digit",
       });
       item.innerHTML = `
-        <div class="history-info">
-          <div class="history-product">${App.Utils.escapeHTML(rec.product)}</div>
-          <div class="history-meta">${App.Utils.escapeHTML(
-            rec.category,
-          )} • ${time}</div>
-        </div>
-        <div class="history-value">${rec.value}</div>
+        <span class="history-cat">${App.Utils.escapeHTML(rec.category)}</span>
+        <span class="history-product">[${App.Utils.escapeHTML(rec.product)}]</span>
+        <span class="history-value">${App.Utils.escapeHTML(String(rec.value))}</span>
+        <span class="history-time">${time}</span>
       `;
       container.appendChild(item);
     });
@@ -449,24 +446,16 @@ App.UI = {
       const card = document.createElement("div");
       card.className = "snapshot-card";
       card.innerHTML = `
-        <div class="snap-header">
-          <div class="snap-title">Report ${dateStr}</div>
-          <div class="snap-time">${timeStr}</div>
-        </div>
-        ${
-          snap.note
-            ? `<div class="snap-note">"${App.Utils.escapeHTML(
-                snap.note,
-              )}"</div>`
-            : ""
-        }
-        <div class="snap-actions">
-           <button class="btn-sort" onclick="window.compareWithCurrent('${
-             snap.id
-           }', '${dateStr}')">Compare</button>
-           <button class="btn-delete" onclick="window.deleteSnapshot('${
-             snap.id
-           }')">🗑️</button>
+        <div class="snapshot-card-header">
+          <div class="snapshot-card-info">
+            <span class="snapshot-card-date">${dateStr}</span>
+            <span class="snapshot-card-time">${timeStr}</span>
+            ${snap.note ? `<span class="snapshot-note">${App.Utils.escapeHTML(snap.note)}</span>` : ""}
+          </div>
+          <div class="snapshot-card-actions">
+             <button onclick="window.compareWithCurrent('${snap.id}', '${dateStr}')">Compare</button>
+             <button class="btn-delete" onclick="window.deleteSnapshot('${snap.id}')">🗑️</button>
+          </div>
         </div>
       `;
       container.appendChild(card);
