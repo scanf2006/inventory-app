@@ -6,7 +6,7 @@ window.App = window.App || {};
 
 App.UI = {
   // --- Core UI Helpers ---
-  isDesktop: () => !App.State.isAdmin && window.innerWidth >= 768,
+  isDesktop: () => window.innerWidth >= 768,
 
   updateSyncStatus: (status, isOnline) => {
     const el = document.getElementById("sync-status");
