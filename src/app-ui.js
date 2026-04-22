@@ -222,12 +222,18 @@ App.UI = {
 
     bar.appendChild(sortControl);
 
-    // v3.6.7: Display last inventory update time next to sort
+    // v3.7.0: Display last inventory update time (with date) next to sort
     if (App.State.lastInventoryUpdate) {
       const timeLabel = document.createElement("div");
       timeLabel.className = "last-update-hint";
       const date = new Date(App.State.lastInventoryUpdate);
-      const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const timeStr = date.toLocaleString([], { 
+        month: "2-digit", 
+        day: "2-digit", 
+        hour: "2-digit", 
+        minute: "2-digit",
+        hour12: false
+      });
       timeLabel.textContent = `Updated: ${timeStr}`;
       bar.appendChild(timeLabel);
     }
