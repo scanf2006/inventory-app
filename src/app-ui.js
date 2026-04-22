@@ -329,6 +329,24 @@ App.UI = {
       data.push(total);
     });
 
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)";
+    const fontColor = isDark ? "#EEE" : "#333";
+
+    const bgColors = data.map((val) => {
+      if (val < 100) return "rgba(255, 69, 58, 0.85)"; // Danger Red
+      if (val >= 100 && val < 500) return "rgba(255, 214, 10, 0.85)"; // Warning Yellow
+      if (val >= 1000) return "rgba(48, 209, 88, 0.85)"; // Healthy Green
+      return "rgba(10, 132, 255, 0.85)"; // Default Blue (500-1000)
+    });
+
+    const borderColors = data.map((val) => {
+      if (val < 100) return "#FF453A";
+      if (val >= 100 && val < 500) return "#FFD60A";
+      if (val >= 1000) return "#30D158";
+      return "#0A84FF";
+    });
+
     if (App.State.chartInstance) App.State.chartInstance.destroy();
 
     App.State.chartInstance = new Chart(ctx, {
@@ -339,20 +357,37 @@ App.UI = {
           {
             label: "Inventory Level",
             data,
-            backgroundColor: "rgba(52, 152, 219, 0.6)",
-            borderColor: "rgba(52, 152, 219, 1)",
+            backgroundColor: bgColors,
+            borderColor: borderColors,
             borderWidth: 1,
             borderRadius: 4,
+            hoverBackgroundColor: borderColors
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { 
-          y: { beginAtZero: true },
-          x: { grid: { display: false } }
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: isDark ? "#333" : "#FFF",
+            titleColor: fontColor,
+            bodyColor: fontColor,
+            borderColor: gridColor,
+            borderWidth: 1
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { color: fontColor },
+            grid: { color: gridColor }
+          },
+          x: {
+            ticks: { color: fontColor },
+            grid: { display: false }
+          },
         },
       },
     });
