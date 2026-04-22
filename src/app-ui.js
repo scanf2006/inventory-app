@@ -245,8 +245,7 @@ App.UI = {
       badge = document.createElement("div");
       badge.id = "inventory-count-badge";
       badge.className = "product-count-badge";
-      badge.style =
-        "text-align: center; margin: 15px 0 10px 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; width: 100%;";
+      badge.style = "text-align: center; margin: 15px 0 10px 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; width: 100%;";
       list.parentNode.insertBefore(badge, list);
     }
     badge.innerText = `Products: ${count}`;
@@ -567,9 +566,10 @@ App.UI = {
       return `[${time}] ${m.text}`;
     });
 
+    // v3.6.4: Use manual padding to ensure consistent full-screen travel
+    const screenPadding = " ".repeat(120); 
     const gap = " ".repeat(40);
-    // v3.6.2: Classic Single-Pass - Clear display with natural leading gaps
-    const displayStr = items.join(gap);
+    const displayStr = screenPadding + items.join(gap);
 
     // Force DOM update
     textEl.style.animation = "none";
@@ -577,7 +577,7 @@ App.UI = {
     
     void textEl.offsetWidth;
     
-    // Traditional speed
+    // Smooth readable speed
     const duration = Math.max(12, displayStr.length * 0.12);
     textEl.style.animation = `tickerScrollClassic ${duration}s linear infinite`;
 
