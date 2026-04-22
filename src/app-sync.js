@@ -139,11 +139,19 @@ App.Sync = {
 
       if (data?.data) {
         const cloudData = data.data;
-        // Merge top-level live_messages if available
-        if (data.live_messages) cloudData.live_messages = data.live_messages;
-        
-        const cloudTS =
-          cloudData.last_updated_ts || new Date(data.updated_at).getTime();
+        const topLiveMessages = Array.isArray(data.live_messages) ? data.live_messages : null;
+        const cloudMessages = topLiveMessages || cloudData.live_messages;
+
+        // v3.5.6: Always apply live messages regardless of conflict detection
+        if (cloudMessages && Array.isArray(cloudMessages)) {
+          console.log("Applying Live Messages from cloud immediately.");
+          App.State.liveMessages = cloudMessages;
+          App.UI.renderLiveTicker();
+          // Also persist it so it doesn't get lost
+          localStorage.setItem(App.Config.STORAGE_KEYS.LIVE_MESSAGES, JSON.stringify(App.State.liveMessages));
+        }
+
+        const cloudTS = cloudData.last_updated_ts || new Date(data.updated_at).getTime();
 
         if (cloudTS >= lastUpdated) {
           App.Sync.handleConflict(cloudData, cloudTS, isSilent);
