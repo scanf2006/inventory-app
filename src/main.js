@@ -16,16 +16,13 @@ window.addEventListener('DOMContentLoaded', () => {
 /**
  * Bootstraps the application state and UI
  */
-const initApp = () => {
-  // v3.1.53 Session-based admin unlock
-  App.State.mobileAdminUnlocked = sessionStorage.getItem("admin_unlocked") === "true";
-  if (!App.UI.isDesktop() && !App.State.mobileAdminUnlocked) {
-    App.State.viewMode = "preview";
-  }
+const initApp = async () => {
+  console.log(`Waycred Inventory ${App.Config.VERSION} System initializing...`);
 
   const SK = App.Config.STORAGE_KEYS;
-  
-  // Data Migration (Recovering data from v1.7.x)
+  const load = (key, def) => App.Utils.safeGetJSON(key, def);
+
+  // Data Migration (Recovering data from older versions)
   if (!localStorage.getItem(SK.PRODUCTS) && localStorage.getItem("inventory_products")) {
     localStorage.setItem(SK.PRODUCTS, localStorage.getItem("inventory_products"));
     localStorage.setItem(SK.INVENTORY, localStorage.getItem("inventory_data"));
@@ -33,20 +30,20 @@ const initApp = () => {
     localStorage.setItem(SK.SYNC_ID, localStorage.getItem("inventory_sync_id"));
   }
 
-  // Load State
-  App.State.products = App.Utils.safeGetJSON(SK.PRODUCTS, App.Config.INITIAL_PRODUCTS);
-  App.State.inventory = App.Utils.safeGetJSON(SK.INVENTORY, {});
-  App.State.categoryOrder = App.Utils.safeGetJSON(SK.CATEGORY_ORDER, Object.keys(App.Config.INITIAL_PRODUCTS));
-  App.State.commonOils = App.Utils.safeGetJSON(SK.COMMON_OILS, ["5W20S", "5W20B", "5W30S", "5W30B"]);
+  // Load State from Storage
+  App.State.products = load(SK.PRODUCTS, App.Config.INITIAL_PRODUCTS);
+  App.State.inventory = load(SK.INVENTORY, {});
+  App.State.categoryOrder = load(SK.CATEGORY_ORDER, Object.keys(App.Config.INITIAL_PRODUCTS));
+  App.State.commonOils = load(SK.COMMON_OILS, ["5W20S", "5W20B", "5W30S", "5W30B"]);
   App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED) || "0");
   App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE) || "0");
-  App.State.history = App.Utils.safeGetJSON(SK.RECENT_HISTORY, []);
-  App.State.liveMessages = App.Utils.safeGetJSON(SK.LIVE_MESSAGES, []);
-
+  App.State.history = load(SK.RECENT_HISTORY, []);
+  App.State.liveMessages = load(SK.LIVE_MESSAGES, []);
+  
   const savedId = localStorage.getItem(SK.SYNC_ID);
   App.State.syncId = (savedId === null || savedId === "null" || savedId === "undefined") ? "" : savedId;
 
-  // Key Integrity Fix (v3.0.x Corrupt keys recovery)
+  // Key Integrity Fix
   let hasCorruptKeys = false;
   Object.keys(App.State.inventory).forEach(key => {
     if (key.includes("::")) {
@@ -58,41 +55,29 @@ const initApp = () => {
   });
   if (hasCorruptKeys) localStorage.setItem(SK.INVENTORY, JSON.stringify(App.State.inventory));
 
-  // --- RESTORE DATA FROM STORAGE ---
-  const SK = App.Config.STORAGE_KEYS;
-  const load = (key, def) => App.Utils.safeGetJSON(key, def);
-
-  App.State.products = load(SK.PRODUCTS, App.Config.INITIAL_PRODUCTS);
-  App.State.inventory = load(SK.INVENTORY, {});
-  App.State.categoryOrder = load(SK.CATEGORY_ORDER, Object.keys(App.Config.INITIAL_PRODUCTS));
-  App.State.syncId = localStorage.getItem(SK.SYNC_ID) || "";
-  App.State.commonOils = load(SK.COMMON_OILS, ["5W20S", "5W20B", "5W30S", "5W30B"]);
-  App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED)) || 0;
-  App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE)) || 0;
-  App.State.history = load(SK.RECENT_HISTORY, []);
-  App.State.liveMessages = load(SK.LIVE_MESSAGES, []);
-
-  // Pre-selection Logic
-  if (!App.State.currentCategory && App.State.categoryOrder.length > 0) {
-    App.State.currentCategory = App.State.categoryOrder[0];
-  }
-
-  // Check Admin Lock
+  // Check Admin Lock (Session persistence)
   if (sessionStorage.getItem("admin_unlocked") === "true") {
     App.State.mobileAdminUnlocked = true;
     App.State.viewMode = "edit";
+  } else if (!App.UI.isDesktop()) {
+    App.State.viewMode = "preview";
   }
 
+  // Initialize Services
   App.Sync.init();
   initializeCategory();
 
   // Initial Render
   document.getElementById("current-date").innerText = new Date().toLocaleDateString("en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric"
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   const versionEl = document.getElementById("app-version-display");
-  if (versionEl) versionEl.innerText = `${App.Config.VERSION} Dashboard Edition`;
+  if (versionEl)
+    versionEl.innerText = `${App.Config.VERSION} Dashboard Edition`;
 
   window.updateAdminLoginUI();
   window.updateProductSuggestions();
@@ -103,7 +88,7 @@ const initApp = () => {
   // Cloud Sync Bootstrap
   if (App.Services.supabase && App.State.syncId) {
     App.Sync.pull();
-    
+
     // Auto-Sync Polling
     setInterval(() => {
       if (document.visibilityState === "visible") App.Sync.pull(true);
