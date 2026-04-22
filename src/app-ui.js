@@ -360,7 +360,7 @@ App.UI = {
             backgroundColor: bgColors,
             borderColor: borderColors,
             borderWidth: 1,
-            borderRadius: 4,
+            borderRadius: 6,
             hoverBackgroundColor: borderColors
           },
         ],
@@ -368,6 +368,11 @@ App.UI = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 1200,
+          easing: "easeOutElastic",
+          delay: (context) => context.dataIndex * 100,
+        },
         plugins: { 
           legend: { display: false },
           tooltip: {
