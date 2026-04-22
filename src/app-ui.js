@@ -354,7 +354,11 @@ App.UI = {
 
     const sub = document.getElementById("chart-last-updated");
     if (sub) {
-      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${new Date().toLocaleTimeString()}`;
+      const now = new Date();
+      const timeStr = now.toLocaleString([], { 
+        month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false 
+      });
+      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}`;
     }
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -440,9 +444,12 @@ App.UI = {
     history.forEach((rec) => {
       const item = document.createElement("div");
       item.className = "history-item";
-      const time = new Date(rec.timestamp).toLocaleTimeString([], {
+      const time = new Date(rec.timestamp).toLocaleString([], {
+        month: "2-digit",
+        day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false
       });
       item.innerHTML = `
         <span class="history-cat">${App.Utils.escapeHTML(rec.category)}</span>
