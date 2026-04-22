@@ -93,8 +93,9 @@ App.Sync = {
             last_updated_ts: lastUpdated,
             last_inventory_update_ts: lastInventoryUpdate,
             recent_history: history,
-            live_messages: liveMessages,
+            live_messages: liveMessages, // Keep duplicate in JSON for backup
           },
+          live_messages: liveMessages, // Top-level field for high-speed sync
           updated_at: new Date().toISOString(),
         },
         { onConflict: "sync_id" },
@@ -122,7 +123,7 @@ App.Sync = {
     try {
       const { data, error } = await supabase
         .from("app_sync")
-        .select("data, updated_at")
+        .select("data, live_messages, updated_at")
         .eq("sync_id", syncId)
         .single();
 
@@ -133,6 +134,9 @@ App.Sync = {
 
       if (data?.data) {
         const cloudData = data.data;
+        // Merge top-level live_messages if available
+        if (data.live_messages) cloudData.live_messages = data.live_messages;
+        
         const cloudTS =
           cloudData.last_updated_ts || new Date(data.updated_at).getTime();
 
