@@ -394,7 +394,7 @@ App.UI = {
   },
 
   renderRecentUpdates: () => {
-    const container = document.getElementById("recent-updates-list");
+    const container = document.getElementById("recent-history-list");
     if (!container) return;
     container.innerHTML = "";
 

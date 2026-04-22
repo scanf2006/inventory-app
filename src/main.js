@@ -74,6 +74,7 @@ const initApp = () => {
   window.updateProductSuggestions();
   App.UI.renderTabs();
   App.UI.renderInventory();
+  App.UI.renderRecentUpdates();
 
   // Cloud Sync Bootstrap
   if (App.Services.supabase && App.State.syncId) {

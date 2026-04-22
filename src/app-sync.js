@@ -220,7 +220,9 @@ App.Sync = {
     App.UI.renderTabs();
     App.UI.renderInventory();
     App.UI.renderManageUI();
+    App.UI.renderRecentUpdates();
     App.UI.renderLiveTicker();
+    if (App.UI.isDesktop()) App.Sync.loadSnapshots();
 
     if (!isSilent) App.UI.showToast("Sync: Cloud state loaded", "success");
     App.UI.updateSyncStatus("Synced", true);
@@ -284,8 +286,7 @@ App.Sync = {
         .limit(10);
 
       if (error) throw error;
-      if (typeof window.renderSnapshots === "function")
-        window.renderSnapshots(data || []);
+      App.UI.renderSnapshots(data || []);
     } catch (e) {
       console.error("Load snapshots error:", e);
     }
