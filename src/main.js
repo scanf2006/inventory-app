@@ -467,11 +467,20 @@ window.sendLiveMessage = () => {
   if (!msg) return;
 
   App.UI.confirm(`Broadcast message: "${msg}"?`, () => {
-    const combined = [msg, ...(App.State.liveMessages || [])].slice(0, 10);
-    App.State.liveMessages = combined;
+    const newMessage = {
+      ts: Date.now(),
+      text: msg,
+    };
+    
+    // Maintain a list of max 10 recent messages
+    const currentMessages = Array.isArray(App.State.liveMessages) ? App.State.liveMessages : [];
+    App.State.liveMessages = [newMessage, ...currentMessages].slice(0, 10);
+    
     input.value = "";
-    window.saveToStorageImmediate(true);
-    App.Sync.push();
+    
+    // Important: Force a timestamp update to trigger real-time pull on other devices
+    window.saveToStorage(true); 
+    
     App.UI.showToast("Broadcast Success!", "success");
     App.UI.renderLiveTicker();
   });

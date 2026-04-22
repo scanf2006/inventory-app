@@ -543,9 +543,12 @@ App.UI = {
     const textEl = document.getElementById("live-ticker-text");
     if (!container || !textEl) return;
 
-    const messages = (App.State.liveMessages || []).filter(
-      (m) => Date.now() - m.ts <= 24 * 60 * 60 * 1000,
-    );
+    // Filter messages from last 24h
+    const now = Date.now();
+    const messages = (App.State.liveMessages || []).filter((m) => {
+      const ts = typeof m === "object" ? m.ts : now;
+      return now - ts <= 24 * 60 * 60 * 1000;
+    });
 
     if (messages.length === 0) {
       container.classList.add("hidden");
@@ -554,7 +557,8 @@ App.UI = {
 
     container.classList.remove("hidden");
 
-    const scrollItems = messages.map((m) => {
+    // Format display string
+    const items = messages.map((m) => {
       if (typeof m === "string") return m;
       const time = new Date(m.ts).toLocaleTimeString([], {
         hour: "2-digit",
@@ -563,20 +567,24 @@ App.UI = {
       return `[${time}] ${m.text}`;
     });
 
-    let displayStr = scrollItems.join(" ".repeat(40));
-    if (scrollItems.length < 3) {
-      displayStr = `${displayStr}${" ".repeat(40)}${displayStr}${" ".repeat(
-        40,
-      )}${displayStr}`;
+    const gap = " ".repeat(40);
+    let displayStr = items.join(gap);
+    // Ensure enough length for continuous scrolling
+    if (items.length < 3) {
+      displayStr = `${displayStr}${gap}${displayStr}${gap}${displayStr}`;
     }
 
-    if (textEl.innerText !== displayStr) {
-      textEl.innerText = displayStr;
-      textEl.style.animation = "none";
-      void textEl.offsetWidth;
-      const duration = Math.max(10, displayStr.length * 0.2);
-      textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
-    }
+    // Force DOM update (移除判断，直接覆盖)
+    textEl.style.animation = "none";
+    textEl.innerText = displayStr;
+    
+    // Trigger reflow to restart animation
+    void textEl.offsetWidth;
+    
+    // Dynamic speed based on length
+    const speed = App.UI.isDesktop() ? 0.15 : 0.25;
+    const duration = Math.max(12, displayStr.length * speed);
+    textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
 
     container.onclick = () => window.showLiveHistory();
   },
