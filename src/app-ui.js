@@ -490,7 +490,6 @@ App.UI = {
             ${snap.note ? `<span class="snapshot-note">${App.Utils.escapeHTML(snap.note)}</span>` : ""}
           </div>
           <div class="snapshot-card-actions">
-             <button class="compare-snap-btn">Compare</button>
              <button class="delete-snap-btn">🗑️</button>
           </div>
         </div>
@@ -501,11 +500,6 @@ App.UI = {
         e.stopPropagation();
         const n = prompt("Enter new note:", snap.note || "");
         if (n !== null && n !== snap.note) window.editSnapshotNote(snap.id, n.trim());
-      };
-
-      card.querySelector(".compare-snap-btn").onclick = (e) => {
-        e.stopPropagation();
-        window.compareWithCurrent(snap.id, dateStr);
       };
 
       card.querySelector(".delete-snap-btn").onclick = (e) => {
