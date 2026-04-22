@@ -569,7 +569,7 @@ App.UI = {
   },
 
   renderCommonOilsCheckboxes: () => {
-    const container = document.getElementById("common-oils-config");
+    const container = document.getElementById("common-oils-checkbox-list");
     if (!container) return;
     container.innerHTML = "";
 

@@ -451,7 +451,7 @@ window.hideQuickAddForm = () => {
 // --- SNAPSHOT ACTIONS ---
 
 window.sendLiveMessage = () => {
-  const input = document.getElementById("live-message-input");
+  const input = document.getElementById("live-msg-input");
   const msg = input?.value.trim();
   if (!msg) return;
 
