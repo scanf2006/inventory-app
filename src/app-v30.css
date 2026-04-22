@@ -699,14 +699,32 @@ body {
 
 /* Ultra-Modern Footer */
 .app-footer {
-  padding: 20px 24px;
+  padding: 10px 24px;
   background: var(--glass-header);
   backdrop-filter: var(--glass-filter);
   -webkit-backdrop-filter: var(--glass-filter);
   display: flex;
   gap: 12px;
-  padding-bottom: calc(24px + var(--safe-area-inset-bottom));
+  padding-bottom: calc(10px + var(--safe-area-inset-bottom));
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+  transition: transform 0.4s var(--smooth-ease), opacity 0.3s ease;
+}
+
+/* Auto-hide logic for Laptop/Desktop (v3.6.8) */
+@media (min-width: 768px) {
+  .app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transform: translateY(calc(100% - 10px)); /* Peak 10px as guide */
+    opacity: 0.9;
+  }
+  .app-footer:hover {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .primary-btn {
@@ -714,10 +732,10 @@ body {
   background: var(--accent-gold);
   color: #000;
   border: none;
-  padding: 20px;
+  padding: 14px 20px;
   border-radius: var(--br-button);
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   box-shadow: 0 8px 25px -5px rgba(255, 214, 10, 0.5);
@@ -729,7 +747,7 @@ body {
   background: rgba(255, 255, 255, 0.12);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 20px;
+  padding: 14px 20px;
   border-radius: var(--br-button);
   font-weight: 700;
   font-size: 0.95rem;
