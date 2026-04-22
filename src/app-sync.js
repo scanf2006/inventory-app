@@ -133,20 +133,18 @@ App.Sync = {
 
       if (error && error.code !== "PGRST116") {
         console.error("Cloud pull error:", error);
+        App.UI.updateSyncStatus("Sync Error", false);
         return;
       }
 
       if (data?.data) {
         const cloudData = data.data;
-        const topLiveMessages = Array.isArray(data.live_messages) ? data.live_messages : null;
-        const cloudMessages = topLiveMessages || cloudData.live_messages;
+        const cloudMessages = cloudData.live_messages || [];
 
         // v3.5.6: Always apply live messages regardless of conflict detection
-        if (cloudMessages && Array.isArray(cloudMessages)) {
-          console.log("Applying Live Messages from cloud immediately.");
+        if (Array.isArray(cloudMessages)) {
           App.State.liveMessages = cloudMessages;
           App.UI.renderLiveTicker();
-          // Also persist it so it doesn't get lost
           localStorage.setItem(App.Config.STORAGE_KEYS.LIVE_MESSAGES, JSON.stringify(App.State.liveMessages));
         }
 
@@ -159,9 +157,13 @@ App.Sync = {
         } else {
           App.UI.updateSyncStatus("Synced", true);
         }
+      } else {
+          // No cloud data yet
+          App.UI.updateSyncStatus("Synced", true);
       }
     } catch (e) {
       console.error("Cloud pull exception:", e);
+      App.UI.updateSyncStatus("Sync Failed", false);
     }
   },
 
