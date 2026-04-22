@@ -568,10 +568,8 @@ App.UI = {
     });
 
     const gap = " ".repeat(40);
-    const singleSet = items.join(gap) + gap;
-    // v3.6.1: High-density repeat (10x) to ensure container is always full of text
-    // This removes the "stutter/reset" gap even on large ultrawide screens.
-    const displayStr = singleSet.repeat(10);
+    // v3.6.2: Classic Single-Pass - Clear display with natural leading gaps
+    const displayStr = items.join(gap);
 
     // Force DOM update
     textEl.style.animation = "none";
@@ -579,10 +577,9 @@ App.UI = {
     
     void textEl.offsetWidth;
     
-    // Turbo Speed: 0.065 factor for elite responsiveness
-    const duration = Math.max(8, displayStr.length * 0.065);
-    // Align animation with repeat factor: move 1/10th of distance to loop back to start of sequence
-    textEl.style.animation = `tickerScrollTurbo ${duration}s linear infinite`;
+    // Traditional speed
+    const duration = Math.max(12, displayStr.length * 0.12);
+    textEl.style.animation = `tickerScrollClassic ${duration}s linear infinite`;
 
     container.onclick = () => window.showLiveHistory();
   },
