@@ -445,20 +445,74 @@ App.UI = {
 
       const card = document.createElement("div");
       card.className = "snapshot-card";
-      card.onclick = () => window.compareWithCurrent(snap.id, dateStr);
+      
+      // Legacy Expand/Collapse Logic
+      card.onclick = (e) => {
+        const detail = card.querySelector(".snapshot-detail");
+        if (detail) {
+          detail.classList.toggle("hidden");
+          return;
+        }
+
+        // Generate Details
+        const detailDiv = document.createElement("div");
+        detailDiv.className = "snapshot-detail";
+        const data = snap.snapshot_data || {};
+        
+        const orderedCats = (App.State.categoryOrder || []).concat(
+          Object.keys(data).filter(c => !App.State.categoryOrder?.includes(c))
+        );
+
+        let html = "";
+        orderedCats.forEach((cat) => {
+          const items = data[cat] || {};
+          const itemKeys = Object.keys(items).filter(k => items[k] > 0);
+          if (itemKeys.length === 0) return;
+
+          html += `<div class="snapshot-cat-label">${App.Utils.escapeHTML(cat)}</div>`;
+          html += `<div class="snapshot-items-grid">`;
+          itemKeys.forEach((p) => {
+            html += `<span class="snapshot-item">${App.Utils.escapeHTML(p)}: <b>${items[p]}</b></span>`;
+          });
+          html += `</div>`;
+        });
+        
+        detailDiv.innerHTML = html;
+        card.appendChild(detailDiv);
+      };
+
       card.innerHTML = `
         <div class="snapshot-card-header">
-          <div class="snapshot-card-info">
+          <div class="snapshot-card-info" style="display: flex; align-items: center; gap: 8px;">
+            <button class="edit-snap-btn" style="background:none; border:none; padding:0; cursor:pointer;">✏️</button>
             <span class="snapshot-card-date">${dateStr}</span>
             <span class="snapshot-card-time">${timeStr}</span>
             ${snap.note ? `<span class="snapshot-note">${App.Utils.escapeHTML(snap.note)}</span>` : ""}
           </div>
           <div class="snapshot-card-actions">
-             <button onclick="window.compareWithCurrent('${snap.id}', '${dateStr}')">Compare</button>
-             <button class="btn-delete" onclick="window.deleteSnapshot('${snap.id}')">🗑️</button>
+             <button class="compare-snap-btn">Compare</button>
+             <button class="delete-snap-btn">🗑️</button>
           </div>
         </div>
       `;
+
+      // Event Listeners for sub-buttons
+      card.querySelector(".edit-snap-btn").onclick = (e) => {
+        e.stopPropagation();
+        const n = prompt("Enter new note:", snap.note || "");
+        if (n !== null && n !== snap.note) window.editSnapshotNote(snap.id, n.trim());
+      };
+
+      card.querySelector(".compare-snap-btn").onclick = (e) => {
+        e.stopPropagation();
+        window.compareWithCurrent(snap.id, dateStr);
+      };
+
+      card.querySelector(".delete-snap-btn").onclick = (e) => {
+        e.stopPropagation();
+        window.deleteSnapshot(snap.id);
+      };
+
       container.appendChild(card);
     });
   },

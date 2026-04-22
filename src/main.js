@@ -550,6 +550,22 @@ window.deleteSnapshot = async (id) => {
   });
 };
 
+window.editSnapshotNote = async (id, newNote) => {
+  if (!App.Services.supabase || !App.State.syncId) return;
+  try {
+    const { error } = await App.Services.supabase
+      .from("inventory_snapshots")
+      .update({ note: newNote })
+      .eq("id", id)
+      .eq("sync_id", App.State.syncId);
+    if (error) throw error;
+    App.UI.showToast("Note updated", "success");
+    App.Sync.loadSnapshots();
+  } catch (err) {
+    App.UI.showToast("Failed to update note", "error");
+  }
+};
+
 // --- MISC OVERRIDES ---
 
 (function initAdminTrigger() {
