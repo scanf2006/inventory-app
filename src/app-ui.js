@@ -554,9 +554,8 @@ App.UI = {
 
     container.classList.remove("hidden");
 
-    // Compatibility: Handle both object {ts, text} and legacy strings
     const scrollItems = messages.map((m) => {
-      if (typeof m === 'string') return m;
+      if (typeof m === "string") return m;
       const time = new Date(m.ts).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -566,64 +565,40 @@ App.UI = {
 
     let displayStr = scrollItems.join(" ".repeat(40));
     if (scrollItems.length < 3) {
-      displayStr = `${displayStr}${" ".repeat(40)}${displayStr}${" ".repeat(40)}${displayStr}`;
+      displayStr = `${displayStr}${" ".repeat(40)}${displayStr}${" ".repeat(
+        40,
+      )}${displayStr}`;
     }
 
     if (textEl.innerText !== displayStr) {
       textEl.innerText = displayStr;
       textEl.style.animation = "none";
-      void textEl.offsetWidth; // Trigger reflow
+      void textEl.offsetWidth;
       const duration = Math.max(10, displayStr.length * 0.2);
       textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
     }
 
     container.onclick = () => window.showLiveHistory();
   },
-};
 
-window.showLiveHistory = () => {
-  const msgs = App.State.liveMessages || [];
-  if (msgs.length === 0) return;
-
-  let html = "<div class='live-history-content'>";
-  [...msgs].sort((a,b) => (b.ts || 0) - (a.ts || 0)).forEach(m => {
-    const text = typeof m === 'string' ? m : m.text;
-    const ts = typeof m === 'string' ? Date.now() : m.ts;
-    const time = new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    html += `
-      <div class="history-card">
-        <div class="history-card-time">${time}</div>
-        <div class="history-card-text">${App.Utils.escapeHTML(text)}</div>
-      </div>
-    `;
-  });
-  html += "</div>";
-
-  App.UI.confirm(html, null, null, {
-    confirmText: "Close",
-    hideCancel: true
-  });
-};
-
-App.UI.renderComparisonError = (msg) => {
+  renderComparisonError: (msg) => {
     const el = document.getElementById("snapshot-compare-view");
     if (el) el.innerHTML = `<div class="snapshot-empty">${msg}</div>`;
-  };
+  },
 
-  App.UI.renderComparison = (oldSnap, newSnap, label) => {
+  renderComparison: (oldSnap, newSnap, label) => {
     const el = document.getElementById("snapshot-compare-view");
     if (!el) return;
 
     const fmt = (d) =>
-      new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      new Date(d).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
     const oldData = oldSnap.snapshot_data || {};
     const newData = newSnap.snapshot_data || {};
 
-    const allCats = new Set([
-      ...Object.keys(oldData),
-      ...Object.keys(newData),
-    ]);
+    const allCats = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
     const orderedCats = (App.State.categoryOrder || [])
       .concat([...allCats].filter((c) => !App.State.categoryOrder?.includes(c)))
       .filter((c) => allCats.has(c));
@@ -632,8 +607,8 @@ App.UI.renderComparisonError = (msg) => {
       <div class="compare-header">
         <span class="compare-label">${label} Comparison</span>
         <span class="compare-range">${fmt(oldSnap.created_at)} ➡️ ${fmt(
-          newSnap.created_at,
-        )}</span>
+      newSnap.created_at,
+    )}</span>
       </div>
     `;
 
@@ -718,4 +693,34 @@ App.UI.renderComparisonError = (msg) => {
       container.appendChild(el);
     });
   },
+};
+
+window.showLiveHistory = () => {
+  const msgs = App.State.liveMessages || [];
+  if (msgs.length === 0) return;
+
+  let html = "<div class='live-history-content'>";
+  [...msgs]
+    .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+    .forEach((m) => {
+      const text = typeof m === "string" ? m : m.text;
+      const ts = typeof m === "string" ? Date.now() : m.ts;
+      const time = new Date(ts).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      html += `
+      <div class="history-card">
+        <div class="history-card-time">${time}</div>
+        <div class="history-card-text">${App.Utils.escapeHTML(text)}</div>
+      </div>
+    `;
+    });
+  html += "</div>";
+
+  App.UI.confirm(html, null, null, {
+    confirmText: "Close",
+    hideCancel: true,
+  });
 };
