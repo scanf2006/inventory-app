@@ -1539,11 +1539,11 @@ hr {
     color: var(--text-main);
     font-weight: 600;
     white-space: pre;
-    animation: tickerScrollClassic 18s linear infinite;
+    animation: tickerScrollClassicFinal 18s linear infinite;
   }
-  @keyframes tickerScrollClassic {
+  @keyframes tickerScrollClassicFinal {
     0% {
-      transform: translateX(0);
+      transform: translateX(100vw);
     }
     100% {
       transform: translateX(-100%);

@@ -566,10 +566,8 @@ App.UI = {
       return `[${time}] ${m.text}`;
     });
 
-    // v3.6.4: Use manual padding to ensure consistent full-screen travel
-    const screenPadding = " ".repeat(120); 
     const gap = " ".repeat(40);
-    const displayStr = screenPadding + items.join(gap);
+    const displayStr = items.join(gap);
 
     // Force DOM update
     textEl.style.animation = "none";
@@ -577,9 +575,10 @@ App.UI = {
     
     void textEl.offsetWidth;
     
-    // Smooth readable speed
-    const duration = Math.max(12, displayStr.length * 0.12);
-    textEl.style.animation = `tickerScrollClassic ${duration}s linear infinite`;
+    // Calculate duration based on total travel distance (Screen + Text)
+    // Approx text length in pixels + screen width
+    const duration = Math.max(12, displayStr.length * 0.12 + 8);
+    textEl.style.animation = `tickerScrollClassicFinal ${duration}s linear infinite`;
 
     container.onclick = () => window.showLiveHistory();
   },
