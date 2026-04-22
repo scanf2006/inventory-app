@@ -568,8 +568,10 @@ App.UI = {
     });
 
     const gap = " ".repeat(40);
-    // v3.5.9: Seamless loop - double the content and scroll half distance
-    const displayStr = `${items.join(gap)}${gap}${items.join(gap)}${gap}`;
+    const singleSet = items.join(gap) + gap;
+    // v3.6.1: High-density repeat (10x) to ensure container is always full of text
+    // This removes the "stutter/reset" gap even on large ultrawide screens.
+    const displayStr = singleSet.repeat(10);
 
     // Force DOM update
     textEl.style.animation = "none";
@@ -577,9 +579,10 @@ App.UI = {
     
     void textEl.offsetWidth;
     
-    // Slightly faster speed: 10s base + shorter length scaling
-    const duration = Math.max(10, displayStr.length * 0.1);
-    textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
+    // Turbo Speed: 0.065 factor for elite responsiveness
+    const duration = Math.max(8, displayStr.length * 0.065);
+    // Align animation with repeat factor: move 1/10th of distance to loop back to start of sequence
+    textEl.style.animation = `tickerScrollTurbo ${duration}s linear infinite`;
 
     container.onclick = () => window.showLiveHistory();
   },
