@@ -481,31 +481,40 @@ App.UI = {
         card.appendChild(detailDiv);
       };
 
+      const noteHTML = snap.note
+        ? `<span class="snapshot-note">${App.Utils.escapeHTML(snap.note)}</span>`
+        : "";
+
       card.innerHTML = `
-        <div class="snapshot-card-header">
-          <div class="snapshot-card-info" style="display: flex; align-items: center; gap: 8px;">
-            <button class="edit-snap-btn" style="background:none; border:none; padding:0; cursor:pointer;">✏️</button>
-            <span class="snapshot-card-date">${dateStr}</span>
-            <span class="snapshot-card-time">${timeStr}</span>
-            ${snap.note ? `<span class="snapshot-note">${App.Utils.escapeHTML(snap.note)}</span>` : ""}
+        <div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center;">
+            <button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">✏️</button>
+            <span class="snapshot-time">${dateStr}</span>
+            ${noteHTML}
           </div>
-          <div class="snapshot-card-actions">
-             <button class="delete-snap-btn">🗑️</button>
+          <div>
+            <button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>
           </div>
         </div>
       `;
 
       // Event Listeners for sub-buttons
-      card.querySelector(".edit-snap-btn").onclick = (e) => {
-        e.stopPropagation();
-        const n = prompt("Enter new note:", snap.note || "");
-        if (n !== null && n !== snap.note) window.editSnapshotNote(snap.id, n.trim());
-      };
+      const editBtn = card.querySelector(".edit-snapshot-btn");
+      if (editBtn) {
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          const n = prompt("Enter new note:", snap.note || "");
+          if (n !== null && n !== snap.note) window.editSnapshotNote(snap.id, n.trim());
+        };
+      }
 
-      card.querySelector(".delete-snap-btn").onclick = (e) => {
-        e.stopPropagation();
-        window.deleteSnapshot(snap.id);
-      };
+      const deleteBtn = card.querySelector(".delete-snapshot-btn");
+      if (deleteBtn) {
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.deleteSnapshot(snap.id);
+        };
+      }
 
       container.appendChild(card);
     });
