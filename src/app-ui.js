@@ -539,20 +539,45 @@ App.UI = {
   },
 
   renderLiveTicker: () => {
-    const ticker = document.getElementById("live-ticker-track");
-    if (!ticker) return;
+    const container = document.getElementById("live-ticker-container");
+    const textEl = document.getElementById("live-ticker-text");
+    if (!container || !textEl) return;
 
-    const messages = App.State.liveMessages || [];
+    const messages = (App.State.liveMessages || []).filter(
+      (m) => Date.now() - m.ts <= 24 * 60 * 60 * 1000,
+    );
+
     if (messages.length === 0) {
-      ticker.innerHTML = "<span>No live messages...</span>";
+      container.classList.add("hidden");
       return;
     }
 
-    ticker.innerHTML = "";
-    const content = messages
-      .map((m) => `<span>${App.Utils.escapeHTML(m)}</span>`)
-      .join(" • ");
-    ticker.innerHTML = `${content} • ${content}`;
+    container.classList.remove("hidden");
+
+    // v3.1.40 Multi-message Scrolling String
+    const scrollItems = messages.map((m) => {
+      const time = new Date(m.ts).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `[${time}] ${m.text}`;
+    });
+
+    let displayStr = scrollItems.join(" ".repeat(50));
+    if (scrollItems.length < 3) {
+      displayStr = `${displayStr}${" ".repeat(50)}${displayStr}${" ".repeat(50)}${displayStr}`;
+    }
+
+    if (textEl.innerText !== displayStr) {
+      textEl.innerText = displayStr;
+      textEl.style.animation = "none";
+      void textEl.offsetWidth; // Trigger reflow
+      const duration = Math.max(12, displayStr.length * 0.15);
+      textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
+    }
+
+    // Click to show history modal
+    container.onclick = () => window.showLiveHistory();
   },
 
   renderComparisonError: (msg) => {
