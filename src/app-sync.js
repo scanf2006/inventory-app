@@ -29,10 +29,15 @@ App.Sync = {
     const { syncId } = App.State;
     if (!supabase || !syncId) return;
 
-    console.log("Setting up Supabase real-time subscriptions...");
+    // v3.5.5: Cleanup existing channels first to avoid ghost listeners
+    if (App.Services.realtimeChannel) {
+        supabase.removeChannel(App.Services.realtimeChannel);
+    }
 
-    supabase
-      .channel(`custom-all-channel-${syncId}`)
+    console.log(`Setting up Supabase real-time for ID: ${syncId}`);
+
+    App.Services.realtimeChannel = supabase
+      .channel(`sync-channel-${syncId}`)
       .on(
         "postgres_changes",
         {
@@ -42,7 +47,7 @@ App.Sync = {
           filter: `sync_id=eq.${syncId}`,
         },
         () => {
-          console.log("Real-time update received for app_sync!");
+          console.log("Cloud update detected via real-time!");
           App.Sync.pull(true);
         },
       )
@@ -61,9 +66,9 @@ App.Sync = {
             window.loadSnapshots();
         },
       )
-      .subscribe((status) =>
-        console.log("Supabase subscription status:", status),
-      );
+      .subscribe((status) => {
+          console.log(`Real-time Status: ${status}`);
+      });
   },
 
   // Push local state to cloud

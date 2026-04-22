@@ -157,7 +157,9 @@ const setupEventListeners = () => {
     const id = document.getElementById("sync-id-input")?.value.trim() || "";
     if (id) {
       App.State.syncId = id;
+      localStorage.setItem(App.Config.STORAGE_KEYS.SYNC_ID, id);
       App.State.lastUpdated = 0; // Ensure cloud wins
+      App.Sync.setupRealtime(); // Critical Fix: Restart listener with new ID
       App.Sync.pull();
     } else {
       App.UI.showToast("Please enter a Sync ID.", "info");
