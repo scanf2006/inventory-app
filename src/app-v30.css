@@ -1740,10 +1740,10 @@ hr {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    padding: 6px 14px;
+    padding: 3px 12px;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   .snapshot-card:hover {

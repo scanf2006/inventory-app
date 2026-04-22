@@ -526,14 +526,14 @@ App.UI = {
         : "";
 
       card.innerHTML = `
-        <div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center; min-height: 24px;">
           <div style="display: flex; align-items: center;">
-            <button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #007aff; padding: 4px; margin-right: 8px;">✏️</button>
+            <button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 0.9rem; cursor: pointer; color: #007aff; padding: 2px; margin-right: 6px;">✏️</button>
             <span class="snapshot-time">${dateStr}</span>
             ${noteHTML}
           </div>
           <div>
-            <button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #ff3b30; padding: 4px; margin-left: 10px;">🗑️</button>
+            <button class="delete-snapshot-btn" title="Delete Record" style="background: none; border: none; font-size: 0.9rem; cursor: pointer; color: #ff3b30; padding: 2px; margin-left: 8px;">🗑️</button>
           </div>
         </div>
       `;
