@@ -58,7 +58,31 @@ const initApp = () => {
   });
   if (hasCorruptKeys) localStorage.setItem(SK.INVENTORY, JSON.stringify(App.State.inventory));
 
-  // Initialize Services
+  // --- RESTORE DATA FROM STORAGE ---
+  const SK = App.Config.STORAGE_KEYS;
+  const load = (key, def) => App.Utils.safeGetJSON(key, def);
+
+  App.State.products = load(SK.PRODUCTS, App.Config.INITIAL_PRODUCTS);
+  App.State.inventory = load(SK.INVENTORY, {});
+  App.State.categoryOrder = load(SK.CATEGORY_ORDER, Object.keys(App.Config.INITIAL_PRODUCTS));
+  App.State.syncId = localStorage.getItem(SK.SYNC_ID) || "";
+  App.State.commonOils = load(SK.COMMON_OILS, ["5W20S", "5W20B", "5W30S", "5W30B"]);
+  App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED)) || 0;
+  App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE)) || 0;
+  App.State.history = load(SK.RECENT_HISTORY, []);
+  App.State.liveMessages = load(SK.LIVE_MESSAGES, []);
+
+  // Pre-selection Logic
+  if (!App.State.currentCategory && App.State.categoryOrder.length > 0) {
+    App.State.currentCategory = App.State.categoryOrder[0];
+  }
+
+  // Check Admin Lock
+  if (sessionStorage.getItem("admin_unlocked") === "true") {
+    App.State.mobileAdminUnlocked = true;
+    App.State.viewMode = "edit";
+  }
+
   App.Sync.init();
   initializeCategory();
 
@@ -181,7 +205,8 @@ const setupEventListeners = () => {
 // --- CORE LOGIC ---
 
 window.initializeCategory = () => {
-  const currentCats = Object.keys(App.State.products);
+  const products = App.State.products || App.Config.INITIAL_PRODUCTS;
+  const currentCats = Object.keys(products);
   const order = App.State.categoryOrder || [];
   App.State.categoryOrder = order.filter(c => currentCats.includes(c));
   currentCats.forEach(c => {
