@@ -140,7 +140,7 @@ App.Sync = {
         const cloudTS =
           cloudData.last_updated_ts || new Date(data.updated_at).getTime();
 
-        if (cloudTS > lastUpdated) {
+        if (cloudTS >= lastUpdated) {
           App.Sync.handleConflict(cloudData, cloudTS, isSilent);
         } else if (cloudTS < lastUpdated) {
           App.Sync.push();
@@ -214,7 +214,10 @@ App.Sync = {
     App.State.lastInventoryUpdate =
       cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
     App.State.history = cloudData.recent_history || App.State.history;
-    App.State.liveMessages = cloudData.live_messages || App.State.liveMessages;
+    // Live Messages are high-priority and bypass strict timestamp checks
+    if (cloudData.live_messages && Array.isArray(cloudData.live_messages)) {
+      App.State.liveMessages = cloudData.live_messages;
+    }
 
     // These trigger global re-renders in main.js
     if (typeof window.saveToStorageImmediate === "function")
