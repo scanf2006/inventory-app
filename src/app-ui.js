@@ -277,32 +277,40 @@ App.UI = {
     (App.State.categoryOrder || []).forEach((cat, idx) => {
       const li = document.createElement("li");
       li.className = "manage-item";
+      li.style = "display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(0,0,0,0.03); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color);";
 
       const catSpan = document.createElement("span");
       catSpan.className = "category-name";
-      catSpan.style.cursor = "pointer";
+      catSpan.style = "font-weight: 500; font-size: 0.95rem; cursor: pointer;";
       catSpan.textContent = cat;
       catSpan.onclick = () => window.editCategory(cat);
 
       const actions = document.createElement("div");
       actions.className = "category-actions";
+      actions.style = "display: flex; gap: 8px;";
 
       const upBtn = document.createElement("button");
       upBtn.className = "btn-sort";
-      upBtn.textContent = "▲";
-      upBtn.disabled = idx === 0;
-      upBtn.onclick = () => window.moveCategory(idx, -1);
+      upBtn.innerHTML = "🔼";
+      if (idx === 0) {
+        upBtn.disabled = true;
+        upBtn.style.opacity = "0.3";
+      }
+      upBtn.onclick = (e) => { e.stopPropagation(); window.moveCategory(idx, -1); };
 
       const downBtn = document.createElement("button");
       downBtn.className = "btn-sort";
-      downBtn.textContent = "▼";
-      downBtn.disabled = idx === App.State.categoryOrder.length - 1;
-      downBtn.onclick = () => window.moveCategory(idx, 1);
+      downBtn.innerHTML = "🔽";
+      if (idx === App.State.categoryOrder.length - 1) {
+        downBtn.disabled = true;
+        downBtn.style.opacity = "0.3";
+      }
+      downBtn.onclick = (e) => { e.stopPropagation(); window.moveCategory(idx, 1); };
 
       const delBtn = document.createElement("button");
       delBtn.className = "btn-delete";
-      delBtn.textContent = "🗑️";
-      delBtn.onclick = () => window.removeCategory(cat);
+      delBtn.innerHTML = "🗑️";
+      delBtn.onclick = (e) => { e.stopPropagation(); window.removeCategory(cat); };
 
       actions.append(upBtn, downBtn, delBtn);
       li.append(catSpan, actions);
