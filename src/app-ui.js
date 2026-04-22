@@ -366,17 +366,17 @@ App.UI = {
     const fontColor = isDark ? "#EEE" : "#333";
 
     const bgColors = data.map((val) => {
-      if (val < 100) return "rgba(255, 69, 58, 0.85)"; // Danger Red
-      if (val >= 100 && val < 500) return "rgba(255, 214, 10, 0.85)"; // Warning Yellow
-      if (val >= 1000) return "rgba(48, 209, 88, 0.85)"; // Healthy Green
-      return "rgba(10, 132, 255, 0.85)"; // Default Blue (500-1000)
+      if (val < 100) return "rgba(255, 69, 58, 0.85)"; // System Red
+      if (val >= 100 && val < 500) return "rgba(255, 214, 10, 0.85)"; // System Gold
+      if (val >= 1000) return "rgba(40, 167, 69, 0.85)"; // Vibrant Green (Healthy)
+      return "rgba(10, 83, 190, 0.85)"; // Brand Blue (#0a53be) (500-1000)
     });
 
     const borderColors = data.map((val) => {
       if (val < 100) return "#FF453A";
       if (val >= 100 && val < 500) return "#FFD60A";
-      if (val >= 1000) return "#30D158";
-      return "#0A84FF";
+      if (val >= 1000) return "#28A745";
+      return "#0A53BE"; // Matches brand identity
     });
 
     if (App.State.chartInstance) App.State.chartInstance.destroy();
