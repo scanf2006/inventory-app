@@ -329,6 +329,11 @@ App.UI = {
       data.push(total);
     });
 
+    const sub = document.getElementById("chart-last-updated");
+    if (sub) {
+      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${new Date().toLocaleTimeString()}`;
+    }
+
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)";
     const fontColor = isDark ? "#EEE" : "#333";
