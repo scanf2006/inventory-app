@@ -568,22 +568,17 @@ App.UI = {
     });
 
     const gap = " ".repeat(40);
-    let displayStr = items.join(gap);
-    // Ensure enough length for continuous scrolling
-    if (items.length < 3) {
-      displayStr = `${displayStr}${gap}${displayStr}${gap}${displayStr}`;
-    }
+    // v3.5.9: Seamless loop - double the content and scroll half distance
+    const displayStr = `${items.join(gap)}${gap}${items.join(gap)}${gap}`;
 
-    // Force DOM update (移除判断，直接覆盖)
+    // Force DOM update
     textEl.style.animation = "none";
     textEl.innerText = displayStr;
     
-    // Trigger reflow to restart animation
     void textEl.offsetWidth;
     
-    // Dynamic speed based on length
-    const speed = App.UI.isDesktop() ? 0.15 : 0.25;
-    const duration = Math.max(12, displayStr.length * speed);
+    // Smooth speed: 10s base + length scaling
+    const duration = Math.max(15, displayStr.length * 0.15);
     textEl.style.animation = `tickerScroll ${duration}s linear infinite`;
 
     container.onclick = () => window.showLiveHistory();
