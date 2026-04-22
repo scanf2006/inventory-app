@@ -574,29 +574,32 @@ App.UI = {
     container.innerHTML = "";
 
     const allProducts = new Set();
-    Object.values(App.State.products).forEach((cat) =>
-      cat.forEach((p) => allProducts.add(p)),
-    );
-    const sorted = [...allProducts].sort();
+    Object.keys(App.State.products).forEach((cat) => {
+      if (cat.toLowerCase().includes("bulk oil")) {
+        (App.State.products[cat] || []).forEach((p) => allProducts.add(p));
+      }
+    });
 
+    const sorted = [...allProducts].sort();
     sorted.forEach((oil) => {
-      const label = document.createElement("label");
-      label.style = "display: block; margin: 5px 0; font-size: 0.9rem;";
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = App.State.commonOils.includes(oil);
-      cb.onchange = (e) => {
-        if (e.target.checked) {
-          if (!App.State.commonOils.includes(oil))
-            App.State.commonOils.push(oil);
+      const el = document.createElement("div");
+      const isActive = App.State.commonOils.includes(oil);
+      el.className = `checkbox-item ${isActive ? "active" : ""}`;
+      el.innerText = oil;
+
+      el.onclick = () => {
+        const index = App.State.commonOils.indexOf(oil);
+        if (index === -1) {
+          App.State.commonOils.push(oil);
+          el.classList.add("active");
         } else {
-          App.State.commonOils = App.State.commonOils.filter((o) => o !== oil);
+          App.State.commonOils.splice(index, 1);
+          el.classList.remove("active");
         }
         window.saveToStorage(true);
         App.UI.renderDesktopChart();
       };
-      label.append(cb, ` ${oil}`);
-      container.appendChild(label);
+      container.appendChild(el);
     });
   },
 };
