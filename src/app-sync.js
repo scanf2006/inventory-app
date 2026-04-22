@@ -127,7 +127,7 @@ App.Sync = {
     try {
       const { data, error } = await supabase
         .from("app_sync")
-        .select("data, live_messages, updated_at")
+        .select("data, updated_at")
         .eq("sync_id", syncId)
         .single();
 
