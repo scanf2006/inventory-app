@@ -98,9 +98,8 @@ App.Sync = {
             last_updated_ts: lastUpdated,
             last_inventory_update_ts: lastInventoryUpdate,
             recent_history: history,
-            live_messages: liveMessages, // Keep duplicate in JSON for backup
+            live_messages: liveMessages, // Store here safely
           },
-          live_messages: liveMessages, // Top-level field for high-speed sync
           updated_at: new Date().toISOString(),
         },
         { onConflict: "sync_id" },
