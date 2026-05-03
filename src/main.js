@@ -1,10 +1,10 @@
 /**
- * Waycred Inventory v3.7.8
+ * Waycred Inventory v3.7.9
  * Primary application controller
  */
 window.App = window.App || {};
 
-console.log('Waycred Inventory v3.7.8 Modular core active');
+console.log('Waycred Inventory v3.7.9 Modular core active');
 
 // --- Initialization ---
 
@@ -480,8 +480,8 @@ window.sendLiveMessage = () => {
     
     input.value = "";
     
-    // Important: Force a timestamp update to trigger real-time pull on other devices
-    window.saveToStorage(true); 
+    // Important: Force immediate push so messages aren't lost by polling
+    window.saveToStorageImmediate(true);
     
     App.UI.showToast("Broadcast Success!", "success");
     App.UI.renderLiveTicker();

@@ -568,7 +568,7 @@ App.UI = {
     // Filter messages from last 24h
     const now = Date.now();
     const messages = (App.State.liveMessages || []).filter((m) => {
-      const ts = typeof m === "object" ? m.ts : now;
+      const ts = typeof m === "object" ? (m.ts || 0) : 0;
       return now - ts <= 24 * 60 * 60 * 1000;
     });
 
