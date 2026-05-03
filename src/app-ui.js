@@ -582,9 +582,12 @@ App.UI = {
     // Format display string
     const items = messages.map((m) => {
       if (typeof m === "string") return m;
-      const time = new Date(m.ts).toLocaleTimeString([], {
+      const time = new Date(m.ts).toLocaleString([], {
+        month: "2-digit",
+        day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false
       });
       return `[${time}] ${m.text}`;
     });
@@ -730,9 +733,12 @@ window.showLiveHistory = () => {
     .forEach((m) => {
       const text = typeof m === "string" ? m : m.text;
       const ts = typeof m === "string" ? Date.now() : m.ts;
-      const time = new Date(ts).toLocaleTimeString([], {
+      const time = new Date(ts).toLocaleString([], {
+        month: "2-digit",
+        day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false
       });
 
       html += `
