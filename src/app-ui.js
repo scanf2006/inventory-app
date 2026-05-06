@@ -145,9 +145,11 @@ App.UI = {
       const key = App.Utils.getProductKey(currentCategory, name);
       const val = inventory[key] || "";
       const total = App.Utils.safeEvaluate(val);
+      const isMobileEdit = !isPreview && !App.UI.isDesktop();
 
       const card = document.createElement("div");
       card.className = `item-card ${isPreview ? "preview-mode" : ""}`;
+      if (isMobileEdit) card.classList.add("mobile-edit-card");
 
       const infoDiv = document.createElement("div");
       infoDiv.className = "item-info";
@@ -165,12 +167,17 @@ App.UI = {
       resultDiv.id = `result-${index}`;
       resultDiv.innerHTML = `Total: <span class="highlight-total">${total}</span>`;
 
-      infoDiv.append(nameDiv, resultDiv);
+      if (isMobileEdit) {
+        infoDiv.append(nameDiv);
+      } else {
+        infoDiv.append(nameDiv, resultDiv);
+      }
       card.append(infoDiv);
 
       if (!isPreview) {
         const inputGroup = document.createElement("div");
         inputGroup.className = "input-group";
+        if (isMobileEdit) inputGroup.classList.add("mobile-edit-input-group");
 
         const input = document.createElement("input");
         input.type = "tel";
