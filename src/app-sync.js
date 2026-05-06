@@ -117,7 +117,7 @@ App.Sync = {
   },
 
   // Pull remote state from cloud
-  pull: async (isSilent = false) => {
+  pull: async (isSilent = false, force = false) => {
     const { supabase } = App.Services;
     const { syncId, lastUpdated } = App.State;
 
@@ -160,9 +160,9 @@ App.Sync = {
         const localInvTS = App.State.lastInventoryUpdate || 0;
         const localInventoryCount = Object.keys(App.State.inventory || {}).length;
 
-        // 1. Sync Inventory if cloud is newer (meta), cloud inventory is newer (data), or local is empty
+        // 1. Sync Inventory if cloud is newer (meta), cloud inventory is newer (data), local is empty, or FORCED
         // This protects against client clock drift preventing pulls
-        if (cloudTS > lastUpdated || cloudInvTS > localInvTS || localInventoryCount === 0) {
+        if (force || cloudTS > lastUpdated || cloudInvTS > localInvTS || localInventoryCount === 0) {
           App.Sync.handleConflict(cloudData, Math.max(cloudTS, cloudInvTS), isSilent);
         } 
         // 2. If local is strictly newer than cloud, push local state

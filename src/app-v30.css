@@ -1146,6 +1146,16 @@ hr {
   font-size: 0.85rem;
   margin-bottom: 12px;
   font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.sync-status:hover {
+  opacity: 0.8;
+}
+
+.sync-status:active {
+  transform: scale(0.98);
 }
 
 .sync-status span {

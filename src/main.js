@@ -1,10 +1,10 @@
 /**
- * Waycred Inventory v3.8.0
+ * Waycred Inventory v3.8.1
  * Primary application controller
  */
 window.App = window.App || {};
 
-console.log('Waycred Inventory v3.8.0 Modular core active');
+console.log('Waycred Inventory v3.8.1 Modular core active');
 
 // --- Initialization ---
 
@@ -160,10 +160,15 @@ const setupEventListeners = () => {
       localStorage.setItem(App.Config.STORAGE_KEYS.SYNC_ID, id);
       App.State.lastUpdated = 0; // Ensure cloud wins
       App.Sync.setupRealtime(); // Critical Fix: Restart listener with new ID
-      App.Sync.pull();
+      App.Sync.pull(false, true);
     } else {
       App.UI.showToast("Please enter a Sync ID.", "info");
     }
+  });
+
+  document.getElementById("sync-status")?.addEventListener("click", () => {
+    App.Sync.pull(false, true);
+    App.UI.showToast("Forcing cloud sync...", "info");
   });
 
   document.getElementById("export-pdf-btn")?.addEventListener("click", () => App.Data.exportPDF());
