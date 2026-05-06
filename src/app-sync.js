@@ -120,6 +120,8 @@ App.Sync = {
   },
 
   pushWithRetry: async (attempts = 3, delayMs = 600) => {
+    // Retry is intentionally linear-backoff to keep cloud pressure predictable
+    // while still healing short mobile network drops.
     let lastResult = { ok: false, reason: "unknown" };
     for (let i = 0; i < attempts; i++) {
       lastResult = await App.Sync.push();
@@ -170,6 +172,7 @@ App.Sync = {
           }
         }
 
+        // Use semantic timestamps from payload first; updated_at is fallback for older rows.
         const cloudTS = cloudData.last_updated_ts || new Date(data.updated_at).getTime();
         const cloudInvTS = cloudData.last_inventory_update_ts || 0;
         const localInvTS = App.State.lastInventoryUpdate || 0;
@@ -178,6 +181,7 @@ App.Sync = {
         // 1. Sync Inventory if cloud is newer (meta), cloud inventory is newer (data), local is empty, or FORCED
         // This protects against client clock drift preventing pulls
         if (force || cloudTS > lastUpdated || cloudInvTS > localInvTS || localInventoryCount === 0) {
+          // Keep a single winner timestamp so storage/UI stay monotonic after apply.
           App.Sync.handleConflict(cloudData, Math.max(cloudTS, cloudInvTS), isSilent);
         } 
         // 2. If local is strictly newer than cloud, push local state
@@ -237,7 +241,7 @@ App.Sync = {
       return;
     }
 
-    // Input Focus Guard
+    // Input Focus Guard: avoid snapping values while user is typing.
     const active = document.activeElement;
     if (
       active?.tagName === "INPUT" &&

@@ -149,6 +149,7 @@ App.UI = {
 
       const card = document.createElement("div");
       card.className = `item-card ${isPreview ? "preview-mode" : ""}`;
+      // Mobile edit intentionally reuses preview visual language to reduce style drift.
       if (isMobileEdit) card.classList.add("preview-mode", "mobile-edit-card");
 
       const infoDiv = document.createElement("div");
@@ -186,6 +187,7 @@ App.UI = {
         input.value = val;
         input.placeholder = "0";
         input.oninput = (e) => {
+          // Keep keyboard-specific transforms centralized via config-backed utility.
           const rules = {
             mapDashToMultiply: !!App.Config.INPUT_RULES?.MAP_DASH_TO_MULTIPLY,
             mapHashToMultiply: !!App.Config.INPUT_RULES?.MAP_HASH_TO_MULTIPLY,

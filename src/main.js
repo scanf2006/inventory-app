@@ -225,6 +225,7 @@ window.saveToStorageImmediate = (skipTimestamp) => {
 
 const debouncedSave = App.Utils.debounce(() => {
   window.saveToStorageImmediate();
+  // Background writes prefer fast retry and no UI interruption.
   App.Sync.pushWithRetry(2, 400);
 }, 300);
 
@@ -232,6 +233,7 @@ window.saveToStorage = (isImmediate) => {
   window.saveToStorageImmediate();
   App.UI.updateSyncStatus("Saving...", false);
   if (isImmediate) {
+    // Immediate saves are user-driven actions; keep status explicit.
     App.Sync.pushWithRetry(2, 400).then((result) => {
       App.UI.updateSyncStatus(result?.ok ? "Saved" : "Saved (Local)", !!result?.ok);
     });
@@ -486,7 +488,7 @@ window.sendLiveMessage = () => {
     
     input.value = "";
     
-    // Save locally first, then push with retry for real-time delivery.
+    // Order matters: local first guarantees persistence even if cloud is unavailable.
     window.saveToStorageImmediate(true);
     App.Sync.pushWithRetry(3, 500).then((result) => {
       if (!result?.ok) {
