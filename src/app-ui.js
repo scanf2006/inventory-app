@@ -267,10 +267,11 @@ App.UI = {
     bar.appendChild(sortControl);
 
     // v3.7.0: Display last inventory update time (with date) next to sort
-    if (App.State.lastInventoryUpdate) {
+    const displayTs = App.Utils.getLastInventoryDisplayTs();
+    if (displayTs) {
       const timeLabel = document.createElement("div");
       timeLabel.className = "last-update-hint";
-      const date = new Date(App.State.lastInventoryUpdate);
+      const date = new Date(displayTs);
       const timeStr = date.toLocaleString([], { 
         month: "2-digit", 
         day: "2-digit", 

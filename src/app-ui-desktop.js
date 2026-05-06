@@ -69,7 +69,7 @@ App.UI.renderDesktopChart = () => {
   const renderKey = JSON.stringify({
     labels,
     data,
-    updated: App.State.lastInventoryUpdate || 0,
+    updated: App.Utils.getLastInventoryDisplayTs(),
     oils: App.State.commonOils || [],
   });
   if (App.State._lastChartRenderKey === renderKey) return;
@@ -77,8 +77,9 @@ App.UI.renderDesktopChart = () => {
 
   const sub = document.getElementById("chart-last-updated");
   if (sub) {
-    if (App.State.lastInventoryUpdate) {
-      const updatedAt = new Date(App.State.lastInventoryUpdate);
+    const displayTs = App.Utils.getLastInventoryDisplayTs();
+    if (displayTs) {
+      const updatedAt = new Date(displayTs);
       const timeStr = updatedAt.toLocaleString([], {
         month: "2-digit",
         day: "2-digit",

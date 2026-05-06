@@ -87,6 +87,17 @@ App.Utils = {
     return normalized;
   },
 
+  // Prefer explicit inventory operation history for display timestamps.
+  // Falls back to lastInventoryUpdate when history is empty/unavailable.
+  getLastInventoryDisplayTs: () => {
+    const h0 = App.State?.history?.[0];
+    if (h0 && typeof h0.timestamp === "number" && h0.timestamp > 0) {
+      return h0.timestamp;
+    }
+    const ts = App.State?.lastInventoryUpdate || 0;
+    return typeof ts === "number" ? ts : 0;
+  },
+
   // Helper: Generate unique inventory key
   getProductKey: (category, product) => `${category}-${product}`,
 
