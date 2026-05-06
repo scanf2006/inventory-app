@@ -7,13 +7,31 @@ window.App = window.App || {};
 App.UI = {
   // --- Core UI Helpers ---
   isDesktop: () => window.innerWidth >= 768,
+  isBulkOilCategory: () =>
+    String(App.State.currentCategory || "").toLowerCase().includes("bulk oil"),
 
   updateSyncStatus: (status, isOnline) => {
     const el = document.getElementById("sync-status");
     const span = el?.querySelector("span");
     if (span) {
       span.innerText = status;
-      el.classList.toggle("online", isOnline);
+      const normalized = String(status || "").toLowerCase();
+      const isSyncing = normalized.includes("saving") || normalized.includes("checking");
+      const isLocalOnly =
+        !isOnline &&
+        (normalized.includes("local") ||
+          normalized.includes("offline") ||
+          normalized.includes("failed") ||
+          normalized.includes("error"));
+
+      el.classList.toggle("online", !!isOnline);
+      el.classList.toggle("syncing", isSyncing);
+      el.classList.toggle("local-only", isLocalOnly);
+      if (isLocalOnly) {
+        el.title = "Changes are saved locally. Tap to retry cloud sync.";
+      } else {
+        el.removeAttribute("title");
+      }
     }
   },
 
@@ -212,12 +230,39 @@ App.UI = {
       App.UI.renderQuickAdd(list);
     }
 
-    if (
-      App.UI.isDesktop() &&
-      String(App.State.currentCategory || "").toLowerCase().includes("bulk oil")
-    ) {
-      App.UI.renderDesktopChart();
+    if (App.UI.isDesktop()) App.UI.renderDesktopChartPanel();
+  },
+
+  renderDesktopChartPanel: () => {
+    const container = document.getElementById("desktop-chart-container");
+    const wrapper = document.querySelector("#desktop-chart-container .chart-wrapper");
+    const sub = document.getElementById("chart-last-updated");
+    if (!container || !wrapper || !sub) return;
+
+    const isBulkOil = App.UI.isBulkOilCategory();
+    let emptyState = document.getElementById("chart-empty-state");
+    if (!emptyState) {
+      emptyState = document.createElement("div");
+      emptyState.id = "chart-empty-state";
+      emptyState.className = "chart-empty-state hidden";
+      emptyState.textContent = "Chart is available in Bulk Oil category only.";
+      container.appendChild(emptyState);
     }
+
+    if (isBulkOil) {
+      wrapper.classList.remove("hidden");
+      emptyState.classList.add("hidden");
+      App.UI.renderDesktopChart();
+      return;
+    }
+
+    if (App.State.chartInstance) {
+      App.State.chartInstance.destroy();
+      App.State.chartInstance = null;
+    }
+    wrapper.classList.add("hidden");
+    emptyState.classList.remove("hidden");
+    sub.innerText = "Detailed Monitoring Dashboard - Switch to Bulk Oil to view chart";
   },
 
   renderInventoryControls: () => {

@@ -351,6 +351,14 @@ hr {
   background: var(--success-color);
 }
 
+.sync-status.syncing span {
+  background: #0a84ff;
+}
+
+.sync-status.local-only span {
+  background: #ff9500;
+}
+
 .small-hint {
   font-size: 0.75rem;
   color: var(--text-muted);
