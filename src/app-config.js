@@ -1,11 +1,11 @@
-/**
+﻿/**
  * App Configuration and Initial State
  * Waycred Inventory v3.3 ES6+ Modularization
  */
 window.App = window.App || {};
 
 App.Config = {
-  VERSION: "v3.8.1",
+  VERSION: "v3.8.2",
   ADMIN_PASSWORD: "9898",
   SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
   SUPABASE_KEY:
@@ -58,3 +58,4 @@ App.State = {
 App.Services = {
   supabase: null,
 };
+

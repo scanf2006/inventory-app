@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -40,7 +40,7 @@
             console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
         }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.8.1">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.8.2">
 </head>
 
 <body>
@@ -80,7 +80,7 @@
 
             <!-- v3.1.14 Desktop Ticker (Marquee) -->
             <div id="live-ticker-container" class="live-ticker-container desktop-only hidden">
-                <div class="ticker-label">📢 LIVE</div>
+                <div class="ticker-label">LIVE</div>
                 <div class="ticker-scroll">
                     <span id="live-ticker-text"></span>
                 </div>
@@ -111,7 +111,7 @@
                 <!-- v3.1.0 Snapshot History Section -->
                 <div id="snapshot-history-container" class="snapshot-history-container" style="margin-top: 20px;">
                     <div class="snapshot-header-bar">
-                        <h3 class="snapshot-title">📊 Historical Data</h3>
+                        <h3 class="snapshot-title">Historical Data</h3>
                         <div class="snapshot-tab-group" id="snapshot-tab-group">
                             <button class="snapshot-tab active" data-tab="list">List</button>
                             <button class="snapshot-tab" data-tab="week">Week</button>
@@ -156,14 +156,14 @@
 
                     <hr class="mobile-only">
                     <section class="management-section mobile-only" id="admin-login-section">
-                        <h3>🔒 Admin Login</h3>
+                        <h3>Admin Login</h3>
                         <div class="add-form" id="admin-login-form">
                             <input type="password" id="admin-password-input" placeholder="Enter admin password" style="width: 100%;">
                             <button id="admin-unlock-btn" class="primary-btn" style="min-width: 80px;">Unlock</button>
                         </div>
                         <div id="admin-logout-form" class="hidden" style="margin-top: 10px;">
-                            <p style="color: var(--primary-green); font-weight: bold; margin-bottom: 10px;">✅ Edit Mode Unlocked</p>
-                            <button id="admin-lock-btn" class="secondary-btn w-full">🔒 Lock & Quit</button>
+                            <p style="color: var(--primary-green); font-weight: bold; margin-bottom: 10px;">Edit Mode Unlocked</p>
+                            <button id="admin-lock-btn" class="secondary-btn w-full">Lock & Quit</button>
                         </div>
                     </section>
                     
@@ -171,14 +171,12 @@
                     <hr class="mobile-only">
                     <section class="management-section mobile-only">
                         <h3>App Installation</h3>
-                        <button id="pwa-install-btn" class="primary-btn pwa-install-button d-none w-full">📥 Install App
-                            to
-                            Home Screen</button>
+                        <button id="pwa-install-btn" class="primary-btn pwa-install-button d-none w-full">Install App to Home Screen</button>
                         <div id="ios-install-hint" class="ios-install-hint-box d-none">
                             <p class="ios-hint-title">iPhone/iPad User?</p>
                             <p class="ios-hint-text">Apple doesn't allow automatic installation.
                                 To install: <br>1. Tap the <strong>Share</strong> button <span
-                                    class="icon-inline">⎋</span> at the bottom.<br>2. Select <strong>"Add to Home
+                                    class="icon-inline">Share</span> at the bottom.<br>2. Select <strong>"Add to Home
                                     Screen"</strong>.</p>
                         </div>
                         <p class="small-hint">Install for offline use and quick access from your home screen.</p>
@@ -196,13 +194,12 @@
 
                     <hr class="mobile-only">
                     <section class="management-section mobile-only">
-                        <h3>📣 Send Ticker Message (Desktop)</h3>
+                        <h3>Send Ticker Message (Desktop)</h3>
                         <div class="add-form" style="flex-direction: column; gap: 10px;">
                             <input type="text" id="live-msg-input"
                                 placeholder="Type a message for the desktop ticker..." style="width: 100%;">
                             <button id="send-live-btn" class="primary-btn"
-                                style="background: #FF2D55; min-width: 80px; box-shadow: 0 4px 15px rgba(255,45,85,0.3); align-self: flex-end;">🚀
-                                Send</button>
+                                style="background: #FF2D55; min-width: 80px; box-shadow: 0 4px 15px rgba(255,45,85,0.3); align-self: flex-end;">Send</button>
                         </div>
                         <p class="small-hint" style="margin-top: 8px;">This message will appear as a scrolling ticker on
                             active desktop dashboards.</p>
@@ -228,8 +225,7 @@
                         <input type="text" id="snapshot-note-input" placeholder="Note (e.g. End-of-month count)"
                             style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1rem; margin-bottom: 10px; background: rgba(0,0,0,0.05); color: var(--text-main);">
                         <button id="save-snapshot-btn" class="primary-btn w-full"
-                            style="background: #30D158; box-shadow: 0 8px 25px -5px rgba(48, 209, 88, 0.4);">📸 Save
-                            Inventory Snapshot</button>
+                            style="background: #30D158; box-shadow: 0 8px 25px -5px rgba(48, 209, 88, 0.4);">Save Inventory Snapshot</button>
                         <p class="small-hint">Save a full snapshot of current inventory to the cloud. View history on
                             desktop.</p>
                     </section>
@@ -237,11 +233,11 @@
                     <section class="management-section mobile-only">
                         <h3>Data Management</h3>
                         <div class="data-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-                            <button id="export-json-btn" class="secondary-btn w-full">📤 Export JSON</button>
-                            <button id="import-json-btn" class="secondary-btn w-full">📥 Import JSON</button>
+                            <button id="export-json-btn" class="secondary-btn w-full">Export JSON</button>
+                            <button id="import-json-btn" class="secondary-btn w-full">Import JSON</button>
                         </div>
                         <button id="purge-zero-btn" class="secondary-btn w-full danger-zone-reset"
-                            style="margin-top: 10px; background: #FF453A !important;">🧹 Purge Zero-Stock Items</button>
+                            style="margin-top: 10px; background: #FF453A !important;">Purge Zero-Stock Items</button>
                         <input type="file" id="import-file-input" accept=".json" style="display: none;">
                         <p class="small-hint">Backup your data or restore from a file.</p>
                     </section>
@@ -289,14 +285,16 @@
         <datalist id="master-product-list"></datalist>
 
         <script>
-            window.__APP_VERSION__ = "3.8.1";
+            window.__APP_VERSION__ = "3.8.2";
         </script>
-        <script src="src/app-config.js?v=3.8.1"></script>
-        <script src="src/app-utils.js?v=3.8.1"></script>
-        <script src="src/app-ui.js?v=3.8.1"></script>
-        <script src="src/app-sync.js?v=3.8.1"></script>
-        <script src="src/app-data.js?v=3.8.1"></script>
-        <script src="src/main.js?v=3.8.1"></script>
+        <script src="src/app-config.js?v=3.8.2"></script>
+        <script src="src/app-utils.js?v=3.8.2"></script>
+        <script src="src/app-ui.js?v=3.8.2"></script>
+        <script src="src/app-sync.js?v=3.8.2"></script>
+        <script src="src/app-data.js?v=3.8.2"></script>
+        <script src="src/main.js?v=3.8.2"></script>
 </body>
 
 </html>
+
+

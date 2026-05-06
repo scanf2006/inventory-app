@@ -23,7 +23,7 @@ App.UI = {
 
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
-    const icons = { success: "✅", error: "⚠️", info: "ℹ️" };
+    const icons = { success: "OK", error: "ERR", info: "INFO" };
 
     toast.innerHTML = `<span>${
       icons[type] || icons.info
@@ -186,7 +186,7 @@ App.UI = {
 
         const delBtn = document.createElement("button");
         delBtn.className = "item-delete-btn";
-        delBtn.textContent = "🗑️";
+        delBtn.textContent = "Delete";
         delBtn.onclick = () => window.removeProductInline(name);
 
         inputGroup.append(input, delBtn);
@@ -306,7 +306,7 @@ App.UI = {
 
       const upBtn = document.createElement("button");
       upBtn.className = "btn-sort";
-      upBtn.innerHTML = "🔼";
+      upBtn.innerHTML = "Up";
       if (idx === 0) {
         upBtn.disabled = true;
         upBtn.style.opacity = "0.3";
@@ -315,7 +315,7 @@ App.UI = {
 
       const downBtn = document.createElement("button");
       downBtn.className = "btn-sort";
-      downBtn.innerHTML = "🔽";
+      downBtn.innerHTML = "Down";
       if (idx === App.State.categoryOrder.length - 1) {
         downBtn.disabled = true;
         downBtn.style.opacity = "0.3";
@@ -324,7 +324,7 @@ App.UI = {
 
       const delBtn = document.createElement("button");
       delBtn.className = "btn-delete";
-      delBtn.innerHTML = "🗑️";
+      delBtn.innerHTML = "Delete";
       delBtn.onclick = (e) => { e.stopPropagation(); window.removeCategory(cat); };
 
       actions.append(upBtn, downBtn, delBtn);
@@ -354,11 +354,19 @@ App.UI = {
 
     const sub = document.getElementById("chart-last-updated");
     if (sub) {
-      const now = new Date();
-      const timeStr = now.toLocaleString([], { 
-        month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false 
-      });
-      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}`;
+      if (App.State.lastInventoryUpdate) {
+        const updatedAt = new Date(App.State.lastInventoryUpdate);
+        const timeStr = updatedAt.toLocaleString([], {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}`;
+      } else {
+        sub.innerText = "Detailed Monitoring Dashboard - Last Updated: Waiting for data...";
+      }
     }
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -539,7 +547,7 @@ App.UI = {
       card.innerHTML = `
         <div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center; min-height: 24px;">
           <div style="display: flex; align-items: center;">
-            <button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 0.9rem; cursor: pointer; color: #007aff; padding: 2px; margin-right: 6px;">✏️</button>
+            <button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 0.9rem; cursor: pointer; color: #007aff; padding: 2px; margin-right: 6px;">Edit</button>
             <span class="snapshot-time">${dateStr}</span>
             ${noteHTML}
           </div>
@@ -634,7 +642,7 @@ App.UI = {
     let html = `
       <div class="compare-header">
         <span class="compare-label">${label} Comparison</span>
-        <span class="compare-range">${fmt(oldSnap.created_at)} ➡️ ${fmt(
+        <span class="compare-range">${fmt(oldSnap.created_at)} -> ${fmt(
       newSnap.created_at,
     )}</span>
       </div>
@@ -755,3 +763,5 @@ window.showLiveHistory = () => {
     hideCancel: true,
   });
 };
+
+
