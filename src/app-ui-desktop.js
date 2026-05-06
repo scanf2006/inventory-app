@@ -42,6 +42,7 @@ App.UI.renderDesktopChartPanel = () => {
 App.UI.renderDesktopChart = () => {
   if (!App.UI.isDesktop()) return;
   const ctx = document.getElementById("inventoryChart")?.getContext("2d");
+  const chartWrapper = document.querySelector("#desktop-chart-container .chart-wrapper");
   if (!ctx || !window.Chart) return;
 
   const data = [];
@@ -57,6 +58,13 @@ App.UI.renderDesktopChart = () => {
     labels.push(oil);
     data.push(total);
   });
+
+  const denseMode = labels.length > 8;
+  if (chartWrapper) {
+    chartWrapper.style.height = denseMode
+      ? `${Math.min(620, Math.max(300, labels.length * 42))}px`
+      : "220px";
+  }
 
   const renderKey = JSON.stringify({
     labels,
@@ -78,7 +86,7 @@ App.UI.renderDesktopChart = () => {
         minute: "2-digit",
         hour12: false,
       });
-      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}`;
+      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}${denseMode ? " (Dense mode)" : ""}`;
     } else {
       sub.innerText = "Detailed Monitoring Dashboard - Last Updated: Waiting for data...";
     }
@@ -130,9 +138,9 @@ App.UI.renderDesktopChart = () => {
       },
       plugins: {
         legend: { display: false },
-        datalabels: {
-          anchor: "end",
-          align: "top",
+          datalabels: {
+          anchor: denseMode ? "end" : "end",
+          align: denseMode ? "right" : "top",
           color: fontColor,
           font: {
             weight: "bold",
@@ -149,17 +157,30 @@ App.UI.renderDesktopChart = () => {
         },
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          grace: "15%",
-          ticks: { color: fontColor },
-          grid: { color: gridColor },
-        },
-        x: {
-          ticks: { color: fontColor },
-          grid: { display: false },
-        },
+        y: denseMode
+          ? {
+              ticks: { color: fontColor, font: { size: 12 } },
+              grid: { display: false },
+            }
+          : {
+              beginAtZero: true,
+              grace: "15%",
+              ticks: { color: fontColor },
+              grid: { color: gridColor },
+            },
+        x: denseMode
+          ? {
+              beginAtZero: true,
+              grace: "8%",
+              ticks: { color: fontColor },
+              grid: { color: gridColor },
+            }
+          : {
+              ticks: { color: fontColor },
+              grid: { display: false },
+            },
       },
+      indexAxis: denseMode ? "y" : "x",
     },
   });
 };
