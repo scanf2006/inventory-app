@@ -691,6 +691,16 @@
     grid-column: 2;
   }
 
+  #inventory-list {
+    grid-row: 1;
+    align-self: start;
+  }
+
+  #desktop-bottom-panels {
+    grid-row: 2;
+    align-self: start;
+  }
+
   #inventory-controls {
     position: sticky;
     top: 14px;
@@ -708,7 +718,7 @@
 
   #inventory-list {
     margin-top: 0 !important;
-    padding-top: 6px !important;
+    padding-top: 0 !important;
   }
 
   #desktop-bottom-panels {
