@@ -199,7 +199,7 @@ App.UI = {
 
         const delBtn = document.createElement("button");
         delBtn.className = "item-delete-btn";
-        delBtn.textContent = "Delete";
+        delBtn.textContent = "Del";
         delBtn.onclick = () => window.removeProductInline(name);
 
         inputGroup.append(input, delBtn);
@@ -337,7 +337,7 @@ App.UI = {
 
       const delBtn = document.createElement("button");
       delBtn.className = "btn-delete";
-      delBtn.innerHTML = "Delete";
+      delBtn.innerHTML = "Del";
       delBtn.onclick = (e) => { e.stopPropagation(); window.removeCategory(cat); };
 
       actions.append(upBtn, downBtn, delBtn);
