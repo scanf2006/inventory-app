@@ -1,0 +1,498 @@
+/* Premium Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: all 0.4s var(--smooth-ease);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-overlay.bottom-align {
+  align-items: flex-end;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  padding: 32px;
+  border-radius: 32px;
+  width: 90%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  box-shadow:
+    0 30px 60px -12px rgba(0, 0, 0, 0.3),
+    var(--inner-glow);
+  animation: modalPop 0.5s var(--spring-ease);
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal {
+  background: var(--bg-color);
+  width: 100%;
+  height: 92vh;
+  border-radius: 32px 32px 0 0;
+  box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.5s var(--spring-ease);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* v3.1.10 Bold red close button */
+.close-modal {
+  width: 52px;
+  height: 52px;
+  border: 3px solid rgba(255, 69, 58, 0.4);
+  border-radius: 50%;
+  background: #ff453a;
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3);
+}
+
+.close-modal:hover {
+  background: #ff3b30;
+  border-color: #ff3b30;
+  transform: scale(1.15) rotate(90deg);
+  box-shadow: 0 8px 16px rgba(255, 69, 58, 0.5);
+}
+
+/* Modal Body Scroll Support */
+.modal-body {
+  flex: 1;
+  min-height: 0;
+  /* Crucial: allow flex child to shrink correctly on overflow */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px;
+  padding-bottom: 60px;
+  /* Increased bottom spacing */
+}
+
+/* Modal Layout Optimization */
+.management-section {
+  margin-bottom: 24px;
+}
+
+.management-section h3 {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.add-form input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.add-form button {
+  padding: 0 20px;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(10, 83, 190, 0.2);
+}
+
+.add-form button:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+
+.manage-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.manage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.manage-item span {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+  color: var(--text-main);
+}
+
+/* Native Minimalist Button System v2.7 */
+.btn-sort,
+.btn-edit {
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s var(--spring-ease);
+  border: none;
+  padding: 0 20px;
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-sort {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text-main);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.btn-edit {
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.btn-sort:active,
+.btn-edit:active {
+  transform: scale(0.96);
+  filter: brightness(0.95);
+}
+
+.btn-sort:disabled {
+  background: rgba(229, 229, 234, 0.5);
+  color: #8e8e93;
+  cursor: not-allowed;
+  box-shadow: none;
+  border: none;
+}
+
+.btn-delete {
+  height: 48px;
+  background: var(--danger-color);
+  color: white;
+  border-radius: 14px;
+  padding: 0 16px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+/* Segmented Control Overhaul */
+.segmented-control {
+  display: flex;
+  background: rgba(118, 118, 128, 0.12);
+  /* Standard iOS slider track color */
+  padding: 2px;
+  border-radius: 12px;
+  gap: 0;
+  align-items: stretch;
+}
+
+.segmented-control .btn-sort,
+.segmented-control .btn-edit {
+  height: 36px;
+  /* Native interior scale */
+  flex: 1;
+  min-width: 80px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.segmented-control .btn-edit:not(.active) {
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  border: none;
+}
+
+/* Floating active card */
+.segmented-control .btn-edit.active {
+  background: #ffffff;
+  color: var(--text-main);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 3px 1px rgba(0, 0, 0, 0.04);
+  border: 0.5px solid rgba(0, 0, 0, 0.04);
+}
+
+.btn-delete:active {
+  transform: scale(0.94);
+  filter: brightness(0.9);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 24px 0;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0 24px;
+  margin-bottom: 20px;
+}
+
+.add-product-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.add-product-form input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Sync UI Styles */
+.sync-config {
+  background: #fdfdfd;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+}
+
+.sync-status {
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.sync-status:hover {
+  opacity: 0.8;
+}
+
+.sync-status:active {
+  transform: scale(0.98);
+}
+
+.sync-status span {
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #ff9500;
+  /* Local mode uses orange */
+  color: white;
+  font-size: 0.75rem;
+}
+
+.sync-status.online span {
+  background: var(--success-color);
+}
+
+.small-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+/* Compact PDF Styles */
+.pdf-template {
+  padding: 30px;
+  background: white;
+  color: black;
+  font-family: "Inter", sans-serif;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+  box-sizing: border-box;
+  /* Removed fixed width and margin for rollback */
+}
+
+.pdf-category-block {
+  margin-bottom: 25px;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  /* Legacy support */
+}
+
+.pdf-category-title {
+  position: relative;
+  background: #f0f0f0;
+  padding: 6px 12px;
+  padding-left: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  page-break-after: avoid !important;
+  /* Bind to grid */
+}
+
+.pdf-category-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #000;
+}
+
+.pdf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid #ddd;
+  border-left: 1px solid #ddd;
+}
+
+.pdf-grid-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.85rem;
+}
+
+/* Enhanced separator for 2-column layout */
+.pdf-grid-item:nth-child(odd) {
+  border-right: 2px solid #aaa;
+  /* Simplified from double to solid to avoid artifacts */
+}
+
+.pdf-grid-item .p-name {
+  font-weight: 500;
+}
+
+.pdf-grid-item .p-val {
+  font-weight: 700;
+  min-width: 40px;
+  text-align: right;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #pdf-template,
+  #pdf-template * {
+    visibility: visible;
+  }
+
+  #pdf-template {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+/* Toast Notifications / Floating Capsules */
+#toast-container {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 100px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toastPop 0.5s var(--spring-ease) forwards;
+  pointer-events: auto;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: 85vw;
+}
+
+.toast.success {
+  background: rgba(50, 215, 75, 0.85);
+  color: #000;
+}
+
+.toast.error {
+  background: rgba(255, 69, 58, 0.9);
+}
+
+.toast.info {
+  background: rgba(10, 83, 190, 0.9);
+}

@@ -1,0 +1,230 @@
+:root {
+  /* --- UI-UX-PRO-MAX Core Design System --- */
+
+  /* Premium Color Palette */
+  --primary-blue: #0a53be;
+  /* Royal Sapphire */
+  --accent-gold: #ffd60a;
+  /* Vivid Amber */
+  --bg-color: #f8f9fa;
+  /* Off-White */
+  --card-bg: rgba(255, 255, 255, 0.75);
+  /* Translucent White */
+  --text-main: #1d1d1f;
+  /* Space Black */
+  --text-muted: #6e6e73;
+  /* Neutral Gray */
+  --success-color: #32d74b;
+  /* Vibrant Emerald */
+  --danger-color: #ff453a;
+  /* System Red */
+
+  /* Advanced Material & Depth */
+  --glass-header: rgba(10, 83, 190, 0.88);
+  --border-color: rgba(0, 0, 0, 0.06);
+  --card-shadow:
+    0 10px 40px -10px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
+  --inner-glow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+
+  /* Extracted Glass Filter */
+  --glass-filter: blur(25px) saturate(180%);
+
+  /* Physical Constants */
+  --br-card: 22px;
+  --br-button: 16px;
+  --spring-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --smooth-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --header-height: 140px;
+  --footer-height: 85px;
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #000000;
+    --card-bg: #1c1c1e;
+    --text-main: #ffffff;
+    --text-muted: #8e8e93;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --glass-header: rgba(0, 0, 0, 0.95);
+    --card-shadow:
+      0 10px 40px -10px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Hardened Dark Contrast */
+  .btn-sort,
+  .segmented-control .btn-sort {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.5),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .btn-edit,
+  .segmented-control .btn-edit {
+    background: transparent !important;
+    color: #8e8e93 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .segmented-control .btn-edit.active {
+    background: #2c2c2e !important;
+    color: #ffffff !important;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+    border: 0.5px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .item-card.preview-mode {
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+  /* Combined Dark Mode Elements from Refactor (v3.1.13) */
+  .segmented-control {
+    background: rgba(118, 118, 128, 0.24) !important;
+  }
+  .item-input {
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .quick-add-actions button.cancel {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .checkbox-item {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .checkbox-item.active {
+    background: rgba(255, 214, 10, 0.2);
+    color: var(--accent-gold);
+    border-color: var(--accent-gold);
+  }
+  .modal {
+    background: #1c1c1e;
+  }
+
+  /* v3.1.14 Ticker Dark Mode */
+  .live-ticker-container {
+    background: rgba(10, 83, 190, 0.2);
+    border-color: rgba(10, 83, 190, 0.4);
+  }
+  .ticker-label {
+    color: #5e94ff;
+    text-shadow: 0 0 10px rgba(94, 148, 255, 0.6);
+  }
+}
+
+.hidden {
+  display: none !important;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  overflow: hidden;
+  transition: background-color 0.4s var(--smooth-ease);
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+/* Header - Glassmorphism */
+.app-header {
+  background: var(--glass-header);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  color: white;
+  padding: 60px 24px 24px;
+  text-align: left;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 100;
+}
+
+.app-header h1 {
+  font-family: "Outfit", sans-serif;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  word-spacing: 0.2em;
+  color: var(--accent-gold);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.date-display {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Modern Pill Tabs */
+.category-tabs {
+  display: flex;
+  background: var(--bg-color);
+  padding: 16px 12px;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  z-index: 90;
+  position: sticky;
+  top: 0;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 100px;
+  transition: all 0.4s var(--spring-ease);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.tab.active {
+  background: var(--accent-gold);
+  color: #000;
+  border-color: transparent;
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px -5px rgba(255, 214, 10, 0.4);
+}
+
+.tab:active {
+  transform: scale(0.95);
+}
