@@ -668,6 +668,45 @@
   }
 }
 
+/* --- Wide Desktop Two-Column Workspace --- */
+@media (min-width: 1180px) {
+  .content-area {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 20px;
+  }
+
+  #inventory-controls,
+  #live-ticker-container,
+  #desktop-chart-container {
+    grid-column: 1;
+  }
+
+  #inventory-list,
+  #desktop-bottom-panels {
+    grid-column: 2;
+  }
+
+  #inventory-controls {
+    position: sticky;
+    top: 14px;
+    z-index: 20;
+  }
+
+  #desktop-chart-container {
+    margin: 0;
+  }
+
+  #inventory-list {
+    margin-top: 0;
+  }
+
+  #desktop-bottom-panels {
+    margin-top: 16px !important;
+  }
+}
+
 /* --- v3.1 Admin Edit Mode Override --- */
 body.admin-edit-mode .item-delete-btn { display: inline-flex !important; }
 body.admin-edit-mode .quick-add-wrapper { display: block !important; }
