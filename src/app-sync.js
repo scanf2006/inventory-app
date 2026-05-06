@@ -156,18 +156,21 @@ App.Sync = {
         }
 
         const cloudTS = cloudData.last_updated_ts || new Date(data.updated_at).getTime();
+        const cloudInvTS = cloudData.last_inventory_update_ts || 0;
+        const localInvTS = App.State.lastInventoryUpdate || 0;
+        const localInventoryCount = Object.keys(App.State.inventory || {}).length;
 
-        // 1. Sync Inventory only if cloud is strictly newer
-        if (cloudTS > lastUpdated) {
-          App.Sync.handleConflict(cloudData, cloudTS, isSilent);
+        // 1. Sync Inventory if cloud is newer (meta), cloud inventory is newer (data), or local is empty
+        // This protects against client clock drift preventing pulls
+        if (cloudTS > lastUpdated || cloudInvTS > localInvTS || localInventoryCount === 0) {
+          App.Sync.handleConflict(cloudData, Math.max(cloudTS, cloudInvTS), isSilent);
         } 
-        // 2. If timestamps match, we might still need to push local changes 
-        // (but we don't re-render everything to avoid "flicker")
-        else if (cloudTS < lastUpdated) {
+        // 2. If local is strictly newer than cloud, push local state
+        else if (cloudTS < lastUpdated && localInvTS > cloudInvTS) {
           App.Sync.push();
         } 
         else {
-          // Exactly synced - do nothing, no re-render needed
+          // Exactly synced or ambiguous - do nothing, no re-render needed
           App.UI.updateSyncStatus("Synced", true);
         }
       } else {

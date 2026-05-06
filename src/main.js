@@ -1,10 +1,10 @@
 /**
- * Waycred Inventory v3.7.9
+ * Waycred Inventory v3.8.0
  * Primary application controller
  */
 window.App = window.App || {};
 
-console.log('Waycred Inventory v3.7.9 Modular core active');
+console.log('Waycred Inventory v3.8.0 Modular core active');
 
 // --- Initialization ---
 
