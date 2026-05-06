@@ -181,7 +181,7 @@ App.UI = {
 
         const input = document.createElement("input");
         input.type = "text";
-        input.inputMode = "numeric";
+        input.inputMode = "tel";
         input.className = "item-input";
         input.value = val;
         input.placeholder = "0";
