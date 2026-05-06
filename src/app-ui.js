@@ -306,7 +306,9 @@ App.UI = {
       badge.id = "inventory-count-badge";
       badge.className = "product-count-badge";
       badge.style = "text-align: center; margin: 15px 0 10px 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; width: 100%;";
-      list.parentNode.insertBefore(badge, list);
+      // Keep the count badge inside the card pane so desktop grid placement
+      // cannot move it into the left rail.
+      list.prepend(badge);
     }
     badge.innerText = `Products: ${count}`;
   },

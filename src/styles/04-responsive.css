@@ -677,7 +677,7 @@
       "live live"
       "controls controls"
       "chart cards"
-      "chart panels";
+      "panels panels";
     align-items: start;
     column-gap: 20px;
     row-gap: 20px;
@@ -710,9 +710,14 @@
     gap: 15px !important;
   }
 
+  #inventory-count-badge {
+    margin: 0 0 10px 0 !important;
+    width: 100% !important;
+  }
+
   #desktop-bottom-panels {
     grid-area: panels;
-    margin-top: 8px !important;
+    margin-top: 6px !important;
     align-self: start;
   }
 }
