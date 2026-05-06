@@ -212,7 +212,12 @@ App.UI = {
       App.UI.renderQuickAdd(list);
     }
 
-    if (App.UI.isDesktop()) App.UI.renderDesktopChart();
+    if (
+      App.UI.isDesktop() &&
+      String(App.State.currentCategory || "").toLowerCase().includes("bulk oil")
+    ) {
+      App.UI.renderDesktopChart();
+    }
   },
 
   renderInventoryControls: () => {
