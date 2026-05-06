@@ -676,6 +676,7 @@
     grid-template-areas:
       "live live"
       "controls controls"
+      "chart cardhead"
       "chart cards"
       "panels panels";
     align-items: start;
@@ -711,14 +712,26 @@
   }
 
   #inventory-count-badge {
-    margin: 0 0 10px 0 !important;
+    grid-area: cardhead;
+    margin: 0 !important;
     width: 100% !important;
+    text-align: left !important;
   }
 
   #desktop-bottom-panels {
     grid-area: panels;
     margin-top: 6px !important;
     align-self: start;
+  }
+
+  .content-area.desktop-cards-below-chart {
+    grid-template-areas:
+      "live live"
+      "controls controls"
+      "chart chart"
+      "cardhead cardhead"
+      "cards cards"
+      "panels panels";
   }
 }
 
