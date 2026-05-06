@@ -180,14 +180,13 @@ App.UI = {
         if (isMobileEdit) inputGroup.classList.add("mobile-edit-input-group");
 
         const input = document.createElement("input");
-        input.type = "tel";
+        input.type = "text";
+        input.inputMode = "numeric";
         input.className = "item-input";
         input.value = val;
         input.placeholder = "0";
         input.oninput = (e) => {
-          let v = e.target.value;
-          if (v.includes("#") || v.includes("-")) v = v.replace(/[-#]/g, "*");
-          e.target.value = v;
+          const v = e.target.value;
           window.updateValue(name, v, index);
         };
 
