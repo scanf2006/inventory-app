@@ -155,10 +155,6 @@ App.UI = {
 
     App.UI.renderInventoryControls();
     App.UI.renderInventoryCount(displayProducts.length);
-    const contentArea = document.querySelector(".content-area");
-    if (contentArea && App.UI.isDesktop()) {
-      contentArea.classList.toggle("desktop-cards-below-chart", displayProducts.length > 12);
-    }
 
     // Reset button for Mobile Edit mode
     if (viewMode === "edit" && !App.UI.isDesktop()) {
