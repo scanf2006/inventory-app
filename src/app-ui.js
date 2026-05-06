@@ -477,7 +477,12 @@ App.UI = {
       card.innerHTML = `
         <div class="snapshot-card-header" style="display: flex; justify-content: space-between; align-items: center; min-height: 24px;">
           <div style="display: flex; align-items: center;">
-            <button class="edit-snapshot-btn" title="Edit Note" style="background: none; border: none; font-size: 0.9rem; cursor: pointer; color: #007aff; padding: 2px; margin-right: 6px;">Edit</button>
+            <button class="edit-snapshot-btn" title="Edit Note" aria-label="Edit Note" style="background: none; border: none; cursor: pointer; color: #007aff; padding: 2px; margin-right: 6px; display: inline-flex; align-items: center; justify-content: center;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M4 20H8L18.3 9.7C18.7 9.3 18.7 8.7 18.3 8.3L15.7 5.7C15.3 5.3 14.7 5.3 14.3 5.7L4 16V20Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12.5 7.5L16.5 11.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
             <span class="snapshot-time">${dateStr}</span>
             ${noteHTML}
           </div>

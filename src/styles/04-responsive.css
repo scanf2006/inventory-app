@@ -454,6 +454,19 @@
     transform: translateX(3px);
   }
 
+  .edit-snapshot-btn {
+    border-radius: 6px;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .edit-snapshot-btn:hover {
+    background: rgba(10, 122, 255, 0.12);
+  }
+
+  .edit-snapshot-btn:active {
+    transform: scale(0.94);
+  }
+
   .snapshot-card-header {
     display: flex;
     justify-content: space-between;
