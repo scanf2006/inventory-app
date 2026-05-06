@@ -85,7 +85,7 @@ App.Sync = {
       liveMessages,
     } = App.State;
 
-    if (!supabase || !syncId) return;
+    if (!supabase || !syncId) return { ok: false, reason: "sync_not_ready" };
 
     try {
       const { error } = await supabase.from("app_sync").upsert(
@@ -108,12 +108,27 @@ App.Sync = {
       if (error) {
         App.UI.updateSyncStatus("Sync Offline", false);
         console.error("Cloud push error:", error);
+        return { ok: false, error };
       } else {
         App.UI.updateSyncStatus("Cloud Synced", true);
+        return { ok: true };
       }
     } catch (e) {
       console.error("Cloud push exception:", e);
+      return { ok: false, error: e };
     }
+  },
+
+  pushWithRetry: async (attempts = 3, delayMs = 600) => {
+    let lastResult = { ok: false, reason: "unknown" };
+    for (let i = 0; i < attempts; i++) {
+      lastResult = await App.Sync.push();
+      if (lastResult?.ok) return lastResult;
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
+      }
+    }
+    return lastResult;
   },
 
   // Pull remote state from cloud

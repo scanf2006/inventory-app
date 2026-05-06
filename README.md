@@ -37,6 +37,14 @@ npx http-server .
 
 3. Open `http://localhost:8000` in your browser.
 
+### Release Helper
+
+- Patch bump (updates `package.json`, `src/app-config.js`, `index.html`, `sw.js`):
+
+```bash
+npm run release:patch
+```
+
 ## Security
 
 - **Safe Eval**: v1.8.0 introduced `SafeMathParser` to prevent code execution in input fields.

@@ -186,8 +186,11 @@ App.UI = {
         input.value = val;
         input.placeholder = "0";
         input.oninput = (e) => {
-          let v = e.target.value;
-          if (v.includes("-")) v = v.replace(/-/g, "*");
+          const rules = {
+            mapDashToMultiply: !!App.Config.INPUT_RULES?.MAP_DASH_TO_MULTIPLY,
+            mapHashToMultiply: !!App.Config.INPUT_RULES?.MAP_HASH_TO_MULTIPLY,
+          };
+          const v = App.Utils.normalizeMathInput(e.target.value, rules);
           e.target.value = v;
           window.updateValue(name, v, index);
         };

@@ -1,11 +1,11 @@
-﻿/**
+/**
  * App Configuration and Initial State
  * Waycred Inventory v3.3 ES6+ Modularization
  */
 window.App = window.App || {};
 
 App.Config = {
-  VERSION: "v3.8.14",
+  VERSION: "v3.8.15",
   ADMIN_PASSWORD: "9898",
   SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
   SUPABASE_KEY:
@@ -20,6 +20,10 @@ App.Config = {
     LAST_INVENTORY_UPDATE: "lubricant_last_inventory_update",
     RECENT_HISTORY: "lubricant_recent_history",
     LIVE_MESSAGES: "lubricant_live_messages",
+  },
+  INPUT_RULES: {
+    MAP_HASH_TO_MULTIPLY: false,
+    MAP_DASH_TO_MULTIPLY: true,
   },
   INITIAL_PRODUCTS: {
     "Bulk Oil": [

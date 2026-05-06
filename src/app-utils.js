@@ -76,6 +76,17 @@ App.Utils = {
     }
   },
 
+  // Normalize keypad input for math-friendly entry on mobile keyboards
+  normalizeMathInput: (value, rules = {}) => {
+    if (typeof value !== "string") return value || "";
+    let normalized = value;
+
+    if (rules.mapDashToMultiply) normalized = normalized.replace(/-/g, "*");
+    if (rules.mapHashToMultiply) normalized = normalized.replace(/#/g, "*");
+
+    return normalized;
+  },
+
   // Helper: Generate unique inventory key
   getProductKey: (category, product) => `${category}-${product}`,
 

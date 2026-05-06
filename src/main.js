@@ -225,15 +225,16 @@ window.saveToStorageImmediate = (skipTimestamp) => {
 
 const debouncedSave = App.Utils.debounce(() => {
   window.saveToStorageImmediate();
-  App.Sync.push();
+  App.Sync.pushWithRetry(2, 400);
 }, 300);
 
 window.saveToStorage = (isImmediate) => {
   window.saveToStorageImmediate();
   App.UI.updateSyncStatus("Saving...", false);
   if (isImmediate) {
-    App.Sync.push();
-    App.UI.updateSyncStatus("Saved", true);
+    App.Sync.pushWithRetry(2, 400).then((result) => {
+      App.UI.updateSyncStatus(result?.ok ? "Saved" : "Saved (Local)", !!result?.ok);
+    });
   } else {
     debouncedSave();
   }
@@ -485,9 +486,13 @@ window.sendLiveMessage = () => {
     
     input.value = "";
     
-    // Save locally first, then push immediately to cloud for real-time delivery.
+    // Save locally first, then push with retry for real-time delivery.
     window.saveToStorageImmediate(true);
-    App.Sync.push();
+    App.Sync.pushWithRetry(3, 500).then((result) => {
+      if (!result?.ok) {
+        App.UI.showToast("Message saved locally; cloud sync retry pending", "info");
+      }
+    });
     
     App.UI.showToast("Broadcast Success!", "success");
     App.UI.renderLiveTicker();
