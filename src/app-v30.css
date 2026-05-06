@@ -589,6 +589,13 @@ body {
     padding-right: 10px !important;
   }
 
+  .view-toggle-bar .last-update-hint {
+    order: 3;
+    flex: 0 0 100%;
+    margin: 0;
+    text-align: left;
+  }
+
   .item-delete-btn {
     opacity: 0.4;
   }
