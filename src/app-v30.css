@@ -559,6 +559,36 @@ body {
 }
 
 @media (max-width: 768px) {
+  .content-area {
+    overflow-x: hidden;
+  }
+
+  .inventory-controls {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .view-toggle-bar {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .view-toggle-bar .segmented-control {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  .view-toggle-bar .segmented-control button {
+    min-width: 0 !important;
+    width: 100%;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
   .item-delete-btn {
     opacity: 0.4;
   }
