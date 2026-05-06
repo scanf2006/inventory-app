@@ -149,7 +149,7 @@ App.UI = {
 
       const card = document.createElement("div");
       card.className = `item-card ${isPreview ? "preview-mode" : ""}`;
-      if (isMobileEdit) card.classList.add("mobile-edit-card");
+      if (isMobileEdit) card.classList.add("preview-mode", "mobile-edit-card");
 
       const infoDiv = document.createElement("div");
       infoDiv.className = "item-info";
