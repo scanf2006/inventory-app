@@ -485,8 +485,9 @@ window.sendLiveMessage = () => {
     
     input.value = "";
     
-    // Important: Force immediate push so messages aren't lost by polling
+    // Save locally first, then push immediately to cloud for real-time delivery.
     window.saveToStorageImmediate(true);
+    App.Sync.push();
     
     App.UI.showToast("Broadcast Success!", "success");
     App.UI.renderLiveTicker();
