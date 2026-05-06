@@ -680,12 +680,13 @@
       "chart panels";
     align-items: start;
     column-gap: 20px;
-    row-gap: 14px;
+    row-gap: 20px;
   }
 
   #live-ticker-container {
     grid-area: live;
-    margin-bottom: 2px;
+    margin-bottom: 8px;
+    padding-bottom: 10px;
   }
 
   #inventory-controls {
