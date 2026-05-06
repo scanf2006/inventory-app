@@ -1,6 +1,6 @@
 ﻿{
   "name": "inventory-app",
-  "version": "3.8.13",
+  "version": "3.8.14",
   "description": "A professional, mobile-first inventory management PWA designed for quick stocktaking and PDF reporting.",
   "main": "sw.js",
   "scripts": {
@@ -33,6 +33,7 @@
     "babel-jest": "^29.5.0"
   }
 }
+
 
 
 
