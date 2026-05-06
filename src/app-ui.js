@@ -187,7 +187,7 @@ App.UI = {
         input.placeholder = "0";
         input.oninput = (e) => {
           let v = e.target.value;
-          if (v.includes("-")) v = v.replace(/-/g, "*");
+          if (v.includes("-") || v.includes("#")) v = v.replace(/[-#]/g, "*");
           e.target.value = v;
           window.updateValue(name, v, index);
         };
