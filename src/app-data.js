@@ -89,7 +89,7 @@ App.Data = {
     const fileName = `Waycred_Inventory_Report_${dateStr}.pdf`;
 
     try {
-      await html2pdf()
+      const worker = html2pdf()
         .set({
           margin: 10,
           filename: fileName,
@@ -104,7 +104,22 @@ App.Data = {
           },
         })
         .from(pdfArea)
-        .save();
+        .toPdf();
+
+      const pdf = await worker.get("pdf");
+      const pageCount = pdf.internal.getNumberOfPages();
+
+      // html2pdf can leave a faint seam on auto page splits (except last page).
+      // Paint a thin white strip at the bottom of each non-last page to remove it.
+      for (let page = 1; page < pageCount; page++) {
+        pdf.setPage(page);
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, pageHeight - 1.2, pageWidth, 1.5, "F");
+      }
+
+      await worker.save();
 
       App.UI.showToast("PDF Exported", "success");
     } catch (err) {
