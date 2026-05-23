@@ -87,7 +87,10 @@ App.Data = {
           image: { type: "jpeg", quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          pagebreak: { mode: ["css", "legacy"] },
+          pagebreak: {
+            mode: ["css"],
+            avoid: [".pdf-category-block", ".pdf-category-title", ".pdf-grid"],
+          },
         })
         .from(pdfArea)
         .save();

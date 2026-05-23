@@ -380,6 +380,7 @@ hr {
 
 .pdf-category-block {
   margin-bottom: 25px;
+  break-inside: avoid-page !important;
   break-inside: avoid !important;
   page-break-inside: avoid !important;
   /* Legacy support */
@@ -414,6 +415,7 @@ hr {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
+  break-inside: avoid-page !important;
   border-top: 1px solid #ddd;
   border-left: 1px solid #ddd;
 }
