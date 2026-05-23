@@ -50,10 +50,13 @@ App.Data = {
     const fileName = `Waycred_Inventory_Report_${dateStr}.pdf`;
 
     try {
-      const { jsPDF } = window.jspdf || {};
-      if (!jsPDF) throw new Error("jsPDF not available");
+      const jsPDFCtor =
+        window.jspdf?.jsPDF ||
+        window.jsPDF ||
+        window.html2pdf?.__private__?.jsPDF;
+      if (!jsPDFCtor) throw new Error("jsPDF not available");
 
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const pdf = new jsPDFCtor({ unit: "mm", format: "a4", orientation: "portrait" });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 12;
