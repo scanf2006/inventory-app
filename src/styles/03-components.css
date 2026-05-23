@@ -388,13 +388,13 @@ hr {
 
 .pdf-category-title {
   position: relative;
-  background: #f0f0f0;
-  padding: 6px 12px;
-  padding-left: 16px;
+  background: transparent;
+  padding: 6px 10px;
   font-weight: 800;
   text-transform: uppercase;
   font-size: 1rem;
   margin-bottom: 8px;
+  border: 1px solid #d9d9d9;
   break-inside: avoid !important;
   page-break-inside: avoid !important;
   page-break-after: avoid !important;
@@ -402,13 +402,7 @@ hr {
 }
 
 .pdf-category-title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: #000;
+  content: none;
 }
 
 .pdf-grid {
