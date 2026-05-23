@@ -416,14 +416,14 @@ hr {
   grid-template-columns: 1fr 1fr;
   gap: 0;
   break-inside: avoid-page !important;
-  border-top: 1px solid #ddd;
-  border-left: 1px solid #ddd;
 }
 
 .pdf-grid-item {
   display: flex;
   justify-content: space-between;
   padding: 6px 10px;
+  border-top: 1px solid #ddd;
+  border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
   font-size: 0.85rem;
@@ -433,6 +433,10 @@ hr {
 .pdf-grid-item:nth-child(odd) {
   border-right: 2px solid #aaa;
   /* Simplified from double to solid to avoid artifacts */
+}
+
+.pdf-grid-item.spacer {
+  border-color: transparent;
 }
 
 .pdf-grid-item .p-name {

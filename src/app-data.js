@@ -30,45 +30,54 @@ App.Data = {
 
     (categoryOrder || []).forEach((cat) => {
       const allProducts = products[cat] || [];
-      if (allProducts.length > 0) {
-        hasData = true;
-        const block = document.createElement("div");
-        block.className = "pdf-category-block";
+      if (allProducts.length === 0) return;
 
-        let unitSuffix = "";
-        const catLower = cat.toLowerCase();
-        if (catLower.includes("bulk oil")) unitSuffix = " (L)";
-        else if (catLower.includes("case oil")) unitSuffix = " (Cases)";
-
-        block.innerHTML = `<div class="pdf-category-title">${App.Utils.escapeHTML(
-          cat,
-        )}${unitSuffix}</div>`;
-
-        const grid = document.createElement("div");
-        grid.className = "pdf-grid";
-
-        allProducts.forEach((name) => {
+      // Report should only include items with inventory > 0.
+      const visibleProducts = allProducts
+        .map((name) => {
           const key = App.Utils.getProductKey(cat, name);
           const total = App.Utils.safeEvaluate(inventory[key]);
-          const item = document.createElement("div");
-          item.className = "pdf-grid-item";
-          item.innerHTML = `<span class="p-name">${App.Utils.escapeHTML(
-            name,
-          )}</span><span class="p-val">${total}</span>`;
-          grid.appendChild(item);
-        });
+          return { name, total };
+        })
+        .filter((it) => it.total > 0);
 
-        // Add spacer if odd number of items for grid alignment
-        if (allProducts.length % 2 !== 0) {
-          const spacer = document.createElement("div");
-          spacer.className = "pdf-grid-item";
-          spacer.innerHTML = "<span></span><span></span>";
-          grid.appendChild(spacer);
-        }
+      if (visibleProducts.length === 0) return;
 
-        block.appendChild(grid);
-        pdfContent.appendChild(block);
+      hasData = true;
+      const block = document.createElement("div");
+      block.className = "pdf-category-block";
+
+      let unitSuffix = "";
+      const catLower = cat.toLowerCase();
+      if (catLower.includes("bulk oil")) unitSuffix = " (L)";
+      else if (catLower.includes("case oil")) unitSuffix = " (Cases)";
+
+      block.innerHTML = `<div class="pdf-category-title">${App.Utils.escapeHTML(
+        cat,
+      )}${unitSuffix}</div>`;
+
+      const grid = document.createElement("div");
+      grid.className = "pdf-grid";
+
+      visibleProducts.forEach(({ name, total }) => {
+        const item = document.createElement("div");
+        item.className = "pdf-grid-item";
+        item.innerHTML = `<span class="p-name">${App.Utils.escapeHTML(
+          name,
+        )}</span><span class="p-val">${total}</span>`;
+        grid.appendChild(item);
+      });
+
+      // Add spacer if odd number of items for grid alignment
+      if (visibleProducts.length % 2 !== 0) {
+        const spacer = document.createElement("div");
+        spacer.className = "pdf-grid-item spacer";
+        spacer.innerHTML = "<span></span><span></span>";
+        grid.appendChild(spacer);
       }
+
+      block.appendChild(grid);
+      pdfContent.appendChild(block);
     });
 
     if (!hasData) return App.UI.showToast("No data to export", "info");
@@ -88,8 +97,10 @@ App.Data = {
           html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: {
-            mode: ["avoid-all", "css"],
-            avoid: [".pdf-category-block", ".pdf-category-title", ".pdf-grid"],
+            // Prefer CSS-driven breaks to avoid html2pdf "phantom separator" artifacts
+            // that can appear at page bottoms when avoid-all is too aggressive.
+            mode: ["css", "legacy"],
+            avoid: [".pdf-category-block"],
           },
         })
         .from(pdfArea)
