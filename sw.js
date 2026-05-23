@@ -1,6 +1,6 @@
 // Service Worker - inventory-app
 // Version driven by cache name; update on each release
-const CACHE_NAME = 'inv-aiden-v3.8.35';
+const CACHE_NAME = 'inv-aiden-v3.8.36';
 const OPTIONAL_CACHE_NAME = 'inv-aiden-opt-v1';
 const CRITICAL_ASSETS = [
     '/',

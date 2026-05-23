@@ -84,11 +84,11 @@ App.Data = {
         .set({
           margin: 10,
           filename: fileName,
-          image: { type: "jpeg", quality: 0.98 },
+          image: { type: "png", quality: 1 },
           html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: {
-            mode: ["css"],
+            mode: ["avoid-all", "css"],
             avoid: [".pdf-category-block", ".pdf-category-title", ".pdf-grid"],
           },
         })
