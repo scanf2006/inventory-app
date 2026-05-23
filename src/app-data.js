@@ -11,7 +11,18 @@ App.Data = {
     const pdfDate = document.getElementById("pdf-date");
     if (!pdfArea || !pdfContent || !pdfDate) return;
 
-    pdfDate.innerText = `Report Date: ${new Date().toLocaleString()}`;
+    const reportDate = new Date().toLocaleString();
+    const lastUpdatedTs = App.Utils.getLastInventoryDisplayTs
+      ? App.Utils.getLastInventoryDisplayTs()
+      : (App.State.lastInventoryUpdate || 0);
+    const lastUpdatedText = lastUpdatedTs
+      ? new Date(lastUpdatedTs).toLocaleString()
+      : "N/A";
+
+    pdfDate.innerHTML = `
+      <span class="pdf-date-left">Report Date: ${App.Utils.escapeHTML(reportDate)}</span>
+      <span class="pdf-date-right">Last Updated: ${App.Utils.escapeHTML(lastUpdatedText)}</span>
+    `;
     pdfContent.innerHTML = "";
     let hasData = false;
 
