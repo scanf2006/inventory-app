@@ -408,7 +408,7 @@ hr {
 .pdf-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
+  gap: 8px;
   break-inside: avoid-page !important;
 }
 
@@ -416,21 +416,20 @@ hr {
   display: flex;
   justify-content: space-between;
   padding: 6px 10px;
-  border-top: 1px solid #ddd;
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
+  border: 1px solid #e1e1e1;
+  border-radius: 6px;
+  background: #fafafa;
   font-size: 0.85rem;
 }
 
 /* Enhanced separator for 2-column layout */
 .pdf-grid-item:nth-child(odd) {
-  border-right: 2px solid #aaa;
-  /* Simplified from double to solid to avoid artifacts */
+  border-color: #d7d7d7;
 }
 
 .pdf-grid-item.spacer {
-  border-color: transparent;
+  border: none;
+  background: transparent;
 }
 
 .pdf-grid-item .p-name {

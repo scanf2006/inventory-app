@@ -5,7 +5,7 @@
 window.App = window.App || {};
 
 App.Config = {
-  VERSION: "v3.8.38",
+  VERSION: "v3.8.39",
   ADMIN_PASSWORD: "9898",
   SUPABASE_URL: "https://kutwhtcvhtbhbhhyqiop.supabase.co",
   SUPABASE_KEY:
@@ -62,6 +62,7 @@ App.State = {
 App.Services = {
   supabase: null,
 };
+
 
 
 
