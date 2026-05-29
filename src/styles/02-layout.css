@@ -379,8 +379,26 @@
     width: 100%;
   }
 
+  .item-card.mobile-edit-card .mobile-edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+  }
+
   .item-card.mobile-edit-card .item-name {
-    margin-bottom: 4px;
+    margin-bottom: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .item-card.mobile-edit-card .mobile-edit-total {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .item-card.mobile-edit-card .mobile-edit-input-group {

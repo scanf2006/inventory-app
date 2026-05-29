@@ -198,7 +198,15 @@ App.UI = {
       resultDiv.innerHTML = `Total: <span class="highlight-total">${total}</span>`;
 
       if (isMobileEdit) {
-        infoDiv.append(nameDiv);
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "mobile-edit-header";
+
+        const totalBadge = document.createElement("div");
+        totalBadge.className = "mobile-edit-total";
+        totalBadge.innerHTML = `Total: <span class="highlight-total">${total}</span>`;
+
+        headerDiv.append(nameDiv, totalBadge);
+        infoDiv.append(headerDiv);
       } else {
         infoDiv.append(nameDiv, resultDiv);
       }
