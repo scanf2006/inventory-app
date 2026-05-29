@@ -385,20 +385,30 @@
     justify-content: space-between;
     gap: 10px;
     width: 100%;
+    flex-wrap: nowrap;
   }
 
   .item-card.mobile-edit-card .item-name {
     margin-bottom: 0;
     min-width: 0;
     flex: 1 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .item-card.mobile-edit-card .mobile-edit-total {
-    font-size: 0.84rem;
-    font-weight: 700;
+    font-size: 0.76rem;
+    font-weight: 600;
     color: var(--text-muted);
     white-space: nowrap;
     flex: 0 0 auto;
+    line-height: 1.1;
+  }
+
+  .item-card.mobile-edit-card .mobile-edit-total .mobile-edit-total-value {
+    color: var(--text-main);
+    font-weight: 700;
   }
 
   .item-card.mobile-edit-card .mobile-edit-input-group {
