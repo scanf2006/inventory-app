@@ -203,7 +203,7 @@ App.UI = {
 
         const totalBadge = document.createElement("div");
         totalBadge.className = "mobile-edit-total";
-        totalBadge.innerHTML = `Tot: <span class="mobile-edit-total-value">${total}</span>`;
+        totalBadge.innerHTML = `Tot: <span class="mobile-edit-total-value" id="mobile-total-${index}">${total}</span>`;
 
         headerDiv.append(nameDiv, totalBadge);
         infoDiv.append(headerDiv);

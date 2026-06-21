@@ -266,6 +266,8 @@ window.updateValue = (name, value, index) => {
   const total = App.Utils.safeEvaluate(value);
   const resultEl = document.getElementById(`result-${index}`);
   if (resultEl) resultEl.innerHTML = `Total:<br>${total}`;
+  const mobileTotalEl = document.getElementById(`mobile-total-${index}`);
+  if (mobileTotalEl) mobileTotalEl.textContent = total;
 };
 
 window.renameProductInline = (oldName) => {
