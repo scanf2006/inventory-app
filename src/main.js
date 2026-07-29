@@ -180,6 +180,7 @@ const setupEventListeners = () => {
   });
 
   document.getElementById("reset-all-btn")?.addEventListener("click", () => window.resetInventory());
+  document.getElementById("add-category-btn")?.addEventListener("click", () => window.addCategory());
   document.getElementById("save-snapshot-btn")?.addEventListener("click", () => {
     const note = document.getElementById("snapshot-note-input")?.value.trim() || "";
     App.Sync.saveSnapshot(note);
@@ -323,6 +324,23 @@ window.submitQuickAdd = () => {
 };
 
 // --- CATEGORY ACTIONS ---
+
+window.addCategory = () => {
+  const input = document.getElementById("new-category-name");
+  const name = input?.value.trim();
+  if (!name) return;
+  if (App.State.products[name]) return App.UI.showToast("Category exists", "error");
+
+  App.State.products[name] = [];
+  App.State.categoryOrder.push(name);
+  App.State.currentCategory = name;
+  input.value = "";
+  window.saveToStorage(true);
+  App.UI.renderTabs();
+  App.UI.renderInventory();
+  App.UI.renderManageUI();
+  App.UI.showToast("Category added", "success");
+};
 
 window.moveCategory = (index, direction) => {
   const next = index + direction;
