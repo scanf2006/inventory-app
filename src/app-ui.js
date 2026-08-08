@@ -303,6 +303,14 @@ App.UI = {
         viewControl.appendChild(btn);
       });
       bar.appendChild(viewControl);
+
+      if (App.UI.isDesktop() && mobileAdminUnlocked) {
+        const exitEditBtn = document.createElement("button");
+        exitEditBtn.className = "btn-edit";
+        exitEditBtn.textContent = "Exit Edit Mode";
+        exitEditBtn.onclick = () => window.lockEditing();
+        bar.appendChild(exitEditBtn);
+      }
     }
     controls.appendChild(bar);
   },

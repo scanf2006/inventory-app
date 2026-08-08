@@ -25,7 +25,9 @@ describe("desktop editing access", () => {
     const ui = read("src", "app-ui.js");
 
     expect(main).toContain("const isUnlocked = App.State.mobileAdminUnlocked;");
+    expect(main).toContain("window.lockEditing = () => {");
     expect(main).toContain('document.body.classList.toggle("desktop-edit-mode", isUnlocked && App.UI.isDesktop());');
     expect(ui).toContain("const isPreview = viewMode === \"preview\" || (App.UI.isDesktop() && !mobileAdminUnlocked);");
+    expect(ui).toContain('exitEditBtn.textContent = "Exit Edit Mode";');
   });
 });

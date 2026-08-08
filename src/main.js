@@ -124,8 +124,7 @@ const setupEventListeners = () => {
     }
   });
 
-  const adminLockBtn = document.getElementById("admin-lock-btn");
-  adminLockBtn?.addEventListener("click", () => {
+  window.lockEditing = () => {
     App.State.mobileAdminUnlocked = false;
     sessionStorage.removeItem("admin_unlocked");
     App.State.viewMode = "preview";
@@ -133,7 +132,10 @@ const setupEventListeners = () => {
     window.updateAdminLoginUI();
     App.UI.renderInventory();
     App.UI.showToast("Edit mode locked", "info");
-  });
+  };
+
+  const adminLockBtn = document.getElementById("admin-lock-btn");
+  adminLockBtn?.addEventListener("click", window.lockEditing);
 
   // Global Sync Listeners
   window.addEventListener("focus", () => App.Sync.pull(true));
