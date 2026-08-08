@@ -34,4 +34,13 @@ describe("desktop editing access", () => {
     expect(ui).toContain('exitEditBtn.className = "btn-edit exit-edit-btn";');
     expect(ui).toContain('exitEditBtn.textContent = "Exit Edit Mode";');
   });
+
+  test("uses a dedicated table for unlocked desktop editing", () => {
+    const ui = read("src", "app-ui.js");
+
+    expect(ui).toContain('list.classList.add("desktop-edit-layout");');
+    expect(ui).toContain("App.UI.renderDesktopEditTable(list, displayProducts, inventory);");
+    expect(ui).toContain('table.className = "desktop-edit-table";');
+    expect(ui).toContain('addInput.id = "desktop-quick-add-name";');
+  });
 });

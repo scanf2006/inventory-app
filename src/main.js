@@ -273,6 +273,8 @@ window.updateValue = (name, value, index) => {
   if (resultEl) resultEl.innerHTML = `Total:<br>${total}`;
   const mobileTotalEl = document.getElementById(`mobile-total-${index}`);
   if (mobileTotalEl) mobileTotalEl.textContent = total;
+  const desktopTotalEl = document.getElementById(`desktop-total-${index}`);
+  if (desktopTotalEl) desktopTotalEl.textContent = total;
 };
 
 window.renameProductInline = (oldName) => {
@@ -313,8 +315,8 @@ window.removeProductInline = (name) => {
   });
 };
 
-window.submitQuickAdd = () => {
-    const input = document.getElementById("quick-add-name");
+window.submitQuickAdd = (inputId = "quick-add-name") => {
+    const input = document.getElementById(inputId);
     const name = input?.value.trim();
     if (!name) return;
 

@@ -708,4 +708,101 @@ body.desktop-edit-mode .exit-edit-btn:hover {
   background: #a91f1f !important;
 }
 
+body.desktop-edit-mode .inventory-list.desktop-edit-layout {
+  display: block !important;
+  padding: 0 !important;
+}
+
+.desktop-edit-panel {
+  overflow: hidden;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+}
+
+.desktop-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.desktop-edit-table th {
+  padding: 12px 16px;
+  background: rgba(10, 83, 190, 0.08);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.desktop-edit-table td {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.desktop-product-name {
+  padding: 4px 0;
+  color: var(--text-main);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+
+.desktop-product-name:hover { color: var(--primary-blue); }
+
+.desktop-edit-input {
+  width: 100%;
+  max-width: 220px;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  color: var(--text-main);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.desktop-edit-input:focus {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 1px;
+}
+
+.desktop-edit-total { font-weight: 800; color: var(--primary-blue); }
+
+.desktop-delete-btn,
+.desktop-add-product-btn {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.desktop-delete-btn { color: #ffffff; background: var(--danger-color); }
+
+.desktop-add-product {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.desktop-add-product input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  color: var(--text-main);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.desktop-add-product-btn { color: #ffffff; background: var(--primary-blue); }
+
 body.admin-edit-mode .mobile-only { display: block !important; }

@@ -156,6 +156,15 @@ App.UI = {
     App.UI.renderInventoryControls();
     App.UI.renderInventoryCount(displayProducts.length);
 
+    if (App.UI.isDesktop() && mobileAdminUnlocked && viewMode === "edit") {
+      list.classList.add("desktop-edit-layout");
+      App.UI.renderDesktopEditTable(list, displayProducts, inventory);
+      if (typeof App.UI.renderDesktopChartPanel === "function") {
+        App.UI.renderDesktopChartPanel();
+      }
+      return;
+    }
+
     // Reset button for Mobile Edit mode
     if (viewMode === "edit" && !App.UI.isDesktop()) {
       const resetWrapper = document.createElement("div");
@@ -252,6 +261,85 @@ App.UI = {
     if (App.UI.isDesktop() && typeof App.UI.renderDesktopChartPanel === "function") {
       App.UI.renderDesktopChartPanel();
     }
+  },
+
+  renderDesktopEditTable: (list, products, inventory) => {
+    const panel = document.createElement("section");
+    panel.className = "desktop-edit-panel";
+
+    const table = document.createElement("table");
+    table.className = "desktop-edit-table";
+    table.innerHTML = `
+      <thead>
+        <tr><th>Product</th><th>Stock Calculation</th><th>Total</th><th>Actions</th></tr>
+      </thead>
+    `;
+    const body = document.createElement("tbody");
+
+    products.forEach((name, index) => {
+      const key = App.Utils.getProductKey(App.State.currentCategory, name);
+      const row = document.createElement("tr");
+
+      const nameCell = document.createElement("td");
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "desktop-product-name";
+      renameBtn.textContent = name;
+      renameBtn.title = "Rename product";
+      renameBtn.onclick = () => window.renameProductInline(name);
+      nameCell.appendChild(renameBtn);
+
+      const stockCell = document.createElement("td");
+      const input = document.createElement("input");
+      input.className = "desktop-edit-input";
+      input.type = "text";
+      input.inputMode = "tel";
+      input.value = inventory[key] || "";
+      input.placeholder = "0";
+      input.oninput = (event) => {
+        const value = App.Utils.normalizeMathInput(event.target.value, {
+          mapDashToMultiply: !!App.Config.INPUT_RULES?.MAP_DASH_TO_MULTIPLY,
+          mapHashToMultiply: !!App.Config.INPUT_RULES?.MAP_HASH_TO_MULTIPLY,
+        });
+        event.target.value = value;
+        window.updateValue(name, value, index);
+      };
+      stockCell.appendChild(input);
+
+      const totalCell = document.createElement("td");
+      totalCell.className = "desktop-edit-total";
+      totalCell.id = `desktop-total-${index}`;
+      totalCell.textContent = App.Utils.safeEvaluate(inventory[key] || "");
+
+      const actionCell = document.createElement("td");
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "desktop-delete-btn";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.onclick = () => window.removeProductInline(name);
+      actionCell.appendChild(deleteBtn);
+
+      row.append(nameCell, stockCell, totalCell, actionCell);
+      body.appendChild(row);
+    });
+    table.appendChild(body);
+
+    const addForm = document.createElement("div");
+    addForm.className = "desktop-add-product";
+    const addInput = document.createElement("input");
+    addInput.id = "desktop-quick-add-name";
+    addInput.type = "text";
+    addInput.placeholder = "New product name";
+    addInput.setAttribute("list", "master-product-list");
+    addInput.onkeydown = (event) => {
+      if (event.key === "Enter") window.submitQuickAdd("desktop-quick-add-name");
+    };
+    const addBtn = document.createElement("button");
+    addBtn.className = "desktop-add-product-btn";
+    addBtn.textContent = "+ Add Product";
+    addBtn.onclick = () => window.submitQuickAdd("desktop-quick-add-name");
+    addForm.append(addInput, addBtn);
+
+    panel.append(table, addForm);
+    list.appendChild(panel);
   },
 
   renderInventoryControls: () => {
