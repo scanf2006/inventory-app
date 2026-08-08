@@ -12,6 +12,14 @@ describe("desktop editing access", () => {
     expect(section[1]).not.toContain("mobile-only");
   });
 
+  test("keeps desktop dashboard configuration outside the edit lock", () => {
+    const html = read("index.html");
+
+    expect(html.indexOf("Dashboard Config (Desktop)")).toBeLessThan(
+      html.indexOf('id="admin-protected-content"'),
+    );
+  });
+
   test("requires the existing admin unlock before desktop editing", () => {
     const main = read("src", "main.js");
     const ui = read("src", "app-ui.js");
