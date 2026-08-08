@@ -17,21 +17,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@400;700&display=swap"
         rel="stylesheet">
-    <!-- html2pdf Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Supabase SDK (Multi-CDN for stability) -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-        if (!window.supabase) {
-            console.log("Unpkg failed, trying cdnjs...");
-            var s = document.createElement('script');
-            s.src = "https://cdnjs.cloudflare.com/ajax/libs/supabase/2.45.1/supabase.js";
-            document.head.appendChild(s);
-        }
-    </script>
-    <!-- Chart.js for Desktop Dashboard -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <!-- Version-pinned local runtime dependencies; hashes are tracked in assets/vendor/VERSIONS.md -->
+    <script src="assets/vendor/html2pdf-0.10.1.bundle.min.js" integrity="sha384-Yv5O+t3uE3hunW8uyrbpPW3iw6/5/Y7HitWJBLgqfMoA36NogMmy+8wWZMpn3HWc"></script>
+    <script src="assets/vendor/supabase-2.45.1.js" integrity="sha384-SFDMqH+LQQ/LYtTNdFzLtsy2g0JpTn32wTG8s8wm9YUTyDstYKO9bcC6UDMGwNNl"></script>
+    <script src="assets/vendor/chart-4.4.7.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"></script>
+    <script src="assets/vendor/chartjs-plugin-datalabels-2.2.0.min.js" integrity="sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y"></script>
     <script>
         // Global Registration of Datalabels plugin with fallback defense
         if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
@@ -40,7 +30,7 @@
             console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
         }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.8.50">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.8.51">
 </head>
 
 <body>
@@ -284,15 +274,15 @@
         <datalist id="master-product-list"></datalist>
 
         <script>
-            window.__APP_VERSION__ = "3.8.50";
+            window.__APP_VERSION__ = "3.8.51";
         </script>
-        <script src="src/app-config.js?v=3.8.50"></script>
-        <script src="src/app-utils.js?v=3.8.50"></script>
-        <script src="src/app-ui.js?v=3.8.50"></script>
-        <script src="src/app-ui-desktop.js?v=3.8.50"></script>
-        <script src="src/app-sync.js?v=3.8.50"></script>
-        <script src="src/app-data.js?v=3.8.50"></script>
-        <script src="src/main.js?v=3.8.50"></script>
+        <script src="src/app-config.js?v=3.8.51"></script>
+        <script src="src/app-utils.js?v=3.8.51"></script>
+        <script src="src/app-ui.js?v=3.8.51"></script>
+        <script src="src/app-ui-desktop.js?v=3.8.51"></script>
+        <script src="src/app-sync.js?v=3.8.51"></script>
+        <script src="src/app-data.js?v=3.8.51"></script>
+        <script src="src/main.js?v=3.8.51"></script>
 </body>
 
 </html>

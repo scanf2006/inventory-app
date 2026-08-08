@@ -1,7 +1,6 @@
 // Service Worker - inventory-app
 // Version driven by cache name; update on each release
-const CACHE_NAME = 'inv-aiden-v3.8.50';
-const OPTIONAL_CACHE_NAME = 'inv-aiden-opt-v1';
+const CACHE_NAME = 'inv-aiden-v3.8.51';
 const CRITICAL_ASSETS = [
     '/',
     '/index.html',
@@ -18,12 +17,11 @@ const CRITICAL_ASSETS = [
     '/src/styles/03-components.css',
     '/src/styles/04-responsive.css',
     '/manifest.json',
-    '/assets/icon.svg'
-];
-const OPTIONAL_ASSETS = [
-    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
-    'https://cdn.jsdelivr.net/npm/chart.js',
-    'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2'
+    '/assets/icon.svg',
+    '/assets/vendor/html2pdf-0.10.1.bundle.min.js',
+    '/assets/vendor/supabase-2.45.1.js',
+    '/assets/vendor/chart-4.4.7.umd.min.js',
+    '/assets/vendor/chartjs-plugin-datalabels-2.2.0.min.js'
 ];
 
 self.addEventListener('install', event => {
@@ -57,7 +55,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     const path = url.pathname;
-    const fullUrl = event.request.url;
 
     // Critical assets: Network-first with cache fallback
     // Use pathname (no query string) as canonical cache key to avoid
@@ -78,18 +75,6 @@ self.addEventListener('fetch', event => {
             }).catch(() => {
                 // Network failed, look up by canonical key (ignores ?v= params)
                 return caches.match(canonicalRequest);
-            })
-        );
-    } else if (OPTIONAL_ASSETS.includes(fullUrl) || OPTIONAL_ASSETS.includes(path)) {
-        // Optional/CDN assets: Cache-first with network fallback (less critical)
-        event.respondWith(
-            caches.open(OPTIONAL_CACHE_NAME).then(cache => {
-                return cache.match(event.request).then(cachedResponse => {
-                    return cachedResponse || fetch(event.request).then(response => {
-                        cache.put(event.request, response.clone());
-                        return response;
-                    });
-                });
             })
         );
     }
