@@ -159,6 +159,12 @@
     padding: 24px;
   }
 
+  .inventory-list.preview-layout > .item-card.preview-mode:last-child:nth-child(odd) {
+    grid-column: auto;
+    justify-self: stretch;
+    width: auto;
+  }
+
   /* v3.6.9 Desktop Enhancement: Larger Cards & Text */
   .item-card.preview-mode {
     padding: 24px 28px;
