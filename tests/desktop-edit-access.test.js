@@ -43,4 +43,13 @@ describe("desktop editing access", () => {
     expect(ui).toContain('table.className = "desktop-edit-table";');
     expect(ui).toContain('addInput.id = "desktop-quick-add-name";');
   });
+
+  test("protects desktop table input from incoming sync renders", () => {
+    const sync = read("src", "app-sync.js");
+    const main = read("src", "main.js");
+
+    expect(sync).toContain('document.activeElement?.matches(".item-input, .desktop-edit-input")');
+    expect(sync).toContain("App.Sync.pendingPullAfterEdit = true;");
+    expect(main).toContain('event.target.matches(".item-input, .desktop-edit-input")');
+  });
 });

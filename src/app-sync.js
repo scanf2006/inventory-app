@@ -5,6 +5,11 @@
 window.App = window.App || {};
 
 App.Sync = {
+  pendingPullAfterEdit: false,
+
+  isInventoryInputActive: () =>
+    document.activeElement?.matches(".item-input, .desktop-edit-input"),
+
   // Initialize Supabase client and real-time subscriptions
   init: async () => {
     const lib = window.supabasejs || window.supabase;
@@ -242,11 +247,8 @@ App.Sync = {
     }
 
     // Input Focus Guard: avoid snapping values while user is typing.
-    const active = document.activeElement;
-    if (
-      active?.tagName === "INPUT" &&
-      active.classList.contains("item-input")
-    ) {
+    if (App.Sync.isInventoryInputActive()) {
+      App.Sync.pendingPullAfterEdit = true;
       return;
     }
 

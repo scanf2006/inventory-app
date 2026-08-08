@@ -142,6 +142,15 @@ const setupEventListeners = () => {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") App.Sync.pull(true);
   });
+  document.addEventListener("focusout", (event) => {
+    if (!event.target.matches(".item-input, .desktop-edit-input")) return;
+
+    setTimeout(() => {
+      if (!App.Sync.pendingPullAfterEdit || App.Sync.isInventoryInputActive()) return;
+      App.Sync.pendingPullAfterEdit = false;
+      App.Sync.pull(true);
+    }, 0);
+  });
 
   // Footer Actions
   document.getElementById("manage-btn")?.addEventListener("click", () => {
