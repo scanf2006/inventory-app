@@ -18,6 +18,9 @@ describe("desktop editing access", () => {
     expect(html.indexOf("Dashboard Config (Desktop)")).toBeLessThan(
       html.indexOf('id="admin-protected-content"'),
     );
+    expect(html.indexOf("Dashboard Config (Desktop)")).toBeLessThan(
+      html.indexOf('id="admin-login-section"'),
+    );
   });
 
   test("requires the existing admin unlock before desktop editing", () => {

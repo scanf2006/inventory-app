@@ -40,7 +40,7 @@
             console.warn("Chart.js or DataLabels plugin not found, skipping registration.");
         }
     </script>
-    <link rel="stylesheet" href="src/app-v30.css?v=3.8.47">
+    <link rel="stylesheet" href="src/app-v30.css?v=3.8.48">
 </head>
 
 <body>
@@ -153,20 +153,6 @@
                             will also pull the latest data immediately.</p>
                     </section>
 
-
-                    <hr>
-                    <section class="management-section" id="admin-login-section">
-                        <h3>Enable Editing</h3>
-                        <div class="add-form" id="admin-login-form">
-                            <input type="password" id="admin-password-input" placeholder="Enter admin password" style="width: 100%;">
-                            <button id="admin-unlock-btn" class="primary-btn" style="min-width: 80px;">Unlock</button>
-                        </div>
-                        <div id="admin-logout-form" class="hidden" style="margin-top: 10px;">
-                            <p style="color: var(--primary-green); font-weight: bold; margin-bottom: 10px;">Edit Mode Unlocked</p>
-                            <button id="admin-lock-btn" class="secondary-btn w-full">Lock & Quit</button>
-                        </div>
-                    </section>
-
                     <hr class="desktop-only">
                     <section class="management-section desktop-only">
                         <h3>Dashboard Config (Desktop)</h3>
@@ -179,6 +165,19 @@
                         </div>
                         <p class="small-hint">Select the key items above to be monitored on the Desktop Dashboard Bar
                             Chart.</p>
+                    </section>
+
+                    <hr>
+                    <section class="management-section" id="admin-login-section">
+                        <h3>Enable Editing</h3>
+                        <div class="add-form" id="admin-login-form">
+                            <input type="password" id="admin-password-input" placeholder="Enter admin password" style="width: 100%;">
+                            <button id="admin-unlock-btn" class="primary-btn" style="min-width: 80px;">Unlock</button>
+                        </div>
+                        <div id="admin-logout-form" class="hidden" style="margin-top: 10px;">
+                            <p style="color: var(--primary-green); font-weight: bold; margin-bottom: 10px;">Edit Mode Unlocked</p>
+                            <button id="admin-lock-btn" class="secondary-btn w-full">Lock & Quit</button>
+                        </div>
                     </section>
                     
                     <div id="admin-protected-content">
@@ -285,15 +284,15 @@
         <datalist id="master-product-list"></datalist>
 
         <script>
-            window.__APP_VERSION__ = "3.8.47";
+            window.__APP_VERSION__ = "3.8.48";
         </script>
-        <script src="src/app-config.js?v=3.8.47"></script>
-        <script src="src/app-utils.js?v=3.8.47"></script>
-        <script src="src/app-ui.js?v=3.8.47"></script>
-        <script src="src/app-ui-desktop.js?v=3.8.47"></script>
-        <script src="src/app-sync.js?v=3.8.47"></script>
-        <script src="src/app-data.js?v=3.8.47"></script>
-        <script src="src/main.js?v=3.8.47"></script>
+        <script src="src/app-config.js?v=3.8.48"></script>
+        <script src="src/app-utils.js?v=3.8.48"></script>
+        <script src="src/app-ui.js?v=3.8.48"></script>
+        <script src="src/app-ui-desktop.js?v=3.8.48"></script>
+        <script src="src/app-sync.js?v=3.8.48"></script>
+        <script src="src/app-data.js?v=3.8.48"></script>
+        <script src="src/main.js?v=3.8.48"></script>
 </body>
 
 </html>
