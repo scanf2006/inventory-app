@@ -128,7 +128,7 @@ App.UI = {
       sortDirection,
       mobileAdminUnlocked,
     } = App.State;
-    const isPreview = viewMode === "preview" || App.UI.isDesktop();
+    const isPreview = viewMode === "preview" || (App.UI.isDesktop() && !mobileAdminUnlocked);
     list.className = `inventory-list ${isPreview ? "preview-layout" : ""}`;
 
     const rawProducts = App.Utils.getCurrentProducts();

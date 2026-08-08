@@ -59,7 +59,7 @@ const initApp = async () => {
   if (sessionStorage.getItem("admin_unlocked") === "true") {
     App.State.mobileAdminUnlocked = true;
     App.State.viewMode = "edit";
-  } else if (!App.UI.isDesktop()) {
+  } else {
     App.State.viewMode = "preview";
   }
 
@@ -115,6 +115,7 @@ const setupEventListeners = () => {
       sessionStorage.setItem("admin_unlocked", "true");
       App.State.viewMode = "edit"; 
       document.getElementById("admin-password-input").value = "";
+      document.body.classList.toggle("desktop-edit-mode", App.UI.isDesktop());
       window.updateAdminLoginUI();
       App.UI.renderInventory();
       App.UI.showToast("Edit mode unlocked", "success");
@@ -128,6 +129,7 @@ const setupEventListeners = () => {
     App.State.mobileAdminUnlocked = false;
     sessionStorage.removeItem("admin_unlocked");
     App.State.viewMode = "preview";
+    document.body.classList.remove("desktop-edit-mode");
     window.updateAdminLoginUI();
     App.UI.renderInventory();
     App.UI.showToast("Edit mode locked", "info");
@@ -437,7 +439,8 @@ window.resetCategoryInventory = () => {
 // --- MISC ---
 
 window.updateAdminLoginUI = () => {
-  const isUnlocked = App.UI.isDesktop() || App.State.mobileAdminUnlocked;
+  const isUnlocked = App.State.mobileAdminUnlocked;
+  document.body.classList.toggle("desktop-edit-mode", isUnlocked && App.UI.isDesktop());
   document.getElementById("admin-login-form")?.classList.toggle("hidden", isUnlocked);
   document.getElementById("admin-logout-form")?.classList.toggle("hidden", !isUnlocked);
   document.getElementById("admin-protected-content")?.classList.toggle("hidden", !isUnlocked);
