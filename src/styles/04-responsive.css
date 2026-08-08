@@ -697,4 +697,15 @@ body.desktop-edit-mode .item-input { display: inline-block !important; }
 body.admin-edit-mode .input-group,
 body.desktop-edit-mode .input-group { display: flex !important; }
 
+body.desktop-edit-mode .exit-edit-btn {
+  background: #c62828 !important;
+  color: #ffffff !important;
+  border: 1px solid #ff8a80 !important;
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.45) !important;
+}
+
+body.desktop-edit-mode .exit-edit-btn:hover {
+  background: #a91f1f !important;
+}
+
 body.admin-edit-mode .mobile-only { display: block !important; }

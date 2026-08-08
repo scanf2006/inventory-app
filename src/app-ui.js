@@ -306,7 +306,7 @@ App.UI = {
 
       if (App.UI.isDesktop() && mobileAdminUnlocked) {
         const exitEditBtn = document.createElement("button");
-        exitEditBtn.className = "btn-edit";
+        exitEditBtn.className = "btn-edit exit-edit-btn";
         exitEditBtn.textContent = "Exit Edit Mode";
         exitEditBtn.onclick = () => window.lockEditing();
         bar.appendChild(exitEditBtn);
