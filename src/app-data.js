@@ -157,6 +157,8 @@ App.Data = {
         }
 
         App.State.lastInventoryUpdate = Date.now();
+        // A restored backup replaces the cloud copy as-is instead of merging into it
+        App.Sync.resetBase();
         
         // Finalize import
         if (typeof window.saveToStorage === 'function') window.saveToStorage(true);

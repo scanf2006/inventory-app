@@ -172,6 +172,7 @@ const setupEventListeners = () => {
       App.State.syncId = id;
       localStorage.setItem(App.Config.STORAGE_KEYS.SYNC_ID, id);
       App.State.lastUpdated = 0; // Ensure cloud wins
+      App.Sync.resetBase(); // New Sync ID: no shared history with this cloud row yet
       App.Sync.setupRealtime(); // Critical Fix: Restart listener with new ID
       App.Sync.pull(false, true);
     } else {
@@ -418,7 +419,12 @@ window.removeCategory = (cat) => {
 
 window.resetInventory = () => {
   App.UI.confirm("Reset ALL inventory values to zero?", () => {
+    // Write an explicit empty value for every product instead of deleting keys,
+    // so the reset also overrides values this device has not received yet
     App.State.inventory = {};
+    Object.entries(App.State.products).forEach(([cat, prods]) => {
+      prods.forEach(p => { App.State.inventory[App.Utils.getProductKey(cat, p)] = ""; });
+    });
     App.State.lastInventoryUpdate = Date.now();
     window.saveToStorage(true);
     App.UI.renderInventory();
@@ -431,13 +437,12 @@ window.resetCategoryInventory = () => {
   if (!cat) return;
   App.UI.confirm(`Reset ALL items in "${cat}" to zero?`, () => {
     const prods = App.State.products[cat] || [];
-    let changed = false;
+    // Explicit empty values (not deletes) so the reset also wins over edits not received yet
     prods.forEach(p => {
-      const key = App.Utils.getProductKey(cat, p);
-      if (App.State.inventory[key]) { delete App.State.inventory[key]; changed = true; }
+      App.State.inventory[App.Utils.getProductKey(cat, p)] = "";
     });
 
-    if (changed) {
+    if (prods.length > 0) {
       App.State.lastInventoryUpdate = Date.now();
       App.State.history.unshift({ product: "ALL ITEMS RESET", category: cat, value: "0 (Cleared)", timestamp: App.State.lastInventoryUpdate });
       if (App.State.history.length > 6) App.State.history.pop();

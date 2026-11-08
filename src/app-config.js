@@ -20,6 +20,9 @@ App.Config = {
     LAST_INVENTORY_UPDATE: "lubricant_last_inventory_update",
     RECENT_HISTORY: "lubricant_recent_history",
     LIVE_MESSAGES: "lubricant_live_messages",
+    // Last cloud state this device synced with; local changes are measured against it
+    SYNC_BASE: "lubricant_sync_base",
+    SYNC_REMOTE_TS: "lubricant_sync_remote_ts",
   },
   INPUT_RULES: {
     MAP_HASH_TO_MULTIPLY: false,

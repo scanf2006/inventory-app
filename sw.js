@@ -9,6 +9,7 @@ const CRITICAL_ASSETS = [
     '/src/app-utils.js',
     '/src/app-ui.js',
     '/src/app-ui-desktop.js',
+    '/src/app-sync-merge.js',
     '/src/app-sync.js',
     '/src/app-data.js',
     '/src/app-v30.css',

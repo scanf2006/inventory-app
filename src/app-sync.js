@@ -66,9 +66,7 @@ App.Sync = {
         },
         () => {
           console.log("Real-time update received for inventory_snapshots!");
-          // Trigger global snapshot refresh
-          if (typeof window.loadSnapshots === "function")
-            window.loadSnapshots();
+          App.Sync.loadSnapshots();
         },
       )
       .subscribe((status) => {
@@ -76,50 +74,148 @@ App.Sync = {
       });
   },
 
-  // Push local state to cloud
-  push: async () => {
-    const { supabase } = App.Services;
-    const {
-      syncId,
-      products,
-      inventory,
-      categoryOrder,
-      lastUpdated,
-      lastInventoryUpdate,
-      history,
-      liveMessages,
-    } = App.State;
+  // --- Sync queue: pushes and pulls on this device run one at a time ---
 
+  _chain: Promise.resolve(),
+  _queued: {},
+
+  _enqueue: (name, fn) => {
+    const S = App.Sync;
+    if (S._queued[name]) return S._queued[name]; // same task already waiting
+    const task = S._chain.then(() => {
+      delete S._queued[name];
+      return fn();
+    });
+    S._queued[name] = task;
+    S._chain = task.catch(() => {});
+    return task;
+  },
+
+  // --- Base: the cloud state this device last synced with ---
+
+  getBase: () => App.Utils.safeGetJSON(App.Config.STORAGE_KEYS.SYNC_BASE, null),
+
+  getRemoteTs: () => localStorage.getItem(App.Config.STORAGE_KEYS.SYNC_REMOTE_TS) || "",
+
+  setBase: (payload, remoteTs) => {
+    const SK = App.Config.STORAGE_KEYS;
+    localStorage.setItem(SK.SYNC_BASE, JSON.stringify(App.SyncMerge.normalize(payload)));
+    localStorage.setItem(SK.SYNC_REMOTE_TS, remoteTs || "");
+  },
+
+  // Forget the base, e.g. after switching Sync ID or importing a backup
+  resetBase: () => {
+    const SK = App.Config.STORAGE_KEYS;
+    localStorage.removeItem(SK.SYNC_BASE);
+    localStorage.removeItem(SK.SYNC_REMOTE_TS);
+  },
+
+  localPayload: () =>
+    App.SyncMerge.clone(
+      App.SyncMerge.normalize({
+        products: App.State.products,
+        inventory: App.State.inventory,
+        category_order: App.State.categoryOrder,
+        recent_history: App.State.history,
+        live_messages: App.State.liveMessages,
+      }),
+    ),
+
+  // Replace local state with a merged payload and re-render
+  applyPayload: (payload) => {
+    const p = App.SyncMerge.clone(payload);
+    const tickerChanged = !App.SyncMerge.same(p.live_messages, App.State.liveMessages);
+    App.State.products = p.products;
+    App.State.inventory = p.inventory;
+    App.State.categoryOrder = p.category_order;
+    App.State.history = p.recent_history;
+    App.State.liveMessages = p.live_messages;
+
+    if (typeof window.initializeCategory === "function") window.initializeCategory();
+    if (typeof window.saveToStorageImmediate === "function") window.saveToStorageImmediate(true);
+    App.UI.renderTabs();
+    App.UI.renderInventory();
+    App.UI.renderManageUI();
+    App.UI.renderRecentUpdates();
+    if (tickerChanged) App.UI.renderLiveTicker();
+  },
+
+  _fetchRow: async () =>
+    App.Services.supabase
+      .from("app_sync")
+      .select("data, updated_at")
+      .eq("sync_id", App.State.syncId)
+      .maybeSingle(),
+
+  // A timestamp strictly later than the previous one, used as the row's version
+  _nextUpdatedAt: (prev) => {
+    const prevMs = prev ? Date.parse(prev) : 0;
+    return new Date(Math.max(Date.now(), prevMs + 1)).toISOString();
+  },
+
+  _isCloudEmpty: (cloud) =>
+    Object.keys(cloud.products).length === 0 && Object.keys(cloud.inventory).length === 0,
+
+  // Push local changes: read latest cloud, merge, then write only if nobody wrote in between
+  push: () => App.Sync._enqueue("push", () => App.Sync._pushNow()),
+
+  _pushNow: async () => {
+    const S = App.Sync;
+    const M = App.SyncMerge;
+    const { supabase } = App.Services;
+    const { syncId } = App.State;
     if (!supabase || !syncId) return { ok: false, reason: "sync_not_ready" };
 
     try {
-      const { error } = await supabase.from("app_sync").upsert(
-        {
-          sync_id: syncId,
-          data: {
-            products,
-            inventory,
-            category_order: categoryOrder,
-            last_updated_ts: lastUpdated,
-            last_inventory_update_ts: lastInventoryUpdate,
-            recent_history: history,
-            live_messages: liveMessages, // Store here safely
-          },
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "sync_id" },
-      );
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const snapshot = S.localPayload();
+        const { data: row, error } = await S._fetchRow();
+        if (error) throw error;
 
-      if (error) {
-        App.UI.updateSyncStatus("Sync Offline", false);
-        console.error("Cloud push error:", error);
-        return { ok: false, error };
-      } else {
+        const cloud = row?.data ? M.normalize(row.data) : null;
+        // Never treat an empty cloud as "everything was deleted"
+        const base = cloud && !S._isCloudEmpty(cloud) ? S.getBase() : null;
+        const merged = cloud ? M.mergePayload(cloud, snapshot, base) : snapshot;
+        const updatedAt = S._nextUpdatedAt(row?.updated_at);
+        const body = {
+          ...merged,
+          // Kept for older app versions that still compare these timestamps
+          last_updated_ts: Date.now(),
+          last_inventory_update_ts: Math.max(
+            row?.data?.last_inventory_update_ts || 0,
+            App.State.lastInventoryUpdate || 0,
+          ),
+        };
+
+        const table = supabase.from("app_sync");
+        const res = row
+          ? await table
+              .update({ data: body, updated_at: updatedAt })
+              .eq("sync_id", syncId)
+              .eq("updated_at", row.updated_at)
+              .select("updated_at")
+          : await table.insert({ sync_id: syncId, data: body, updated_at: updatedAt }).select("updated_at");
+
+        if (res.error) {
+          if (!row && res.error.code === "23505") continue; // another device created the row first
+          throw res.error;
+        }
+        if (!res.data || res.data.length === 0) continue; // another device wrote first: merge again
+
+        S.setBase(merged, res.data[0].updated_at);
+        // Keep edits made while this push was in flight, and pick up other devices' changes
+        const current = S.localPayload();
+        const rebased = M.mergePayload(merged, current, snapshot);
+        if (!M.same(rebased, current)) S.applyPayload(rebased);
+
         App.UI.updateSyncStatus("Cloud Synced", true);
         return { ok: true };
       }
+      App.UI.updateSyncStatus("Sync Busy", false);
+      return { ok: false, reason: "conflict" };
     } catch (e) {
-      console.error("Cloud push exception:", e);
+      console.error("Cloud push error:", e);
+      App.UI.updateSyncStatus("Sync Offline", false);
       return { ok: false, error: e };
     }
   },
@@ -138,152 +234,90 @@ App.Sync = {
     return lastResult;
   },
 
-  // Pull remote state from cloud
-  pull: async (isSilent = false, force = false) => {
-    const { supabase } = App.Services;
-    const { syncId, lastUpdated } = App.State;
+  // Pull cloud state and merge it with any local changes not pushed yet
+  pull: (isSilent = false, force = false) =>
+    App.Sync._enqueue(`pull-${isSilent ? "s" : "v"}${force ? "f" : ""}`, () =>
+      App.Sync._pullNow(isSilent, force),
+    ),
 
-    if (!supabase || !syncId) return;
+  _pullNow: async (isSilent, force) => {
+    const S = App.Sync;
+    const M = App.SyncMerge;
+    const { supabase } = App.Services;
+    if (!supabase || !App.State.syncId) return;
     if (!isSilent) App.UI.updateSyncStatus("Checking...", false);
 
     try {
-      const { data, error } = await supabase
-        .from("app_sync")
-        .select("data, updated_at")
-        .eq("sync_id", syncId)
-        .single();
-
-      if (error && error.code !== "PGRST116") {
+      const { data: row, error } = await S._fetchRow();
+      if (error) {
         console.error("Cloud pull error:", error);
         App.UI.updateSyncStatus("Sync Error", false);
         return;
       }
 
-      if (data?.data) {
-        const cloudData = data.data;
-        const cloudMessages = cloudData.live_messages || [];
+      const local = S.localPayload();
+      const localProductCount = Object.keys(local.products).length;
 
-        // v3.5.6: Always apply live messages regardless of conflict detection
-        // v3.5.6: Only apply live messages if they have actually changed to avoid ticker flicker
-        if (Array.isArray(cloudMessages)) {
-          const currentMsgs = JSON.stringify(App.State.liveMessages);
-          const newMsgs = JSON.stringify(cloudMessages);
-          
-          if (currentMsgs !== newMsgs) {
-            console.log("Live messages updated from cloud.");
-            App.State.liveMessages = cloudMessages;
-            App.UI.renderLiveTicker();
-            localStorage.setItem(App.Config.STORAGE_KEYS.LIVE_MESSAGES, newMsgs);
-          }
-        }
-
-        // Use semantic timestamps from payload first; updated_at is fallback for older rows.
-        const cloudTS = cloudData.last_updated_ts || new Date(data.updated_at).getTime();
-        const cloudInvTS = cloudData.last_inventory_update_ts || 0;
-        const localInvTS = App.State.lastInventoryUpdate || 0;
-        const localInventoryCount = Object.keys(App.State.inventory || {}).length;
-
-        // 1. Sync Inventory if cloud is newer (meta), cloud inventory is newer (data), local is empty, or FORCED
-        // This protects against client clock drift preventing pulls
-        if (force || cloudTS > lastUpdated || cloudInvTS > localInvTS || localInventoryCount === 0) {
-          // Keep a single winner timestamp so storage/UI stay monotonic after apply.
-          App.Sync.handleConflict(cloudData, Math.max(cloudTS, cloudInvTS), isSilent);
-        } 
-        // 2. If local is strictly newer than cloud, push local state
-        else if (cloudTS < lastUpdated && localInvTS > cloudInvTS) {
-          App.Sync.push();
-        } 
-        else {
-          // Exactly synced or ambiguous - do nothing, no re-render needed
-          App.UI.updateSyncStatus("Synced", true);
-        }
-      } else {
-          // No cloud data yet
-          App.UI.updateSyncStatus("Synced", true);
+      if (!row?.data) {
+        // No cloud data yet: upload what this device has
+        if (localProductCount > 0) return S._pushNow();
+        App.UI.updateSyncStatus("Synced", true);
+        return;
       }
+
+      const cloud = M.normalize(row.data);
+      if (S._isCloudEmpty(cloud) && localProductCount > 0) {
+        console.warn("[Sync Guard] Refusing to overwrite local data with empty cloud state.");
+        if (!isSilent) App.UI.showToast("Cloud data empty. Local preserved.", "error");
+        S.resetBase();
+        return S._pushNow();
+      }
+
+      let base = S.getBase();
+      if (!base) {
+        // First sync on this device (or after switching Sync ID): fall back to
+        // the old timestamp rule to decide whether cloud or local wins
+        const cloudTS = row.data.last_updated_ts || Date.parse(row.updated_at) || 0;
+        const cloudInvTS = row.data.last_inventory_update_ts || 0;
+        const cloudWins =
+          force ||
+          cloudTS > (App.State.lastUpdated || 0) ||
+          cloudInvTS > (App.State.lastInventoryUpdate || 0) ||
+          Object.keys(local.inventory).length === 0;
+        base = cloudWins ? local : cloud;
+      }
+
+      if (row.updated_at === S.getRemoteTs() && !M.hasLocalChanges(local, base)) {
+        App.UI.updateSyncStatus("Synced", true);
+        return; // nothing new on either side
+      }
+
+      // Input Focus Guard: avoid snapping values while user is typing.
+      if (S.isInventoryInputActive()) {
+        App.Sync.pendingPullAfterEdit = true;
+        return;
+      }
+
+      const rebased = M.mergePayload(cloud, local, base);
+      S.setBase(cloud, row.updated_at);
+      App.State.lastUpdated = Math.max(App.State.lastUpdated || 0, row.data.last_updated_ts || 0);
+      App.State.lastInventoryUpdate = Math.max(
+        App.State.lastInventoryUpdate || 0,
+        row.data.last_inventory_update_ts || 0,
+      );
+
+      if (!M.same(rebased, local)) {
+        S.applyPayload(rebased);
+        if (App.UI.isDesktop()) S.loadSnapshots();
+        if (!isSilent) App.UI.showToast("Sync: Cloud state loaded", "success");
+      }
+
+      if (M.hasLocalChanges(rebased, cloud)) return S._pushNow();
+      App.UI.updateSyncStatus("Synced", true);
     } catch (e) {
       console.error("Cloud pull exception:", e);
       App.UI.updateSyncStatus("Sync Failed", false);
     }
-  },
-
-  // Helper to handle data merging and conflicts
-  handleConflict: (cloudData, cloudTS, isSilent) => {
-    const cloudProductCount = Object.keys(cloudData.products || {}).length;
-    const cloudInventoryCount = Object.keys(cloudData.inventory || {}).length;
-    const localProductCount = Object.keys(App.State.products || {}).length;
-    const localInventoryCount = Object.keys(App.State.inventory || {}).length;
-
-    if (
-      localProductCount > 0 &&
-      cloudProductCount === 0 &&
-      cloudInventoryCount === 0
-    ) {
-      console.warn(
-        "[Sync Guard] Refusing to overwrite local data with empty cloud state.",
-      );
-      if (!isSilent)
-        App.UI.showToast("Cloud data empty. Local preserved.", "error");
-      App.Sync.push();
-      return;
-    }
-
-    if (
-      localInventoryCount > 5 &&
-      cloudInventoryCount < localInventoryCount * 0.2
-    ) {
-      if (!isSilent) {
-        App.UI.confirm(
-          `Cloud data has significantly fewer items (${cloudInventoryCount} vs local ${localInventoryCount}). Overwrite?`,
-          () => App.Sync.applyCloudData(cloudData, cloudTS, isSilent),
-          () => {
-            App.Sync.push();
-            App.UI.showToast("Local data pushed to override cloud", "info");
-          },
-        );
-        return;
-      }
-      return;
-    }
-
-    // Input Focus Guard: avoid snapping values while user is typing.
-    if (App.Sync.isInventoryInputActive()) {
-      App.Sync.pendingPullAfterEdit = true;
-      return;
-    }
-
-    App.Sync.applyCloudData(cloudData, cloudTS, isSilent);
-  },
-
-  // Apply cloud data to local state
-  applyCloudData: (cloudData, cloudTS, isSilent) => {
-    App.State.products = cloudData.products || App.State.products;
-    App.State.inventory = cloudData.inventory || App.State.inventory;
-    App.State.categoryOrder =
-      cloudData.category_order || App.State.categoryOrder;
-    App.State.lastUpdated = cloudTS;
-    App.State.lastInventoryUpdate =
-      cloudData.last_inventory_update_ts || App.State.lastInventoryUpdate;
-    App.State.history = cloudData.recent_history || App.State.history;
-    // Live Messages are high-priority and bypass strict timestamp checks
-    if (cloudData.live_messages && Array.isArray(cloudData.live_messages)) {
-      App.State.liveMessages = cloudData.live_messages;
-    }
-
-    // These trigger global re-renders in main.js
-    if (typeof window.saveToStorageImmediate === "function")
-      window.saveToStorageImmediate(true);
-    if (typeof window.initializeCategory === "function")
-      window.initializeCategory();
-    App.UI.renderTabs();
-    App.UI.renderInventory();
-    App.UI.renderManageUI();
-    App.UI.renderRecentUpdates();
-    App.UI.renderLiveTicker();
-    if (App.UI.isDesktop()) App.Sync.loadSnapshots();
-
-    if (!isSilent) App.UI.showToast("Sync: Cloud state loaded", "success");
-    App.UI.updateSyncStatus("Synced", true);
   },
 
   // --- Snapshot Features ---
