@@ -80,9 +80,25 @@ describe("email", () => {
       lastUpdatedMs: Date.parse("2026-11-06T15:00:00Z"),
       now,
     });
-    expect(email.subject).toBe("Bulk Oil Inventory — Mon, Nov 9, 2026 — 2 low");
+    // EMPTY is at zero with no earlier value, so it is hidden and not counted
+    expect(email.subject).toBe("Bulk Oil Inventory — Mon, Nov 9, 2026 — 1 low");
     expect(email.html).toContain("figures are from 3 days ago");
-    expect(email.html).toContain("Low stock (2)");
+    expect(email.html).toContain("Low stock (1)");
+  });
+
+  test("hides products at zero unless they just dropped to zero", () => {
+    const prev = { date: "2026-11-06", totals: { A: 700, BIG: 300 } };
+    const zeroData = {
+      products: { "Bulk Oil": ["A", "BIG", "EMPTY"] },
+      inventory: { "Bulk Oil-A": "600" }, // BIG went 300 -> 0, EMPTY stays 0
+    };
+    const rows = report.buildRows(zeroData, config, prev);
+    const email = report.buildEmail({ rows, config, today: "2026-11-09", prev, lastUpdatedMs: now.getTime(), now });
+
+    expect(email.html).toContain(">BIG");
+    expect(email.html).not.toContain(">EMPTY");
+    expect(email.html).toContain("1 product at zero not shown.");
+    expect(email.text).not.toContain("EMPTY");
   });
 
   test("product names are escaped", () => {

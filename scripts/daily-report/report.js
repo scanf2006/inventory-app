@@ -115,6 +115,12 @@ const formatDateTime = (ms, timeZone) =>
 
 const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
   const { unit, category, timeZone } = config;
+  // Leave out products sitting at zero, but keep ones that dropped to zero since the last report
+  const hiddenCount = rows.filter((r) => r.value === 0 && !r.prevValue).length;
+  rows = rows.filter((r) => !(r.value === 0 && !r.prevValue));
+  const hiddenNote = hiddenCount
+    ? `${hiddenCount} product${hiddenCount === 1 ? "" : "s"} at zero not shown.`
+    : "";
   const low = rows.filter((r) => r.low);
   const total = rows.reduce((s, r) => s + r.value, 0);
   const prevTotal = prev ? rows.reduce((s, r) => s + (r.prevValue ?? 0), 0) : null;
@@ -181,6 +187,7 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
       </tr>
     </tbody>
   </table>
+  ${hiddenNote ? `<p style="color:#666;">${hiddenNote}</p>` : ""}
   ${prev ? "" : '<p style="color:#666;">No earlier report stored yet, so there is no comparison today.</p>'}
   <p style="color:#999;font-size:12px;margin-top:16px;">Sent automatically by Waycred Inventory.</p>
 </div>`;
@@ -193,9 +200,11 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
     "",
     ...rows.map((r) => `${r.name}: ${fmt(r.value)} (prev ${fmt(r.prevValue)}, change ${fmtChange(r.change)})${r.low ? " LOW" : ""}`),
     `Total: ${fmt(total)}`,
+    hiddenNote,
   ]
     .filter((l, i, a) => l !== "" || a[i - 1] !== "")
-    .join("\n");
+    .join("\n")
+    .trim();
 
   return { subject, html, text };
 };
