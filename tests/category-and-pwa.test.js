@@ -74,10 +74,11 @@ describe("PWA wiring", () => {
 
   test("activate removes every old cache without throwing", async () => {
     const deleted = [];
+    const current = read("sw.js").match(/CACHE_NAME = '([^']+)'/)[1];
     const context = {
       self: { addEventListener: (n, fn) => (context[n] = fn), skipWaiting() {}, clients: { claim() {} } },
       caches: {
-        keys: async () => ["inv-aiden-v3.8.50", "inv-aiden-opt-v1", "inv-aiden-v3.8.51"],
+        keys: async () => ["inv-aiden-v3.8.50", "inv-aiden-opt-v1", current],
         delete: async (name) => deleted.push(name),
       },
       console: { log() {} },
