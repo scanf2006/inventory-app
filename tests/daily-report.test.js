@@ -58,6 +58,14 @@ describe("report rows", () => {
     ]);
   });
 
+  test("detects whether any quantity changed since the previous report", () => {
+    const rows = report.currentTotals(data, "Bulk Oil"); // A 600, BIG 4000, EMPTY 0
+    expect(report.hasChanged(rows, null)).toBe(true); // first report always sends
+    expect(report.hasChanged(rows, { date: "d", totals: { A: 600, BIG: 4000 } })).toBe(false); // EMPTY missing = 0
+    expect(report.hasChanged(rows, { date: "d", totals: { A: 600, BIG: 3990 } })).toBe(true);
+    expect(report.hasChanged(rows, { date: "d", totals: { A: 600, BIG: 4000, OLD: 50 } })).toBe(true); // removed product
+  });
+
   test("stored history keeps the newest days only", () => {
     const state = { reports: { "2026-01-01": { totals: {} }, "2026-01-02": { totals: {} } } };
     const next = report.updateState(state, "2026-01-03", [{ name: "A", value: 5 }], "ts", 2);

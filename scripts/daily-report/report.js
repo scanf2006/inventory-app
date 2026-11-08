@@ -91,6 +91,15 @@ const buildRows = (data, config, prev) =>
     };
   });
 
+// Did any quantity change since the previous report? Missing counts as zero,
+// so adding or removing an empty product is not a change.
+const hasChanged = (rows, prev) => {
+  if (!prev) return true;
+  const today = Object.fromEntries(rows.map((r) => [r.name, r.value]));
+  const names = new Set([...Object.keys(today), ...Object.keys(prev.totals)]);
+  return [...names].some((n) => (today[n] || 0) !== (prev.totals[n] || 0));
+};
+
 // Keep stored history small
 const updateState = (state, today, rows, sourceUpdatedAt, keepDays = 60) => {
   const reports = { ...(state?.reports || {}) };
@@ -219,6 +228,7 @@ module.exports = {
   currentTotals,
   previousReport,
   buildRows,
+  hasChanged,
   updateState,
   buildEmail,
 };

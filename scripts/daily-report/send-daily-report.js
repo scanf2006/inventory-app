@@ -45,10 +45,18 @@ const main = async () => {
   if (rows.length === 0) throw new Error(`Category "${config.category}" has no products`);
   const lastUpdatedMs = row.data.last_inventory_update_ts || Date.parse(row.updated_at);
   const email = report.buildEmail({ rows, config, today, prev, lastUpdatedMs, now });
+  const changed = report.hasChanged(rows, prev);
 
   if (DRY_RUN) {
     if (OUT) fs.writeFileSync(OUT, `<!doctype html><meta charset="utf-8"><title>${email.subject}</title>${email.html}`);
     console.log(`Subject: ${email.subject}\n\n${email.text}`);
+    if (!changed) console.log(`\n(No change since ${prev.date}: the scheduled run would not send this.)`);
+    return;
+  }
+
+  // Nothing to report: skip without saving, so the next email compares with the last one sent
+  if (!changed && !FORCE) {
+    console.log(`Not sending: no change since ${prev.date}`);
     return;
   }
 

@@ -117,7 +117,10 @@ node scripts/daily-report/send-daily-report.js --dry-run --out preview.html
 ## Notes
 
 - No email on weekends or on the holidays listed in `skipHolidays` (see Common changes).
-  The next report compares with the last working day.
+- No email when no Bulk Oil quantity changed since the last email sent. Nothing is
+  saved that day, so the next email compares with the last one actually sent. If
+  someone updates Bulk Oil after 5:30 PM, a backup run (6:30 or 7:30 PM) sends it.
+  Manual test sends always go out.
 - GitHub may start scheduled jobs a few minutes late.
 - In a public repository, GitHub pauses scheduled jobs after 60 days without
   commits. Re-enable it on the Actions tab if that happens.
