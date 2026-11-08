@@ -105,12 +105,19 @@ node scripts/daily-report/send-daily-report.js --dry-run --out preview.html
   every product without its own entry, e.g.
   `"products": { "R-H1030B-B": 5000, "R-AW68-B": 300 }`. Set `"default": null`
   to warn only for products listed there.
+- **Holidays:** `skipHolidays` in `config.json` lists the holidays with no email.
+  Default: Ontario's 9 statutory holidays. Dates are computed every year; a holiday
+  on a weekend moves to the next weekday (e.g. Boxing Day on Saturday -> Monday).
+  Optional names you can add: `Civic Holiday`, `Easter Monday`,
+  `Truth and Reconciliation Day`, `Remembrance Day`. For one-off closures add dates
+  to `skipDates`, e.g. `["2026-12-24", "2026-12-31"]`.
 - **Send time:** the job runs at 21:30, 22:30 and 23:30 UTC on weekdays and sends
   on the first run at or after `sendWindow.start` Toronto time, once per day.
 
 ## Notes
 
-- Statutory holidays are not skipped; the email still goes out on weekdays.
+- No email on weekends or on the holidays listed in `skipHolidays` (see Common changes).
+  The next report compares with the last working day.
 - GitHub may start scheduled jobs a few minutes late.
 - In a public repository, GitHub pauses scheduled jobs after 60 days without
   commits. Re-enable it on the Actions tab if that happens.

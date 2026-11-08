@@ -5,6 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { holidayOn } = require("./holidays");
 
 // Reuse the app's own expression parser so totals match what the app shows
 const loadSafeEvaluate = () => {
@@ -46,6 +47,8 @@ const localParts = (date, timeZone) => {
 const shouldSend = (now, config, lastSentDate) => {
   const local = localParts(now, config.timeZone);
   if (["Sat", "Sun"].includes(local.weekday)) return { send: false, reason: `weekend (${local.weekday})`, local };
+  const holiday = holidayOn(local.date, config.skipHolidays || [], config.skipDates || []);
+  if (holiday) return { send: false, reason: `holiday (${holiday})`, local };
   if (local.time < config.sendWindow.start || local.time >= config.sendWindow.end) {
     return { send: false, reason: `outside send window (${local.time})`, local };
   }
