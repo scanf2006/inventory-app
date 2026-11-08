@@ -1,0 +1,11 @@
+{
+  "syncId": "scanf2006",
+  "category": "Bulk Oil",
+  "unit": "L",
+  "timeZone": "America/Toronto",
+  "sendWindow": { "start": "17:00", "end": "21:00" },
+  "lowStock": {
+    "default": 500,
+    "products": {}
+  }
+}
