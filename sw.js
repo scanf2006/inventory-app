@@ -40,7 +40,7 @@ self.addEventListener('activate', event => {
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME && cacheName !== OPTIONAL_CACHE_NAME) {
+                    if (cacheName !== CACHE_NAME) {
                         console.log('[Service Worker] Removing old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
@@ -66,28 +66,19 @@ self.addEventListener('fetch', event => {
 
         event.respondWith(
             fetch(event.request).then(response => {
-                // Successfully fetched from network, store under canonical key
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(canonicalRequest, responseClone);
-                });
+                // Only cache successful responses, under the canonical key
+                if (response.ok) {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(canonicalRequest, responseClone);
+                    });
+                }
                 return response;
             }).catch(() => {
-                // Network failed, look up by canonical key (ignores ?v= params)
-                return caches.match(canonicalRequest);
+                // Network failed: read from the current cache only, so a leftover
+                // older cache can never serve stale code
+                return caches.open(CACHE_NAME).then(cache => cache.match(canonicalRequest));
             })
         );
     }
 });
-
-
-
-
-
-
-
-
-
-
-
-

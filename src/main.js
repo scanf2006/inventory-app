@@ -368,24 +368,24 @@ window.moveCategory = (index, direction) => {
 };
 
 window.editCategory = (oldCat) => {
-  const newCat = prompt("Rename category:", oldCat);
-  if (newCat?.trim() && newCat !== oldCat) {
+  const newCat = prompt("Rename category:", oldCat)?.trim();
+  if (newCat && newCat !== oldCat) {
     if (App.State.products[newCat]) return App.UI.showToast("Category exists", "error");
 
-    App.State.products[newCat] = App.State.products[oldCat];
+    const prods = App.State.products[oldCat] || [];
+    App.State.products[newCat] = prods;
     delete App.State.products[oldCat];
 
     const idx = App.State.categoryOrder.indexOf(oldCat);
     if (idx > -1) App.State.categoryOrder[idx] = newCat;
 
-    // Migrate inventory keys
-    const prefix = `${oldCat}-`;
-    Object.keys(App.State.inventory).forEach(key => {
-      if (key.startsWith(prefix)) {
-        const pName = key.substring(prefix.length);
-        App.State.inventory[App.Utils.getProductKey(newCat, pName)] = App.State.inventory[key];
-        delete App.State.inventory[key];
-      }
+    // Migrate inventory keys of this category's own products only.
+    // A prefix match would also catch another category such as "Oil-Bulk" when renaming "Oil".
+    prods.forEach(p => {
+      const oldKey = App.Utils.getProductKey(oldCat, p);
+      if (App.State.inventory[oldKey] === undefined) return;
+      App.State.inventory[App.Utils.getProductKey(newCat, p)] = App.State.inventory[oldKey];
+      delete App.State.inventory[oldKey];
     });
 
     if (App.State.currentCategory === oldCat) App.State.currentCategory = newCat;
@@ -398,13 +398,12 @@ window.editCategory = (oldCat) => {
 
 window.removeCategory = (cat) => {
   App.UI.confirm(`Delete category "${cat}"?`, () => {
+    // Delete inventory of this category's own products only (see editCategory)
+    (App.State.products[cat] || []).forEach(p => {
+      delete App.State.inventory[App.Utils.getProductKey(cat, p)];
+    });
     delete App.State.products[cat];
     App.State.categoryOrder = App.State.categoryOrder.filter(c => c !== cat);
-    
-    const prefix = `${cat}-`;
-    Object.keys(App.State.inventory).forEach(key => {
-      if (key.startsWith(prefix)) delete App.State.inventory[key];
-    });
 
     if (App.State.currentCategory === cat) App.State.currentCategory = App.State.categoryOrder[0] || "";
     window.saveToStorage(true);
@@ -635,6 +634,45 @@ window.editSnapshotNote = async (id, newNote) => {
     App.UI.showToast("Failed to update note", "error");
   }
 };
+
+// --- PWA (offline cache + install) ---
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch((err) => console.error("SW registration failed", err));
+  });
+}
+
+(function initInstallPrompt() {
+  const installBtn = document.getElementById("pwa-install-btn");
+  const iosHint = document.getElementById("ios-install-hint");
+  const isStandalone =
+    window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (isStandalone) return;
+
+  // iOS has no install prompt; show manual instructions instead
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIOS) iosHint?.classList.remove("d-none");
+
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn?.classList.remove("d-none");
+  });
+
+  installBtn?.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.classList.add("d-none");
+  });
+
+  window.addEventListener("appinstalled", () => installBtn?.classList.add("d-none"));
+})();
 
 // --- MISC OVERRIDES ---
 
