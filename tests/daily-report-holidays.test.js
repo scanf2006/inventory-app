@@ -58,6 +58,12 @@ describe("send decision", () => {
     expect(gate).toMatchObject({ send: false, reason: "holiday (Thanksgiving)" });
   });
 
+  test("real config sends from 5:30 PM Toronto, not before", () => {
+    expect(report.shouldSend(new Date("2026-11-10T22:20:00Z"), config).send).toBe(false); // 5:20 PM EST
+    expect(report.shouldSend(new Date("2026-11-10T22:30:00Z"), config).send).toBe(true); // 5:30 PM EST
+    expect(report.shouldSend(new Date("2026-07-07T21:30:00Z"), config).send).toBe(true); // 5:30 PM EDT
+  });
+
   test("sends on the next working day", () => {
     expect(report.shouldSend(new Date("2026-10-13T21:30:00Z"), config).send).toBe(true);
   });

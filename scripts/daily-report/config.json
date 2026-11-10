@@ -3,7 +3,7 @@
   "category": "Bulk Oil",
   "unit": "L",
   "timeZone": "America/Toronto",
-  "sendWindow": { "start": "17:00", "end": "21:00" },
+  "sendWindow": { "start": "17:30", "end": "21:00" },
   "skipHolidays": [
     "New Year's Day",
     "Family Day",

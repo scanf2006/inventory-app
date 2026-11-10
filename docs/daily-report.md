@@ -1,6 +1,7 @@
 # Daily Bulk Oil Email
 
-Every weekday around **5:30 PM Toronto time**, a GitHub Actions job reads the
+Every weekday around **5:30 PM Toronto time**, a GitHub Actions job (started by
+Supabase, with GitHub's own schedule as a backup) reads the
 `Bulk Oil` category for Sync ID `scanf2006` from Supabase and emails a report:
 
 - current quantity of each Bulk Oil product (L), using the same math as the app
@@ -17,6 +18,7 @@ Files:
 | `scripts/daily-report/report.js` | Totals, comparison, low stock, email layout |
 | `scripts/daily-report/mail.js` | Sends through Microsoft 365; keeps the saved sign-in fresh |
 | `scripts/daily-report/authorize.js` | One-time sign-in for sending from your own mailbox |
+| `scripts/daily-report/supabase-trigger.sql` | Supabase schedule that starts the workflow every weekday |
 | `scripts/daily-report/config.json` | Sync ID, category, time window, low-stock minimums |
 
 Each day's values are kept in Supabase table `app_sync`, row
@@ -84,6 +86,39 @@ GitHub secrets: `MS_TENANT_ID`, `MS_CLIENT_ID`, `MS_CLIENT_SECRET`,
 `MAIL_FROM` (`aiden@waycred.com`) and `REPORT_TO`. When `MS_CLIENT_SECRET` is set,
 the job uses this option. Client secrets expire; renew before the date shown in Entra.
 
+### Daily trigger (Supabase)
+
+GitHub's own schedule is unreliable (runs can start late or not at all), so
+Supabase starts the workflow every weekday. GitHub's schedule stays on as a backup.
+
+1. **GitHub token.** GitHub → your avatar → **Settings → Developer settings →
+   Personal access tokens → Fine-grained tokens → Generate new token**.
+   - Repository access: *Only select repositories* → `scanf2006/inventory-app`
+   - Permissions → Repository permissions → **Actions: Read and write**
+   - Pick the longest expiration allowed and note the date.
+2. **Supabase.** Dashboard → **SQL Editor → New query**. Paste
+   `scripts/daily-report/supabase-trigger.sql`, replace `PASTE_GITHUB_TOKEN_HERE`
+   with the token, and click **Run**.
+3. **Check it works.** In a new query run:
+
+   ```sql
+   select public.start_bulk_oil_report('preview');
+   ```
+
+   Within a minute a new `workflow_dispatch` run appears on the Actions tab
+   (preview mode sends no email). If nothing appears, check the response:
+
+   ```sql
+   select status_code, content from net._http_response order by created desc limit 1;
+   ```
+
+   `204` means GitHub accepted it; `401`/`403`/`404` usually means a wrong token
+   or missing *Actions: Read and write* permission.
+
+**When the token expires**, create a new one and run only the `do $$ ... $$;`
+block of the SQL file again with the new token. To stop the trigger:
+`select cron.unschedule('daily-bulk-oil-report');`
+
 ### Test
 
 **Actions → Daily Bulk Oil report → Run workflow**:
@@ -111,16 +146,18 @@ node scripts/daily-report/send-daily-report.js --dry-run --out preview.html
   Optional names you can add: `Civic Holiday`, `Easter Monday`,
   `Truth and Reconciliation Day`, `Remembrance Day`. For one-off closures add dates
   to `skipDates`, e.g. `["2026-12-24", "2026-12-31"]`.
-- **Send time:** the job runs at 21:30, 22:30 and 23:30 UTC on weekdays and sends
-  on the first run at or after `sendWindow.start` Toronto time, once per day.
+- **Send time:** Supabase starts the job at 21:30, 22:30 and 23:30 UTC on weekdays;
+  GitHub's backup schedule runs every 10 minutes from 21:00 to 00:50 UTC. The email
+  goes out on the first run at or after `sendWindow.start` (17:30) Toronto time,
+  once per day.
 
 ## Notes
 
 - No email on weekends or on the holidays listed in `skipHolidays` (see Common changes).
 - No email when no Bulk Oil quantity changed since the last email sent. Nothing is
   saved that day, so the next email compares with the last one actually sent. If
-  someone updates Bulk Oil after 5:30 PM, a backup run (6:30 or 7:30 PM) sends it.
+  someone updates Bulk Oil after 5:30 PM, a later run that evening sends it.
   Manual test sends always go out.
-- GitHub may start scheduled jobs a few minutes late.
+- GitHub may start its own scheduled jobs late or skip them; Supabase is the main trigger.
 - In a public repository, GitHub pauses scheduled jobs after 60 days without
   commits. Re-enable it on the Actions tab if that happens.

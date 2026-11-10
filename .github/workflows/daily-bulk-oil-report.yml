@@ -2,15 +2,19 @@ name: Daily Bulk Oil report
 
 on:
   schedule:
-    # GitHub cron is UTC. Toronto 5:30 PM is 21:30 UTC in summer and 22:30 UTC in winter;
-    # the script only sends once per weekday, from 5:00 PM Toronto time. Later runs are backups.
-    - cron: "30 21,22,23 * * 1-5"
+    # Backup trigger. GitHub cron is UTC and often runs late or skips runs, so it
+    # fires every 10 minutes from 5:00 PM to about 8:00 PM Toronto time (summer and
+    # winter). The main trigger is Supabase (docs/daily-report.md), which starts
+    # this workflow with mode "scheduled". The script sends at most once per day,
+    # from 5:30 PM Toronto time, so extra runs just exit.
+    - cron: "*/10 21-23 * * 1-5"
+    - cron: "*/10 0 * * 2-6"
   workflow_dispatch:
     inputs:
       mode:
-        description: "test = send now without saving today's values; preview = build only, no email"
+        description: "test = send now without saving today's values; preview = build only, no email; scheduled = normal daily run"
         type: choice
-        options: [test, preview]
+        options: [test, preview, scheduled]
         default: test
 
 concurrency:
@@ -36,7 +40,8 @@ jobs:
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
         run: |
           case "${{ github.event_name }}:${{ inputs.mode }}" in
-            workflow_dispatch:preview) node scripts/daily-report/send-daily-report.js --dry-run ;;
-            workflow_dispatch:*)       node scripts/daily-report/send-daily-report.js --force ;;
-            *)                         node scripts/daily-report/send-daily-report.js ;;
+            workflow_dispatch:preview)   node scripts/daily-report/send-daily-report.js --dry-run ;;
+            workflow_dispatch:scheduled) node scripts/daily-report/send-daily-report.js ;;
+            workflow_dispatch:*)         node scripts/daily-report/send-daily-report.js --force ;;
+            *)                           node scripts/daily-report/send-daily-report.js ;;
           esac
