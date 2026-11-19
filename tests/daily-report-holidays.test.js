@@ -53,18 +53,19 @@ describe("Ontario holiday dates", () => {
 });
 
 describe("send decision", () => {
-  test("no email on a statutory holiday at 5:30 PM", () => {
-    const gate = report.shouldSend(new Date("2026-10-12T21:30:00Z"), config); // Thanksgiving, 5:30 PM EDT
+  test("no email on a statutory holiday at 7:00 PM", () => {
+    const gate = report.shouldSend(new Date("2026-10-12T23:00:00Z"), config); // Thanksgiving, 7:00 PM EDT
     expect(gate).toMatchObject({ send: false, reason: "holiday (Thanksgiving)" });
   });
 
-  test("real config sends from 5:30 PM Toronto, not before", () => {
-    expect(report.shouldSend(new Date("2026-11-10T22:20:00Z"), config).send).toBe(false); // 5:20 PM EST
-    expect(report.shouldSend(new Date("2026-11-10T22:30:00Z"), config).send).toBe(true); // 5:30 PM EST
-    expect(report.shouldSend(new Date("2026-07-07T21:30:00Z"), config).send).toBe(true); // 5:30 PM EDT
+  test("real config sends from 7:00 PM Toronto, not before", () => {
+    expect(report.shouldSend(new Date("2026-11-10T23:50:00Z"), config).send).toBe(false); // 6:50 PM EST
+    expect(report.shouldSend(new Date("2026-11-11T00:00:00Z"), config).send).toBe(true); // Tue 7:00 PM EST
+    expect(report.shouldSend(new Date("2026-07-07T23:00:00Z"), config).send).toBe(true); // 7:00 PM EDT
+    expect(report.shouldSend(new Date("2026-11-14T00:00:00Z"), config).send).toBe(true); // Fri 7:00 PM EST (Sat UTC)
   });
 
   test("sends on the next working day", () => {
-    expect(report.shouldSend(new Date("2026-10-13T21:30:00Z"), config).send).toBe(true);
+    expect(report.shouldSend(new Date("2026-10-13T23:00:00Z"), config).send).toBe(true);
   });
 });

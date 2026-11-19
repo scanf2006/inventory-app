@@ -1,6 +1,6 @@
 # Daily Bulk Oil Email
 
-Every weekday around **5:30 PM Toronto time**, a GitHub Actions job (started by
+Every weekday around **7:00 PM Toronto time**, a GitHub Actions job (started by
 Supabase, with GitHub's own schedule as a backup) reads the
 `Bulk Oil` category for Sync ID `scanf2006` from Supabase and emails a report:
 
@@ -117,14 +117,14 @@ Supabase starts the workflow every weekday. GitHub's schedule stays on as a back
 
 **When the token expires**, create a new one and run only the `do $$ ... $$;`
 block of the SQL file again with the new token. To stop the trigger:
-`select cron.unschedule('daily-bulk-oil-report');`
+`select cron.unschedule(jobname) from cron.job where jobname like 'daily-bulk-oil-report%';`
 
 ### Test
 
 **Actions → Daily Bulk Oil report → Run workflow**:
 
 - `test`: sends the email now. Does not record today's values, so the real
-  5:30 PM report still goes out.
+  7:00 PM report still goes out.
 - `preview`: builds the report and prints it in the job log; sends nothing.
 
 Locally (no email, nothing saved):
@@ -146,17 +146,18 @@ node scripts/daily-report/send-daily-report.js --dry-run --out preview.html
   Optional names you can add: `Civic Holiday`, `Easter Monday`,
   `Truth and Reconciliation Day`, `Remembrance Day`. For one-off closures add dates
   to `skipDates`, e.g. `["2026-12-24", "2026-12-31"]`.
-- **Send time:** Supabase starts the job at 21:30, 22:30 and 23:30 UTC on weekdays;
-  GitHub's backup schedule runs every 10 minutes from 21:00 to 00:50 UTC. The email
-  goes out on the first run at or after `sendWindow.start` (17:30) Toronto time,
-  once per day.
+- **Send time:** Supabase starts the job at 23:00 UTC (Mon-Fri) and 00:00 and
+  01:00 UTC (Tue-Sat), i.e. 7:00 PM Toronto in both summer and winter plus backups;
+  GitHub's backup schedule runs every 10 minutes from 23:00 to 02:50 UTC. The email
+  goes out on the first run at or after `sendWindow.start` (19:00) Toronto time,
+  once per day. To change the time, edit `sendWindow` and both schedules.
 
 ## Notes
 
 - No email on weekends or on the holidays listed in `skipHolidays` (see Common changes).
 - No email when no Bulk Oil quantity changed since the last email sent. Nothing is
   saved that day, so the next email compares with the last one actually sent. If
-  someone updates Bulk Oil after 5:30 PM, a later run that evening sends it.
+  someone updates Bulk Oil after 7:00 PM, a later run that evening sends it.
   Manual test sends always go out.
 - GitHub may start its own scheduled jobs late or skip them; Supabase is the main trigger.
 - In a public repository, GitHub pauses scheduled jobs after 60 days without

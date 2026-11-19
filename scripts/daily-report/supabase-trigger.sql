@@ -1,9 +1,10 @@
 -- Main trigger for the daily Bulk Oil email.
 --
--- Supabase starts the GitHub workflow at 21:30, 22:30 and 23:30 UTC on weekdays
--- (5:30 PM Toronto is 21:30 UTC in summer and 22:30 UTC in winter). The workflow
--- itself decides whether to send: once per day, from 5:30 PM Toronto, not on
--- holidays, only when Bulk Oil changed.
+-- Supabase starts the GitHub workflow at 23:00 UTC (Mon-Fri) and 00:00 and
+-- 01:00 UTC (Tue-Sat). 7:00 PM Toronto is 23:00 UTC in summer and 00:00 UTC the
+-- next day in winter; the other runs are backups. The workflow itself decides
+-- whether to send: once per day, from 7:00 PM Toronto, not on holidays, only when
+-- Bulk Oil changed.
 --
 -- Run this once in Supabase: SQL Editor -> New query -> paste -> Run.
 -- Replace PASTE_GITHUB_TOKEN_HERE with the GitHub token first (see docs/daily-report.md).
@@ -51,5 +52,7 @@ $$;
 -- Only the database itself may call it (not the public app key)
 revoke all on function public.start_bulk_oil_report(text) from public, anon, authenticated;
 
--- Weekdays at 21:30, 22:30 and 23:30 UTC
-select cron.schedule('daily-bulk-oil-report', '30 21,22,23 * * 1-5', $$select public.start_bulk_oil_report('scheduled')$$);
+-- Toronto weekday evenings: 23:00 UTC Mon-Fri, plus 00:00 and 01:00 UTC Tue-Sat
+select cron.unschedule(jobname) from cron.job where jobname like 'daily-bulk-oil-report%';
+select cron.schedule('daily-bulk-oil-report-a', '0 23 * * 1-5', $$select public.start_bulk_oil_report('scheduled')$$);
+select cron.schedule('daily-bulk-oil-report-b', '0 0,1 * * 2-6', $$select public.start_bulk_oil_report('scheduled')$$);

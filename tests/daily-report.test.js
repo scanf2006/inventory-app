@@ -113,9 +113,9 @@ describe("email", () => {
     const rows = report.buildRows(data, config, null);
     const args = { rows, today: "2026-11-09", prev: null, lastUpdatedMs: now.getTime(), now };
     const withLink = report.buildEmail({ ...args, config: { ...config, appUrl: "https://inv.example.com/" } });
-    expect(withLink.html).toContain('For full details, open <a href="https://inv.example.com/"');
-    expect(withLink.text.endsWith("For full details, open https://inv.example.com/")).toBe(true);
-    expect(report.buildEmail({ ...args, config }).html).not.toContain("For full details");
+    expect(withLink.html).toContain('For complete inventory details, please visit <a href="https://inv.example.com/"');
+    expect(withLink.text.endsWith("For complete inventory details, please visit https://inv.example.com/")).toBe(true);
+    expect(report.buildEmail({ ...args, config }).html).not.toContain("inventory details");
   });
 
   test("product names are escaped", () => {

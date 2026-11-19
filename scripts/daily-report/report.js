@@ -203,7 +203,7 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
   ${prev ? "" : '<p style="color:#666;">No earlier report stored yet, so there is no comparison today.</p>'}
   ${
     config.appUrl
-      ? `<p style="margin-top:16px;">For full details, open <a href="${escapeHtml(config.appUrl)}" style="color:#007aff;">${escapeHtml(config.appUrl)}</a></p>`
+      ? `<p style="margin-top:16px;">For complete inventory details, please visit <a href="${escapeHtml(config.appUrl)}" style="color:#007aff;">${escapeHtml(config.appUrl)}</a></p>`
       : ""
   }
   <p style="color:#999;font-size:12px;margin-top:16px;">Sent automatically by Waycred Inventory.</p>
@@ -219,7 +219,7 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
     `Total: ${fmt(total)}`,
     hiddenNote,
     "",
-    config.appUrl ? `For full details, open ${config.appUrl}` : "",
+    config.appUrl ? `For complete inventory details, please visit ${config.appUrl}` : "",
   ]
     .filter((l, i, a) => l !== "" || a[i - 1] !== "")
     .join("\n")

@@ -63,7 +63,7 @@ const main = async () => {
   const to = await sendMail(email, { syncId: config.syncId });
   console.log(`Sent "${email.subject}" to ${to.join(", ")}`);
 
-  // A forced test send must not block or replace the real 5:30 PM report
+  // A forced test send must not block or replace the real 7:00 PM report
   if (!FORCE) {
     await writeRow(STATE_ID, report.updateState(state, today, rows, row.updated_at));
     console.log(`Saved values for ${today}`);
