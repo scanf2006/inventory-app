@@ -118,6 +118,35 @@ describe("email", () => {
     expect(report.buildEmail({ ...args, config }).html).not.toContain("inventory details");
   });
 
+  test("one shared minimum is stated at the top instead of a Min column", () => {
+    const flat = { ...config, lowStock: { default: 500, products: {} } };
+    const email = report.buildEmail({
+      rows: report.buildRows(data, flat, null),
+      config: flat,
+      today: "2026-11-09",
+      prev: null,
+      lastUpdatedMs: now.getTime(),
+      now,
+    });
+    expect(email.html).toContain("Low-stock alert: below 500 L");
+    expect(email.html).not.toContain(">Min</th>");
+    expect(email.text).toContain("Low-stock alert: below 500 L");
+  });
+
+  test("different minimums keep the Min column", () => {
+    const email = report.buildEmail({
+      rows: report.buildRows(data, config, null), // A 500, BIG 5000
+      config,
+      today: "2026-11-09",
+      prev: null,
+      lastUpdatedMs: now.getTime(),
+      now,
+    });
+    expect(email.html).toContain(">Min</th>");
+    expect(email.html).not.toContain("Low-stock alert");
+    expect(email.html).toContain("(min 5,000)");
+  });
+
   test("product names are escaped", () => {
     const rows = [{ name: "<b>x</b>", value: 1, prevValue: null, change: null, min: null, low: false }];
     const email = report.buildEmail({ rows, config, today: "2026-11-09", prev: null, lastUpdatedMs: now.getTime(), now });

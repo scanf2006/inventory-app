@@ -134,6 +134,11 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
     ? `${hiddenCount} product${hiddenCount === 1 ? "" : "s"} at zero not shown.`
     : "";
   const low = rows.filter((r) => r.low);
+  // One shared minimum is stated once at the top; a Min column only when they differ
+  const mins = [...new Set(rows.map((r) => r.min))];
+  const showMinColumn = mins.length > 1;
+  const sharedMin = !showMinColumn && mins[0] !== null && mins[0] !== undefined ? mins[0] : null;
+  const minNote = sharedMin !== null ? `Low-stock alert: below ${fmt(sharedMin)} ${unit}` : "";
   const total = rows.reduce((s, r) => s + r.value, 0);
   const prevTotal = prev ? rows.reduce((s, r) => s + (r.prevValue ?? 0), 0) : null;
   const updatedLocal = lastUpdatedMs ? localParts(new Date(lastUpdatedMs), timeZone).date : null;
@@ -159,8 +164,9 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
       <td style="${cell}">${escapeHtml(r.name)}${r.low ? ' <span style="color:#c62828;font-weight:600;">LOW</span>' : ""}</td>
       <td style="${num}font-weight:600;">${fmt(r.value)}</td>
       <td style="${num}color:#666;">${fmt(r.prevValue)}</td>
-      <td style="${num}color:${changeColor(r.change)};">${fmtChange(r.change)}</td>
-      <td style="${num}color:#666;">${fmt(r.min)}</td>
+      <td style="${num}color:${changeColor(r.change)};">${fmtChange(r.change)}</td>${
+        showMinColumn ? `\n      <td style="${num}color:#666;">${fmt(r.min)}</td>` : ""
+      }
     </tr>`,
     )
     .join("");
@@ -168,7 +174,7 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
   const lowBlock = low.length
     ? `<div style="margin:12px 0;padding:10px 12px;background:#fdecea;border-left:4px solid #c62828;">
         <strong>Low stock (${low.length}):</strong> ${low
-          .map((r) => `${escapeHtml(r.name)} ${fmt(r.value)} ${unit} (min ${fmt(r.min)})`)
+          .map((r) => `${escapeHtml(r.name)} ${fmt(r.value)} ${unit}${showMinColumn ? ` (min ${fmt(r.min)})` : ""}`)
           .join(", ")}
       </div>`
     : "";
@@ -179,6 +185,7 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
   <div style="color:#666;">Inventory last updated: ${
     lastUpdatedMs ? escapeHtml(formatDateTime(lastUpdatedMs, timeZone)) : "unknown"
   }</div>
+  ${minNote ? `<div style="color:#666;">${minNote}</div>` : ""}
   ${staleNote ? `<div style="margin:12px 0;padding:10px 12px;background:#fff8e1;border-left:4px solid #f9a825;">${staleNote}</div>` : ""}
   ${lowBlock}
   <table style="border-collapse:collapse;width:100%;margin-top:12px;">
@@ -186,16 +193,16 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
       <th style="${cell}text-align:left;">Product</th>
       <th style="${cell}text-align:right;">Today</th>
       <th style="${cell}text-align:right;">${prev ? escapeHtml(prev.date) : "Previous"}</th>
-      <th style="${cell}text-align:right;">Change</th>
-      <th style="${cell}text-align:right;">Min</th>
+      <th style="${cell}text-align:right;">Change</th>${showMinColumn ? `\n      <th style="${cell}text-align:right;">Min</th>` : ""}
     </tr></thead>
     <tbody>${tableRows}
       <tr style="font-weight:600;">
         <td style="${cell}">Total</td>
         <td style="${num}">${fmt(total)}</td>
         <td style="${num}">${fmt(prevTotal)}</td>
-        <td style="${num}">${prev ? fmtChange(Math.round((total - prevTotal) * 100) / 100) : "—"}</td>
-        <td style="${cell}"></td>
+        <td style="${num}">${prev ? fmtChange(Math.round((total - prevTotal) * 100) / 100) : "—"}</td>${
+          showMinColumn ? `\n        <td style="${cell}"></td>` : ""
+        }
       </tr>
     </tbody>
   </table>
@@ -212,6 +219,7 @@ const buildEmail = ({ rows, config, today, prev, lastUpdatedMs, now }) => {
   const text = [
     `${category} Inventory (${unit}) — ${formatDateTime(now.getTime(), timeZone)}`,
     `Inventory last updated: ${lastUpdatedMs ? formatDateTime(lastUpdatedMs, timeZone) : "unknown"}`,
+    minNote,
     staleNote,
     low.length ? `Low stock: ${low.map((r) => `${r.name} ${fmt(r.value)}`).join(", ")}` : "",
     "",
