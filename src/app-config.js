@@ -25,7 +25,7 @@ App.Config = {
   },
   INPUT_RULES: {
     MAP_HASH_TO_MULTIPLY: false,
-    MAP_DASH_TO_MULTIPLY: true,
+    MAP_DASH_TO_MULTIPLY: false,
   },
   INITIAL_PRODUCTS: {
     "Bulk Oil": [

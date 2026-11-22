@@ -196,10 +196,6 @@ App.UI = {
       const nameDiv = document.createElement("div");
       nameDiv.className = "item-name";
       nameDiv.textContent = name;
-      if (!isPreview) {
-        nameDiv.style.cursor = "pointer";
-        nameDiv.onclick = () => window.renameProductInline(name);
-      }
 
       const resultDiv = document.createElement("div");
       resultDiv.className = "item-result";
@@ -227,29 +223,38 @@ App.UI = {
         if (isMobileEdit) inputGroup.classList.add("mobile-edit-input-group");
 
         const input = document.createElement("input");
-        input.type = "text";
-        input.inputMode = "tel";
         input.className = "item-input";
-        input.value = val;
-        input.placeholder = "0";
-        input.oninput = (e) => {
-          // Keep keyboard-specific transforms centralized via config-backed utility.
-          const rules = {
-            mapDashToMultiply: !!App.Config.INPUT_RULES?.MAP_DASH_TO_MULTIPLY,
-            mapHashToMultiply: !!App.Config.INPUT_RULES?.MAP_HASH_TO_MULTIPLY,
-          };
-          const v = App.Utils.normalizeMathInput(e.target.value, rules);
-          e.target.value = v;
-          window.updateValue(name, v, index);
-        };
+        App.UI.bindInventoryInput(input, name, key, index, val);
+
+        const actions = document.createElement("div");
+        actions.className = "mobile-item-actions hidden";
+
+        const renameBtn = document.createElement("button");
+        renameBtn.className = "mobile-item-action";
+        renameBtn.textContent = "Rename";
+        renameBtn.onclick = () => window.renameProductInline(name);
 
         const delBtn = document.createElement("button");
-        delBtn.className = "item-delete-btn";
-        delBtn.textContent = "Del";
+        delBtn.className = "mobile-item-action danger";
+        delBtn.textContent = "Delete";
         delBtn.onclick = () => window.removeProductInline(name);
+        actions.append(renameBtn, delBtn);
 
-        inputGroup.append(input, delBtn);
-        card.append(inputGroup);
+        const moreBtn = document.createElement("button");
+        moreBtn.className = "item-more-btn";
+        moreBtn.textContent = "⋯";
+        moreBtn.setAttribute("aria-label", `More actions for ${name}`);
+        moreBtn.setAttribute("aria-expanded", "false");
+        moreBtn.onclick = () => {
+          const willOpen = actions.classList.contains("hidden");
+          list.querySelectorAll(".mobile-item-actions").forEach((el) => el.classList.add("hidden"));
+          list.querySelectorAll(".item-more-btn").forEach((el) => el.setAttribute("aria-expanded", "false"));
+          actions.classList.toggle("hidden", !willOpen);
+          moreBtn.setAttribute("aria-expanded", String(willOpen));
+        };
+
+        inputGroup.append(input, moreBtn);
+        card.append(inputGroup, actions);
       }
       list.appendChild(card);
     });
@@ -261,6 +266,204 @@ App.UI = {
     if (App.UI.isDesktop() && typeof App.UI.renderDesktopChartPanel === "function") {
       App.UI.renderDesktopChartPanel();
     }
+  },
+
+  bindInventoryInput: (input, name, key, index, value) => {
+    input.type = "text";
+    input.inputMode = "tel";
+    input.enterKeyHint = "next";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("aria-label", `Stock for ${name}`);
+    input.value = value;
+    input.placeholder = "0";
+    input.dataset.productKey = key;
+    input.dataset.rowIndex = index;
+    input.classList.toggle("has-error", !App.Utils.evaluateExpression(value).valid);
+
+    input.oninput = (event) => {
+      const el = event.target;
+      // Keep keyboard-specific transforms centralized via config-backed utility.
+      const normalized = App.Utils.normalizeMathInput(el.value, {
+        mapDashToMultiply: !!App.Config.INPUT_RULES?.MAP_DASH_TO_MULTIPLY,
+        mapHashToMultiply: !!App.Config.INPUT_RULES?.MAP_HASH_TO_MULTIPLY,
+      });
+      if (normalized !== el.value) {
+        // Assigning value moves the caret to the end, so put it back
+        const caret = el.selectionStart;
+        el.value = normalized;
+        el.setSelectionRange(caret, caret);
+      }
+      window.updateValue(name, normalized, index);
+    };
+    input.onkeydown = (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      App.UI.focusNextInput(input);
+    };
+  },
+
+  renderRowTotal: (index, value) => {
+    const { value: total, valid } = App.Utils.evaluateExpression(value);
+    const resultEl = document.getElementById(`result-${index}`);
+    if (resultEl) resultEl.innerHTML = `Total:<br>${total}`;
+    const mobileTotalEl = document.getElementById(`mobile-total-${index}`);
+    if (mobileTotalEl) mobileTotalEl.textContent = total;
+    const desktopTotalEl = document.getElementById(`desktop-total-${index}`);
+    if (desktopTotalEl) desktopTotalEl.textContent = total;
+    document
+      .querySelector(`[data-row-index="${index}"]`)
+      ?.classList.toggle("has-error", !valid);
+  },
+
+  // Update other rows in place while one input keeps focus
+  refreshVisibleInputs: () => {
+    document.querySelectorAll(".item-input, .desktop-edit-input").forEach((input) => {
+      if (input === document.activeElement) return;
+      const value = App.State.inventory[input.dataset.productKey] || "";
+      if (input.value !== value) input.value = value;
+      App.UI.renderRowTotal(Number(input.dataset.rowIndex), value);
+    });
+  },
+
+  focusNextInput: (current) => {
+    const selector = current.matches(".item-input") ? ".item-input" : ".desktop-edit-input";
+    const inputs = [...document.querySelectorAll(selector)];
+    const next = inputs[inputs.indexOf(current) + 1];
+    if (!next) {
+      current.blur();
+      return;
+    }
+    next.focus();
+    next.setSelectionRange(next.value.length, next.value.length);
+  },
+
+  // Calculator bar shown above the phone keyboard while editing stock
+  initMobileInput: () => {
+    const bar = document.getElementById("mobile-input-bar");
+    const area = document.querySelector(".content-area");
+    if (!bar || !area) return;
+
+    const clearBtn = bar.querySelector('[data-action="clear"]');
+    const nextBtn = bar.querySelector('[data-action="next"]');
+    let closeTimer = null;
+    let undoValue = null;
+
+    const activeInput = () => {
+      const el = document.activeElement;
+      return el?.matches?.(".item-input") ? el : null;
+    };
+    const resetUndo = () => {
+      undoValue = null;
+      clearBtn.textContent = "Clear";
+    };
+    const setValue = (input, value) => {
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const replaceSelection = (input, text, start, end) => {
+      input.setRangeText(text, start, end, "end");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+
+    const keepCardVisible = (behavior = "auto") => {
+      const card = activeInput()?.closest(".item-card");
+      if (!card) return;
+      const areaRect = area.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const visibleHeight = areaRect.height - bar.offsetHeight;
+      const offset = Math.max(8, (visibleHeight - cardRect.height) / 2);
+      area.scrollBy({ top: cardRect.top - areaRect.top - offset, behavior });
+    };
+
+    const syncViewport = () => {
+      if (!document.body.classList.contains("mobile-inputting")) return;
+      const viewport = window.visualViewport;
+      const height = viewport ? viewport.height : window.innerHeight;
+      const top = viewport ? viewport.offsetTop : 0;
+      document.documentElement.style.setProperty("--input-viewport-height", `${height}px`);
+      bar.style.transform = `translateY(${top + height - bar.offsetHeight}px)`;
+      // iOS pans the page to reveal the field; the list does the scrolling instead
+      if (window.scrollY) window.scrollTo(0, 0);
+    };
+
+    const updateNextLabel = () => {
+      const inputs = [...document.querySelectorAll(".item-input")];
+      const isLast = inputs.indexOf(activeInput()) === inputs.length - 1;
+      nextBtn.textContent = isLast ? "Done" : "Next";
+    };
+
+    document.addEventListener("focusin", (event) => {
+      if (!event.target.matches?.(".item-input") || App.UI.isDesktop()) return;
+      clearTimeout(closeTimer);
+      resetUndo();
+      document.body.classList.add("mobile-inputting");
+      bar.classList.remove("hidden");
+      updateNextLabel();
+      syncViewport();
+      requestAnimationFrame(() => keepCardVisible());
+    });
+
+    document.addEventListener("focusout", (event) => {
+      if (!event.target.matches?.(".item-input")) return;
+      clearTimeout(closeTimer);
+      closeTimer = setTimeout(() => {
+        if (activeInput()) return;
+        document.body.classList.remove("mobile-inputting");
+        bar.classList.add("hidden");
+        bar.style.transform = "";
+      }, 120);
+    });
+
+    document.addEventListener("input", (event) => {
+      if (event.isTrusted && event.target.matches?.(".item-input")) resetUndo();
+    });
+
+    window.visualViewport?.addEventListener("resize", () => {
+      syncViewport();
+      keepCardVisible();
+    });
+    window.visualViewport?.addEventListener("scroll", syncViewport);
+
+    // Keep focus in the field so the keyboard stays open when a key is tapped
+    ["pointerdown", "mousedown"].forEach((type) => {
+      bar.addEventListener(type, (event) => event.preventDefault());
+    });
+
+    bar.addEventListener("click", (event) => {
+      const btn = event.target.closest("button");
+      const input = activeInput();
+      if (!btn || !input) return;
+      const { insert, action } = btn.dataset;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+
+      if (action === "clear") {
+        if (undoValue !== null) {
+          const restored = undoValue;
+          resetUndo();
+          setValue(input, restored);
+        } else if (input.value) {
+          undoValue = input.value;
+          clearBtn.textContent = "Undo";
+          setValue(input, "");
+        }
+        return;
+      }
+
+      resetUndo();
+      if (insert) {
+        replaceSelection(input, insert, start, end);
+      } else if (action === "backspace") {
+        if (start !== end) replaceSelection(input, "", start, end);
+        else if (start > 0) replaceSelection(input, "", start - 1, start);
+      } else if (action === "next") {
+        App.UI.focusNextInput(input);
+        requestAnimationFrame(() => keepCardVisible("smooth"));
+      }
+    });
   },
 
   renderDesktopEditTable: (list, products, inventory) => {
@@ -291,18 +494,7 @@ App.UI = {
       const stockCell = document.createElement("td");
       const input = document.createElement("input");
       input.className = "desktop-edit-input";
-      input.type = "text";
-      input.inputMode = "tel";
-      input.value = inventory[key] || "";
-      input.placeholder = "0";
-      input.oninput = (event) => {
-        const value = App.Utils.normalizeMathInput(event.target.value, {
-          mapDashToMultiply: !!App.Config.INPUT_RULES?.MAP_DASH_TO_MULTIPLY,
-          mapHashToMultiply: !!App.Config.INPUT_RULES?.MAP_HASH_TO_MULTIPLY,
-        });
-        event.target.value = value;
-        window.updateValue(name, value, index);
-      };
+      App.UI.bindInventoryInput(input, name, key, index, inventory[key] || "");
       stockCell.appendChild(input);
 
       const totalCell = document.createElement("td");

@@ -58,3 +58,35 @@ describe("App.Utils.normalizeMathInput", () => {
     ).toBe("10-2#3");
   });
 });
+
+describe("App.Utils.evaluateExpression", () => {
+  const Utils = loadUtils();
+
+  test.each([
+    ["10-2-3", 5],
+    ["5*-2", -10],
+    [".5", 0.5],
+    ["2+.5", 2.5],
+    ["+5", 5],
+    ["-5", -5],
+    ["5++3", 8],
+    ["1,5", 1.5],
+    ["1,500", 1500],
+    ["1,000,000", 1000000],
+    ["10+5*3", 25],
+    ["(2+3)*4", 20],
+  ])("%s equals %d", (expr, expected) => {
+    expect(Utils.evaluateExpression(expr)).toEqual({ value: expected, valid: true });
+  });
+
+  test.each([["5*", 5], ["12/", 12], ["12+", 12], ["5-", 5], ["2*(3+", 6]])(
+    "unfinished %s keeps the total so far",
+    (expr, expected) => {
+      expect(Utils.evaluateExpression(expr)).toEqual({ value: expected, valid: true });
+    },
+  );
+
+  test.each(["5**3", "12 5", "1.2.3", "5/0", "5)", "12a"])("%s is flagged", (expr) => {
+    expect(Utils.evaluateExpression(expr).valid).toBe(false);
+  });
+});

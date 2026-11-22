@@ -6,6 +6,7 @@ window.App = window.App || {};
 
 App.Sync = {
   pendingPullAfterEdit: false,
+  pendingRenderAfterEdit: false,
 
   isInventoryInputActive: () =>
     document.activeElement?.matches(".item-input, .desktop-edit-input"),
@@ -134,7 +135,13 @@ App.Sync = {
     if (typeof window.initializeCategory === "function") window.initializeCategory();
     if (typeof window.saveToStorageImmediate === "function") window.saveToStorageImmediate(true);
     App.UI.renderTabs();
-    App.UI.renderInventory();
+    // Rebuilding the list would destroy the focused input and close the keyboard
+    if (App.Sync.isInventoryInputActive()) {
+      App.Sync.pendingRenderAfterEdit = true;
+      App.UI.refreshVisibleInputs();
+    } else {
+      App.UI.renderInventory();
+    }
     App.UI.renderManageUI();
     App.UI.renderRecentUpdates();
     if (tickerChanged) App.UI.renderLiveTicker();

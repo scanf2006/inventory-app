@@ -27,21 +27,32 @@ App.Utils = {
   },
 
   // Pure arithmetic parser: tokenize and compute without eval/Function
-  safeEvaluate: (expr) => {
-    if (!expr || typeof expr !== "string" || expr.trim() === "") return 0;
-    const cleanExpr = expr.replace(/[^0-9+\-*/(). ]/g, "");
-    if (!cleanExpr) return 0;
+  safeEvaluate: (expr) => App.Utils.evaluateExpression(expr).value,
+
+  // Returns the total plus whether the text is a usable expression.
+  // An unfinished entry such as "5*" is valid and shows the total so far.
+  evaluateExpression: (expr) => {
+    if (!expr || typeof expr !== "string" || expr.trim() === "") {
+      return { value: 0, valid: true };
+    }
+
+    // "1,500" is a thousands separator; any other comma is a decimal point
+    const text = expr.replace(/(\d),(?=\d{3}(?!\d))/g, "$1").replace(/,/g, ".");
+    const cleanExpr = text.replace(/[^0-9+\-*/(). ]/g, "");
+    let valid = cleanExpr === text;
 
     try {
-      const tokens = cleanExpr.match(/(?:\d+\.?\d*|[+\-*/()])/g);
-      if (!tokens) return 0;
+      const tokens = cleanExpr.match(/\d+\.?\d*|\.\d+|[+\-*/()]/g);
+      if (!tokens) return { value: 0, valid };
       let pos = 0;
 
+      // Parsers return null when there is no operand to read
       const parseExpr = () => {
         let result = parseTerm();
-        while (pos < tokens.length && (tokens[pos] === "+" || tokens[pos] === "-")) {
+        while (result !== null && (tokens[pos] === "+" || tokens[pos] === "-")) {
           const op = tokens[pos++];
           const right = parseTerm();
+          if (right === null) break;
           result = op === "+" ? result + right : result - right;
         }
         return result;
@@ -49,30 +60,49 @@ App.Utils = {
 
       const parseTerm = () => {
         let result = parseFactor();
-        while (pos < tokens.length && (tokens[pos] === "*" || tokens[pos] === "/")) {
+        while (result !== null && (tokens[pos] === "*" || tokens[pos] === "/")) {
           const op = tokens[pos++];
           const right = parseFactor();
-          if (op === "/" && right === 0) return 0;
-          result = op === "*" ? result * right : result / right;
+          if (right === null) break;
+          if (op === "/" && right === 0) {
+            valid = false;
+            result = 0;
+          } else {
+            result = op === "*" ? result * right : result / right;
+          }
         }
         return result;
       };
 
       const parseFactor = () => {
-        if (tokens[pos] === "(") {
+        const token = tokens[pos];
+        if (token === undefined) return null;
+        if (token === "+" || token === "-") {
           pos++;
-          const result = parseExpr();
-          if (tokens[pos] === ")") pos++;
-          return result;
+          const operand = parseFactor();
+          if (operand === null) return null;
+          return token === "-" ? -operand : operand;
         }
-        const num = parseFloat(tokens[pos++]);
-        return isNaN(num) ? 0 : num;
+        if (token === "(") {
+          pos++;
+          const inner = parseExpr();
+          if (tokens[pos] === ")") pos++;
+          return inner;
+        }
+        if (token === "*" || token === "/" || token === ")") {
+          valid = false;
+          return null;
+        }
+        pos++;
+        return parseFloat(token);
       };
 
       const result = parseExpr();
-      return isNaN(result) ? 0 : Math.round(result * 100) / 100;
+      if (pos < tokens.length) valid = false;
+      const value = result === null ? 0 : Math.round(result * 100) / 100;
+      return { value: value || 0, valid };
     } catch (e) {
-      return 0;
+      return { value: 0, valid: false };
     }
   },
 

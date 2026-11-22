@@ -145,11 +145,23 @@ const setupEventListeners = () => {
     if (!event.target.matches(".item-input, .desktop-edit-input")) return;
 
     setTimeout(() => {
-      if (!App.Sync.pendingPullAfterEdit || App.Sync.isInventoryInputActive()) return;
+      if (App.Sync.isInventoryInputActive()) return;
+      window.flushPendingSave();
+      if (App.Sync.pendingRenderAfterEdit) {
+        App.Sync.pendingRenderAfterEdit = false;
+        App.UI.renderInventory();
+      }
+      if (!App.Sync.pendingPullAfterEdit) return;
       App.Sync.pendingPullAfterEdit = false;
       App.Sync.pull(true);
     }, 0);
   });
+  // Typed values are saved after a short pause, so write them before the page goes away
+  window.addEventListener("pagehide", () => window.flushPendingSave());
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") window.flushPendingSave();
+  });
+  App.UI.initMobileInput();
 
   // Footer Actions
   document.getElementById("manage-btn")?.addEventListener("click", () => {
@@ -235,22 +247,34 @@ window.saveToStorageImmediate = (skipTimestamp) => {
   localStorage.setItem(SK.LIVE_MESSAGES, JSON.stringify(App.State.liveMessages));
 };
 
-const debouncedSave = App.Utils.debounce(() => {
+let pendingSaveTimer = null;
+
+const runPendingSave = () => {
+  pendingSaveTimer = null;
   window.saveToStorageImmediate();
   // Background writes prefer fast retry and no UI interruption.
   App.Sync.pushWithRetry(2, 400);
-}, 300);
+};
+
+window.flushPendingSave = () => {
+  if (pendingSaveTimer === null) return;
+  clearTimeout(pendingSaveTimer);
+  runPendingSave();
+};
 
 window.saveToStorage = (isImmediate) => {
-  window.saveToStorageImmediate();
+  clearTimeout(pendingSaveTimer);
   App.UI.updateSyncStatus("Saving...", false);
   if (isImmediate) {
+    pendingSaveTimer = null;
+    window.saveToStorageImmediate();
     // Immediate saves are user-driven actions; keep status explicit.
     App.Sync.pushWithRetry(2, 400).then((result) => {
       App.UI.updateSyncStatus(result?.ok ? "Saved" : "Saved (Local)", !!result?.ok);
     });
   } else {
-    debouncedSave();
+    // Keystrokes: avoid rewriting all of localStorage on every key press
+    pendingSaveTimer = setTimeout(runPendingSave, 300);
   }
 };
 
@@ -275,13 +299,7 @@ window.updateValue = (name, value, index) => {
     }
     window.saveToStorage(false);
   }
-  const total = App.Utils.safeEvaluate(value);
-  const resultEl = document.getElementById(`result-${index}`);
-  if (resultEl) resultEl.innerHTML = `Total:<br>${total}`;
-  const mobileTotalEl = document.getElementById(`mobile-total-${index}`);
-  if (mobileTotalEl) mobileTotalEl.textContent = total;
-  const desktopTotalEl = document.getElementById(`desktop-total-${index}`);
-  if (desktopTotalEl) desktopTotalEl.textContent = total;
+  App.UI.renderRowTotal(index, value);
 };
 
 window.renameProductInline = (oldName) => {
