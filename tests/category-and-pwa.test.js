@@ -57,6 +57,57 @@ describe("category rename/delete keeps other categories intact", () => {
   });
 });
 
+describe("desktop chart oil selection", () => {
+  const loadChartApp = () => {
+    const window = loadApp();
+    const { App } = window;
+    vm.runInContext(read("src", "app-ui-desktop.js"), window);
+    App.UI.isDesktop = () => true;
+    App.UI.isBulkOilCategory = () => true;
+    App.State.products = { "Bulk Oil": ["R-P520S-B", "5W30S"] };
+    App.State.categoryOrder = ["Bulk Oil"];
+    App.State.currentCategory = "Bulk Oil";
+    App.State.inventory = { "Bulk Oil-R-P520S-B": "700", "Bulk Oil-5W30S": "300" };
+    window.matchMedia = () => ({ matches: false });
+    window.document.getElementById = (id) => (id === "inventoryChart" ? { getContext: () => ({}) } : null);
+    window.Chart = function Chart(_ctx, config) {
+      this.config = config;
+      this.destroy = () => {};
+    };
+    return window;
+  };
+
+  test("the chart skips names no longer in Bulk Oil", () => {
+    const window = loadChartApp();
+    window.App.State.commonOils = ["5W20S", "R-P520S-B", "5W30S"];
+    window.App.UI.renderDesktopChart();
+
+    const { labels, datasets } = window.App.State.chartInstance.config.data;
+    expect(Array.from(labels)).toEqual(["R-P520S-B", "5W30S"]);
+    expect(Array.from(datasets[0].data)).toEqual([700, 300]);
+  });
+
+  test("the chart total ignores the same product in other categories", () => {
+    const window = loadChartApp();
+    const { State } = window.App;
+    State.products["Case Oil"] = ["5W30S"];
+    State.inventory["Case Oil-5W30S"] = "50";
+    State.commonOils = ["5W30S"];
+    window.App.UI.renderDesktopChart();
+
+    expect(Array.from(State.chartInstance.config.data.datasets[0].data)).toEqual([300]);
+  });
+
+  test("renaming a selected oil keeps it selected under the new name", () => {
+    const window = loadChartApp();
+    window.App.State.commonOils = ["5W30S"];
+    window.prompt = () => "R-P530S-B";
+    window.renameProductInline("5W30S");
+
+    expect(Array.from(window.App.State.commonOils)).toEqual(["R-P530S-B"]);
+  });
+});
+
 describe("PWA wiring", () => {
   test("main.js registers the service worker", () => {
     expect(read("src", "main.js")).toContain('.register("./sw.js")');

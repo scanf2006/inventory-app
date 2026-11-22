@@ -691,14 +691,7 @@ App.UI = {
     if (!container) return;
     container.innerHTML = "";
 
-    const allProducts = new Set();
-    Object.keys(App.State.products).forEach((cat) => {
-      if (cat.toLowerCase().includes("bulk oil")) {
-        (App.State.products[cat] || []).forEach((p) => allProducts.add(p));
-      }
-    });
-
-    const sorted = [...allProducts].sort();
+    const sorted = [...App.Utils.getBulkOilProducts()].sort();
     sorted.forEach((oil) => {
       const el = document.createElement("div");
       const isActive = App.State.commonOils.includes(oil);

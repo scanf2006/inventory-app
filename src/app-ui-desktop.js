@@ -48,12 +48,17 @@ App.UI.renderDesktopChart = () => {
   const data = [];
   const labels = [];
 
-  App.State.commonOils.forEach((oil) => {
+  // The selection is stored per device, so it can hold names renamed or removed elsewhere.
+  const bulkProducts = App.Utils.getBulkOilProducts();
+  const bulkCategories = Object.keys(App.State.products || {}).filter((cat) =>
+    cat.toLowerCase().includes("bulk oil"),
+  );
+  App.State.commonOils.filter((oil) => bulkProducts.has(oil)).forEach((oil) => {
     let total = 0;
-    Object.keys(App.State.inventory).forEach((key) => {
-      if (key.endsWith("-" + oil)) {
-        total += App.Utils.safeEvaluate(App.State.inventory[key]);
-      }
+    bulkCategories.forEach((cat) => {
+      if (!(App.State.products[cat] || []).includes(oil)) return;
+      const value = App.State.inventory[App.Utils.getProductKey(cat, oil)];
+      if (value !== undefined) total += App.Utils.safeEvaluate(value);
     });
     labels.push(oil);
     data.push(total);

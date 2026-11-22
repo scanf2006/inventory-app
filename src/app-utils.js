@@ -108,6 +108,18 @@ App.Utils = {
     return products[currentCategory] || [];
   },
 
+  // Helper: Every product currently listed under a Bulk Oil category
+  getBulkOilProducts: () => {
+    const products = App.State.products || {};
+    const bulk = new Set();
+    Object.keys(products).forEach((cat) => {
+      if (cat.toLowerCase().includes("bulk oil")) {
+        (products[cat] || []).forEach((p) => bulk.add(p));
+      }
+    });
+    return bulk;
+  },
+
   // Helper: Escape illegal characters for inline HTML/JS injections
   escapeStr: (str) => {
     if (!str) return "";

@@ -306,6 +306,13 @@ window.renameProductInline = (oldName) => {
       delete App.State.inventory[oldKey];
     }
 
+    // Keep the chart selection on the renamed oil
+    if (App.UI.isBulkOilCategory()) {
+      App.State.commonOils = [...new Set(
+        App.State.commonOils.map((oil) => (oil === oldName ? trimmed : oil)),
+      )];
+    }
+
     window.saveToStorage(true);
     App.UI.renderInventory();
   }
