@@ -106,6 +106,33 @@ App.Utils = {
     }
   },
 
+  // Join count entries back into the stored expression, e.g. "80+40-5"
+  joinExpression: (parts) =>
+    parts.map((p, i) => (i === 0 && p.s === "+" ? p.e : `${p.s}${p.e}`)).join(""),
+
+  // Split a stored expression into count entries. Anything that cannot be
+  // rebuilt exactly stays as one entry, so existing values are never rewritten.
+  splitExpression: (raw) => {
+    const text = String(raw || "");
+    if (!text) return [];
+    const whole = [{ s: "+", e: text }];
+    if (!/^[0-9.*+\-]+$/.test(text)) return whole;
+
+    const parts = [];
+    let sign = text[0] === "-" ? "-" : "+";
+    let start = text[0] === "-" ? 1 : 0;
+    for (let i = start + 1; i < text.length; i++) {
+      if ((text[i] === "+" || text[i] === "-") && /[\d.]/.test(text[i - 1])) {
+        parts.push({ s: sign, e: text.slice(start, i) });
+        sign = text[i];
+        start = i + 1;
+      }
+    }
+    parts.push({ s: sign, e: text.slice(start) });
+    const exact = parts.every((p) => p.e) && App.Utils.joinExpression(parts) === text;
+    return exact ? parts : whole;
+  },
+
   // Normalize keypad input for math-friendly entry on mobile keyboards
   normalizeMathInput: (value, rules = {}) => {
     if (typeof value !== "string") return value || "";

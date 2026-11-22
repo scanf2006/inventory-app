@@ -365,9 +365,11 @@ App.Sync = {
       App.UI.showToast(`Snapshot saved! (${totalItems} items)`, "success");
       const noteInput = document.getElementById("snapshot-note-input");
       if (noteInput) noteInput.value = "";
+      return true;
     } catch (e) {
       console.error("Snapshot save error:", e);
       App.UI.showToast("Failed to save snapshot", "error");
+      return false;
     }
   },
 

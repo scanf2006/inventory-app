@@ -131,6 +131,13 @@ App.UI = {
     const isPreview = viewMode === "preview" || (App.UI.isDesktop() && !mobileAdminUnlocked);
     list.className = `inventory-list ${isPreview ? "preview-layout" : ""}`;
 
+    // Phone editing uses the full-screen count mode instead of the product list
+    if (!isPreview && !App.UI.isDesktop()) {
+      App.CountMode.show();
+      return;
+    }
+    App.CountMode?.hide();
+
     const rawProducts = App.Utils.getCurrentProducts();
     if (!currentCategory || !rawProducts.length) {
       if (!currentCategory || !products[currentCategory]) {
@@ -165,30 +172,12 @@ App.UI = {
       return;
     }
 
-    // Reset button for Mobile Edit mode
-    if (viewMode === "edit" && !App.UI.isDesktop()) {
-      const resetWrapper = document.createElement("div");
-      resetWrapper.style = "margin: 5px 0 15px 0;";
-      const resetBtn = document.createElement("button");
-      resetBtn.className = "btn-delete danger-zone-reset w-full";
-      resetBtn.style =
-        "opacity: 0.8; font-size: 0.85rem; padding: 12px; border-radius: 12px;";
-      resetBtn.textContent = `Reset ${currentCategory} to Zero`;
-      resetBtn.onclick = () => window.resetCategoryInventory();
-      resetWrapper.appendChild(resetBtn);
-      list.appendChild(resetWrapper);
-    }
-
     displayProducts.forEach((name, index) => {
       const key = App.Utils.getProductKey(currentCategory, name);
-      const val = inventory[key] || "";
-      const total = App.Utils.safeEvaluate(val);
-      const isMobileEdit = !isPreview && !App.UI.isDesktop();
+      const total = App.Utils.safeEvaluate(inventory[key] || "");
 
       const card = document.createElement("div");
-      card.className = `item-card ${isPreview ? "preview-mode" : ""}`;
-      // Mobile edit intentionally reuses preview visual language to reduce style drift.
-      if (isMobileEdit) card.classList.add("preview-mode", "mobile-edit-card");
+      card.className = "item-card preview-mode";
 
       const infoDiv = document.createElement("div");
       infoDiv.className = "item-info";
@@ -202,66 +191,10 @@ App.UI = {
       resultDiv.id = `result-${index}`;
       resultDiv.innerHTML = `Total: <span class="highlight-total">${total}</span>`;
 
-      if (isMobileEdit) {
-        const headerDiv = document.createElement("div");
-        headerDiv.className = "mobile-edit-header";
-
-        const totalBadge = document.createElement("div");
-        totalBadge.className = "mobile-edit-total";
-        totalBadge.innerHTML = `Tot: <span class="mobile-edit-total-value" id="mobile-total-${index}">${total}</span>`;
-
-        headerDiv.append(nameDiv, totalBadge);
-        infoDiv.append(headerDiv);
-      } else {
-        infoDiv.append(nameDiv, resultDiv);
-      }
+      infoDiv.append(nameDiv, resultDiv);
       card.append(infoDiv);
-
-      if (!isPreview) {
-        const inputGroup = document.createElement("div");
-        inputGroup.className = "input-group";
-        if (isMobileEdit) inputGroup.classList.add("mobile-edit-input-group");
-
-        const input = document.createElement("input");
-        input.className = "item-input";
-        App.UI.bindInventoryInput(input, name, key, index, val);
-
-        const actions = document.createElement("div");
-        actions.className = "mobile-item-actions hidden";
-
-        const renameBtn = document.createElement("button");
-        renameBtn.className = "mobile-item-action";
-        renameBtn.textContent = "Rename";
-        renameBtn.onclick = () => window.renameProductInline(name);
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "mobile-item-action danger";
-        delBtn.textContent = "Delete";
-        delBtn.onclick = () => window.removeProductInline(name);
-        actions.append(renameBtn, delBtn);
-
-        const moreBtn = document.createElement("button");
-        moreBtn.className = "item-more-btn";
-        moreBtn.textContent = "⋯";
-        moreBtn.setAttribute("aria-label", `More actions for ${name}`);
-        moreBtn.setAttribute("aria-expanded", "false");
-        moreBtn.onclick = () => {
-          const willOpen = actions.classList.contains("hidden");
-          list.querySelectorAll(".mobile-item-actions").forEach((el) => el.classList.add("hidden"));
-          list.querySelectorAll(".item-more-btn").forEach((el) => el.setAttribute("aria-expanded", "false"));
-          actions.classList.toggle("hidden", !willOpen);
-          moreBtn.setAttribute("aria-expanded", String(willOpen));
-        };
-
-        inputGroup.append(input, moreBtn);
-        card.append(inputGroup, actions);
-      }
       list.appendChild(card);
     });
-
-    if (viewMode === "edit" && !App.UI.isDesktop()) {
-      App.UI.renderQuickAdd(list);
-    }
 
     if (App.UI.isDesktop() && typeof App.UI.renderDesktopChartPanel === "function") {
       App.UI.renderDesktopChartPanel();
@@ -309,8 +242,6 @@ App.UI = {
     const { value: total, valid } = App.Utils.evaluateExpression(value);
     const resultEl = document.getElementById(`result-${index}`);
     if (resultEl) resultEl.innerHTML = `Total:<br>${total}`;
-    const mobileTotalEl = document.getElementById(`mobile-total-${index}`);
-    if (mobileTotalEl) mobileTotalEl.textContent = total;
     const desktopTotalEl = document.getElementById(`desktop-total-${index}`);
     if (desktopTotalEl) desktopTotalEl.textContent = total;
     document
@@ -338,132 +269,6 @@ App.UI = {
     }
     next.focus();
     next.setSelectionRange(next.value.length, next.value.length);
-  },
-
-  // Calculator bar shown above the phone keyboard while editing stock
-  initMobileInput: () => {
-    const bar = document.getElementById("mobile-input-bar");
-    const area = document.querySelector(".content-area");
-    if (!bar || !area) return;
-
-    const clearBtn = bar.querySelector('[data-action="clear"]');
-    const nextBtn = bar.querySelector('[data-action="next"]');
-    let closeTimer = null;
-    let undoValue = null;
-
-    const activeInput = () => {
-      const el = document.activeElement;
-      return el?.matches?.(".item-input") ? el : null;
-    };
-    const resetUndo = () => {
-      undoValue = null;
-      clearBtn.textContent = "Clear";
-    };
-    const setValue = (input, value) => {
-      input.value = value;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    };
-    const replaceSelection = (input, text, start, end) => {
-      input.setRangeText(text, start, end, "end");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    };
-
-    const keepCardVisible = (behavior = "auto") => {
-      const card = activeInput()?.closest(".item-card");
-      if (!card) return;
-      const areaRect = area.getBoundingClientRect();
-      const cardRect = card.getBoundingClientRect();
-      const visibleHeight = areaRect.height - bar.offsetHeight;
-      const offset = Math.max(8, (visibleHeight - cardRect.height) / 2);
-      area.scrollBy({ top: cardRect.top - areaRect.top - offset, behavior });
-    };
-
-    const syncViewport = () => {
-      if (!document.body.classList.contains("mobile-inputting")) return;
-      const viewport = window.visualViewport;
-      const height = viewport ? viewport.height : window.innerHeight;
-      const top = viewport ? viewport.offsetTop : 0;
-      document.documentElement.style.setProperty("--input-viewport-height", `${height}px`);
-      bar.style.transform = `translateY(${top + height - bar.offsetHeight}px)`;
-      // iOS pans the page to reveal the field; the list does the scrolling instead
-      if (window.scrollY) window.scrollTo(0, 0);
-    };
-
-    const updateNextLabel = () => {
-      const inputs = [...document.querySelectorAll(".item-input")];
-      const isLast = inputs.indexOf(activeInput()) === inputs.length - 1;
-      nextBtn.textContent = isLast ? "Done" : "Next";
-    };
-
-    document.addEventListener("focusin", (event) => {
-      if (!event.target.matches?.(".item-input") || App.UI.isDesktop()) return;
-      clearTimeout(closeTimer);
-      resetUndo();
-      document.body.classList.add("mobile-inputting");
-      bar.classList.remove("hidden");
-      updateNextLabel();
-      syncViewport();
-      requestAnimationFrame(() => keepCardVisible());
-    });
-
-    document.addEventListener("focusout", (event) => {
-      if (!event.target.matches?.(".item-input")) return;
-      clearTimeout(closeTimer);
-      closeTimer = setTimeout(() => {
-        if (activeInput()) return;
-        document.body.classList.remove("mobile-inputting");
-        bar.classList.add("hidden");
-        bar.style.transform = "";
-      }, 120);
-    });
-
-    document.addEventListener("input", (event) => {
-      if (event.isTrusted && event.target.matches?.(".item-input")) resetUndo();
-    });
-
-    window.visualViewport?.addEventListener("resize", () => {
-      syncViewport();
-      keepCardVisible();
-    });
-    window.visualViewport?.addEventListener("scroll", syncViewport);
-
-    // Keep focus in the field so the keyboard stays open when a key is tapped
-    ["pointerdown", "mousedown"].forEach((type) => {
-      bar.addEventListener(type, (event) => event.preventDefault());
-    });
-
-    bar.addEventListener("click", (event) => {
-      const btn = event.target.closest("button");
-      const input = activeInput();
-      if (!btn || !input) return;
-      const { insert, action } = btn.dataset;
-      const start = input.selectionStart ?? input.value.length;
-      const end = input.selectionEnd ?? input.value.length;
-
-      if (action === "clear") {
-        if (undoValue !== null) {
-          const restored = undoValue;
-          resetUndo();
-          setValue(input, restored);
-        } else if (input.value) {
-          undoValue = input.value;
-          clearBtn.textContent = "Undo";
-          setValue(input, "");
-        }
-        return;
-      }
-
-      resetUndo();
-      if (insert) {
-        replaceSelection(input, insert, start, end);
-      } else if (action === "backspace") {
-        if (start !== end) replaceSelection(input, "", start, end);
-        else if (start > 0) replaceSelection(input, "", start - 1, start);
-      } else if (action === "next") {
-        App.UI.focusNextInput(input);
-        requestAnimationFrame(() => keepCardVisible("smooth"));
-      }
-    });
   },
 
   renderDesktopEditTable: (list, products, inventory) => {
@@ -606,23 +411,6 @@ App.UI = {
       list.parentNode.insertBefore(badge, list);
     }
     badge.innerText = `Products: ${count}`;
-  },
-
-  renderQuickAdd: (list) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "quick-add-wrapper";
-
-    const card = document.createElement("div");
-    card.className = "quick-add-card";
-    card.innerHTML = "<span>+ Add Product</span>";
-    card.onclick = () => window.showQuickAddForm();
-
-    const formOuter = document.createElement("div");
-    formOuter.id = "quick-add-form-container";
-    formOuter.className = "hidden";
-
-    wrapper.append(card, formOuter);
-    list.appendChild(wrapper);
   },
 
   renderManageUI: () => {

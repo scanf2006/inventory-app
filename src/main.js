@@ -161,7 +161,7 @@ const setupEventListeners = () => {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") window.flushPendingSave();
   });
-  App.UI.initMobileInput();
+  App.CountMode.init();
 
   // Footer Actions
   document.getElementById("manage-btn")?.addEventListener("click", () => {
@@ -326,16 +326,23 @@ window.renameProductInline = (oldName) => {
   }
 };
 
+window.deleteProduct = (category, name) => {
+  const prods = App.State.products[category] || [];
+  const index = prods.indexOf(name);
+  if (index === -1) return false;
+
+  prods.splice(index, 1);
+  delete App.State.inventory[App.Utils.getProductKey(category, name)];
+  window.saveToStorage(true);
+  App.UI.renderInventory();
+  return true;
+};
+
 window.removeProductInline = (name) => {
-  const currentProds = App.Utils.getCurrentProducts();
-  const index = currentProds.indexOf(name);
-  if (index === -1) return;
+  if (!App.Utils.getCurrentProducts().includes(name)) return;
 
   App.UI.confirm(`Delete product "${name}"?`, () => {
-    currentProds.splice(index, 1);
-    delete App.State.inventory[App.Utils.getProductKey(App.State.currentCategory, name)];
-    window.saveToStorage(true);
-    App.UI.renderInventory();
+    window.deleteProduct(App.State.currentCategory, name);
     App.UI.showToast("Product deleted", "info");
   });
 };
@@ -500,28 +507,6 @@ window.sortProductsToggle = () => {
 window.toggleViewMode = (mode) => {
   App.State.viewMode = mode;
   App.UI.renderInventory();
-};
-
-window.showQuickAddForm = () => {
-  const container = document.getElementById("quick-add-form-container");
-  if (!container) return;
-  container.innerHTML = `
-    <div class="quick-add-form">
-      <input type="text" id="quick-add-name" placeholder="New product name" list="master-product-list">
-      <div class="quick-add-actions">
-        <button onclick="window.submitQuickAdd()">Add</button>
-        <button class="cancel" onclick="window.hideQuickAddForm()">Cancel</button>
-      </div>
-    </div>
-  `;
-  container.classList.remove("hidden");
-  document.querySelector(".quick-add-card").classList.add("hidden");
-  document.getElementById("quick-add-name")?.focus();
-};
-
-window.hideQuickAddForm = () => {
-  document.getElementById("quick-add-form-container")?.classList.add("hidden");
-  document.querySelector(".quick-add-card")?.classList.remove("hidden");
 };
 
 // --- SNAPSHOT ACTIONS ---
