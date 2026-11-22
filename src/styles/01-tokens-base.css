@@ -93,14 +93,6 @@
   .quick-add-actions button.cancel {
     background: rgba(255, 255, 255, 0.15);
   }
-  .checkbox-item {
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .checkbox-item.active {
-    background: rgba(255, 214, 10, 0.2);
-    color: var(--accent-gold);
-    border-color: var(--accent-gold);
-  }
   .modal {
     background: #1c1c1e;
   }

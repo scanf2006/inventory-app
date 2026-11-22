@@ -77,9 +77,8 @@ describe("desktop chart oil selection", () => {
     return window;
   };
 
-  test("the chart skips names no longer in Bulk Oil", () => {
+  test("the chart shows every current Bulk Oil product", () => {
     const window = loadChartApp();
-    window.App.State.commonOils = ["5W20S", "R-P520S-B", "5W30S"];
     window.App.UI.renderDesktopChart();
 
     const { labels, datasets } = window.App.State.chartInstance.config.data;
@@ -92,19 +91,20 @@ describe("desktop chart oil selection", () => {
     const { State } = window.App;
     State.products["Case Oil"] = ["5W30S"];
     State.inventory["Case Oil-5W30S"] = "50";
-    State.commonOils = ["5W30S"];
     window.App.UI.renderDesktopChart();
 
-    expect(Array.from(State.chartInstance.config.data.datasets[0].data)).toEqual([300]);
+    expect(Array.from(State.chartInstance.config.data.datasets[0].data)).toEqual([700, 300]);
   });
 
-  test("renaming a selected oil keeps it selected under the new name", () => {
+  test("a renamed oil appears in the chart under its new name only", () => {
     const window = loadChartApp();
-    window.App.State.commonOils = ["5W30S"];
     window.prompt = () => "R-P530S-B";
     window.renameProductInline("5W30S");
+    window.App.UI.renderDesktopChart();
 
-    expect(Array.from(window.App.State.commonOils)).toEqual(["R-P530S-B"]);
+    const { labels, datasets } = window.App.State.chartInstance.config.data;
+    expect(Array.from(labels)).toEqual(["R-P520S-B", "R-P530S-B"]);
+    expect(Array.from(datasets[0].data)).toEqual([700, 300]);
   });
 });
 

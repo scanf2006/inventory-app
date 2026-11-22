@@ -48,12 +48,11 @@ App.UI.renderDesktopChart = () => {
   const data = [];
   const labels = [];
 
-  // The selection is stored per device, so it can hold names renamed or removed elsewhere.
   const bulkProducts = App.Utils.getBulkOilProducts();
   const bulkCategories = Object.keys(App.State.products || {}).filter((cat) =>
     cat.toLowerCase().includes("bulk oil"),
   );
-  App.State.commonOils.filter((oil) => bulkProducts.has(oil)).forEach((oil) => {
+  bulkProducts.forEach((oil) => {
     let total = 0;
     bulkCategories.forEach((cat) => {
       if (!(App.State.products[cat] || []).includes(oil)) return;
@@ -64,18 +63,14 @@ App.UI.renderDesktopChart = () => {
     data.push(total);
   });
 
-  const denseMode = labels.length > 8;
   if (chartWrapper) {
-    chartWrapper.style.height = denseMode
-      ? `${Math.min(620, Math.max(300, labels.length * 42))}px`
-      : "220px";
+    chartWrapper.style.height = labels.length > 8 ? "340px" : "220px";
   }
 
   const renderKey = JSON.stringify({
     labels,
     data,
     updated: App.Utils.getLastInventoryDisplayTs(),
-    oils: App.State.commonOils || [],
   });
   if (App.State._lastChartRenderKey === renderKey) return;
   App.State._lastChartRenderKey = renderKey;
@@ -92,7 +87,7 @@ App.UI.renderDesktopChart = () => {
         minute: "2-digit",
         hour12: false,
       });
-      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}${denseMode ? " (Dense mode)" : ""}`;
+      sub.innerText = `Detailed Monitoring Dashboard - Last Updated: ${timeStr}`;
     } else {
       sub.innerText = "Detailed Monitoring Dashboard - Last Updated: Waiting for data...";
     }
@@ -145,8 +140,8 @@ App.UI.renderDesktopChart = () => {
       plugins: {
         legend: { display: false },
           datalabels: {
-          anchor: denseMode ? "end" : "end",
-          align: denseMode ? "right" : "top",
+          anchor: "end",
+          align: "top",
           color: fontColor,
           font: {
             weight: "bold",
@@ -163,30 +158,17 @@ App.UI.renderDesktopChart = () => {
         },
       },
       scales: {
-        y: denseMode
-          ? {
-              ticks: { color: fontColor, font: { size: 12 } },
-              grid: { display: false },
-            }
-          : {
-              beginAtZero: true,
-              grace: "15%",
-              ticks: { color: fontColor },
-              grid: { color: gridColor },
-            },
-        x: denseMode
-          ? {
-              beginAtZero: true,
-              grace: "8%",
-              ticks: { color: fontColor },
-              grid: { color: gridColor },
-            }
-          : {
-              ticks: { color: fontColor },
-              grid: { display: false },
-            },
+        y: {
+          beginAtZero: true,
+          grace: "15%",
+          ticks: { color: fontColor },
+          grid: { color: gridColor },
+        },
+        x: {
+          ticks: { color: fontColor, autoSkip: false, maxRotation: 45, minRotation: 0 },
+          grid: { display: false },
+        },
       },
-      indexAxis: denseMode ? "y" : "x",
     },
   });
 };

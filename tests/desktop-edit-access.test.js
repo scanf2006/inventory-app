@@ -12,15 +12,11 @@ describe("desktop editing access", () => {
     expect(section[1]).not.toContain("mobile-only");
   });
 
-  test("keeps desktop dashboard configuration outside the edit lock", () => {
+  test("no longer offers a desktop dashboard oil selection in Settings", () => {
     const html = read("index.html");
 
-    expect(html.indexOf("Dashboard Config (Desktop)")).toBeLessThan(
-      html.indexOf('id="admin-protected-content"'),
-    );
-    expect(html.indexOf("Dashboard Config (Desktop)")).toBeLessThan(
-      html.indexOf('id="admin-login-section"'),
-    );
+    expect(html).not.toContain("Dashboard Config (Desktop)");
+    expect(html).not.toContain("common-oils-checkbox-list");
   });
 
   test("requires the existing admin unlock before desktop editing", () => {

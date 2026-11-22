@@ -34,7 +34,6 @@ const initApp = async () => {
   App.State.products = load(SK.PRODUCTS, App.Config.INITIAL_PRODUCTS);
   App.State.inventory = load(SK.INVENTORY, {});
   App.State.categoryOrder = load(SK.CATEGORY_ORDER, Object.keys(App.Config.INITIAL_PRODUCTS));
-  App.State.commonOils = load(SK.COMMON_OILS, ["5W20S", "5W20B", "5W30S", "5W30B"]);
   App.State.lastUpdated = parseInt(localStorage.getItem(SK.LAST_UPDATED) || "0");
   App.State.lastInventoryUpdate = parseInt(localStorage.getItem(SK.LAST_INVENTORY_UPDATE) || "0");
   App.State.history = load(SK.RECENT_HISTORY, []);
@@ -156,7 +155,6 @@ const setupEventListeners = () => {
   document.getElementById("manage-btn")?.addEventListener("click", () => {
     document.getElementById("modal-overlay").classList.remove("hidden");
     document.getElementById("sync-id-input").value = App.State.syncId || "";
-    App.UI.renderCommonOilsCheckboxes();
     App.UI.renderManageUI();
     window.updateAdminLoginUI();
   });
@@ -231,7 +229,6 @@ window.saveToStorageImmediate = (skipTimestamp) => {
   localStorage.setItem(SK.INVENTORY, JSON.stringify(App.State.inventory));
   localStorage.setItem(SK.CATEGORY_ORDER, JSON.stringify(App.State.categoryOrder));
   localStorage.setItem(SK.SYNC_ID, App.State.syncId);
-  localStorage.setItem(SK.COMMON_OILS, JSON.stringify(App.State.commonOils));
   localStorage.setItem(SK.LAST_UPDATED, App.State.lastUpdated);
   localStorage.setItem(SK.LAST_INVENTORY_UPDATE, App.State.lastInventoryUpdate);
   localStorage.setItem(SK.RECENT_HISTORY, JSON.stringify(App.State.history));
@@ -304,13 +301,6 @@ window.renameProductInline = (oldName) => {
     if (App.State.inventory[oldKey] !== undefined) {
       App.State.inventory[newKey] = App.State.inventory[oldKey];
       delete App.State.inventory[oldKey];
-    }
-
-    // Keep the chart selection on the renamed oil
-    if (App.UI.isBulkOilCategory()) {
-      App.State.commonOils = [...new Set(
-        App.State.commonOils.map((oil) => (oil === oldName ? trimmed : oil)),
-      )];
     }
 
     window.saveToStorage(true);

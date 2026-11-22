@@ -685,34 +685,6 @@ App.UI = {
 
     el.innerHTML = html;
   },
-
-  renderCommonOilsCheckboxes: () => {
-    const container = document.getElementById("common-oils-checkbox-list");
-    if (!container) return;
-    container.innerHTML = "";
-
-    const sorted = [...App.Utils.getBulkOilProducts()].sort();
-    sorted.forEach((oil) => {
-      const el = document.createElement("div");
-      const isActive = App.State.commonOils.includes(oil);
-      el.className = `checkbox-item ${isActive ? "active" : ""}`;
-      el.innerText = oil;
-
-      el.onclick = () => {
-        const index = App.State.commonOils.indexOf(oil);
-        if (index === -1) {
-          App.State.commonOils.push(oil);
-          el.classList.add("active");
-        } else {
-          App.State.commonOils.splice(index, 1);
-          el.classList.remove("active");
-        }
-        window.saveToStorage(true);
-        App.UI.renderDesktopChart();
-      };
-      container.appendChild(el);
-    });
-  },
 };
 
 window.showLiveHistory = () => {
