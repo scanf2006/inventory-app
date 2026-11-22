@@ -11,7 +11,7 @@ App.CountMode = (() => {
   const UNDO_MS = 5000;
 
   const TEMPLATE = `
-    <div class="cm-topline"><span data-cm="date"></span><span class="cm-sync" data-cm="sync"></span><button class="cm-exit" data-cm="exitBtn" aria-label="Exit edit mode">Exit</button></div>
+    <header class="cm-topline"><div class="cm-brand"><b>Waycred Inventory</b><small><span data-cm="date"></span><span class="cm-sync" data-cm="sync"></span></small></div><button class="cm-exit" data-cm="exitBtn" aria-label="Exit edit mode">Exit</button></header>
     <nav class="cm-tabs" data-cm="tabs" aria-label="Categories"></nav>
 
     <section class="cm-view" data-cm="countView" aria-label="Count">
