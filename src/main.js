@@ -128,6 +128,7 @@ const setupEventListeners = () => {
     sessionStorage.removeItem("admin_unlocked");
     App.State.viewMode = "preview";
     document.body.classList.remove("desktop-edit-mode");
+    document.getElementById("modal-overlay")?.classList.add("hidden");
     window.updateAdminLoginUI();
     App.UI.renderInventory();
     App.UI.showToast("Edit mode locked", "info");

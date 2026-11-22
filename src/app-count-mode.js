@@ -11,7 +11,7 @@ App.CountMode = (() => {
   const UNDO_MS = 5000;
 
   const TEMPLATE = `
-    <div class="cm-topline"><span data-cm="date"></span><span data-cm="sync"></span></div>
+    <div class="cm-topline"><span data-cm="date"></span><span class="cm-sync" data-cm="sync"></span><button class="cm-exit" data-cm="exitBtn" aria-label="Exit edit mode">Exit</button></div>
     <nav class="cm-tabs" data-cm="tabs" aria-label="Categories"></nav>
 
     <section class="cm-view" data-cm="countView" aria-label="Count">
@@ -646,6 +646,15 @@ App.CountMode = (() => {
     }
   };
 
+  // Finish anything pending first, because locking removes this screen
+  const exitEditing = () => {
+    commit();
+    flushDelete();
+    hideToast();
+    window.flushPendingSave?.();
+    window.lockEditing();
+  };
+
   // --- Toast ---
 
   const hideToast = () => {
@@ -925,6 +934,7 @@ App.CountMode = (() => {
       if (key && e.detail === 0) press(key.dataset.k);
     });
 
+    $("exitBtn").onclick = exitEditing;
     $("prev").onclick = () => stepBy(-1);
     $("skip").onclick = () => stepBy(1);
     $("pickerBtn").onclick = openPicker;

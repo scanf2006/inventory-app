@@ -134,6 +134,15 @@ const scenarios = {
     runTimers();
     assert.deepStrictEqual(deleted, ["Bulk Oil/A"]);
   },
+  "exit finishes a pending delete and locks editing": () => {
+    const { window, q, removeCurrent, deleted } = loadApp();
+    let locked = 0;
+    window.lockEditing = () => { locked += 1; };
+    removeCurrent();
+    q("exitBtn").click();
+    assert.deepStrictEqual(deleted, ["Bulk Oil/A"]);
+    assert.strictEqual(locked, 1);
+  },
   "leaving the page completes a pending delete": () => {
     const { window, removeCurrent, deleted } = loadApp();
     removeCurrent();

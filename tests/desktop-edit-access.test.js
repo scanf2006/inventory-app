@@ -31,6 +31,17 @@ describe("desktop editing access", () => {
     expect(ui).toContain('exitEditBtn.textContent = "Exit Edit Mode";');
   });
 
+  test("locking closes the settings dialog so the preview is visible", () => {
+    const main = read("src", "main.js");
+    const lockEditing = main.slice(main.indexOf("window.lockEditing = () => {"), main.indexOf("const adminLockBtn"));
+
+    expect(lockEditing).toContain('getElementById("modal-overlay")?.classList.add("hidden")');
+  });
+
+  test("the hidden count screen cannot stay on top of the preview", () => {
+    expect(read("src", "styles", "05-count-mode.css")).toMatch(/\.count-mode\[hidden\][^{]*\{\s*display:\s*none\s*!important/);
+  });
+
   test("uses a dedicated table for unlocked desktop editing", () => {
     const ui = read("src", "app-ui.js");
 
